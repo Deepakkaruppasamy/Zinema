@@ -1,0 +1,17 @@
+{
+  "name": "Zinema",
+  "short_name": "Zinema",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090B",
+  "theme_color": "#F84565",
+  "description": "Zinema: Book movies, view showtimes, and explore trending content.",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
