@@ -3,6 +3,7 @@ import Booking from "../models/Booking.js";
 import Coupon from "../models/Coupon.js";
 import Show from "../models/Show.js"
 import User from "../models/User.js"
+import { updateBookingStats } from "./gamificationController.js";
 
 import stripe from 'stripe'
 

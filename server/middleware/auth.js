@@ -10,6 +10,15 @@ export const protectAdmin = async (req, res, next)=>{
             return res.json({success: false, message: "not authorized"})
         }
 
+        // Attach user info to request object for controllers to use
+        req.user = {
+            userId: user.id,
+            email: user.emailAddresses[0]?.emailAddress,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.privateMetadata.role
+        };
+
         next();
     } catch (error) {
         return res.json({ success: false, message: "not authorized" });

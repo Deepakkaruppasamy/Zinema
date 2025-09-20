@@ -9,13 +9,18 @@ export const isAdmin = async (req, res) =>{
     res.json({success: true, isAdmin: true})
 }
 
-// Simple risk flags (basic heuristics)
+// Enhanced risk management system
 export const getRiskFlags = async (req, res) => {
     try {
         const since = new Date();
         since.setDate(since.getDate() - 7);
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
         const recent = await Booking.find({ createdAt: { $gte: since } }).lean();
+        const allRecent = await Booking.find({ createdAt: { $gte: thirtyDaysAgo } }).lean();
+
+        // Heavy booking users (potential fraud or abuse)
         const byUser = recent.reduce((m, b) => {
             m[b.user] = (m[b.user] || 0) + 1; return m;
         }, {})
@@ -23,16 +28,87 @@ export const getRiskFlags = async (req, res) => {
             .filter(([_, cnt]) => cnt >= 10)
             .map(([user, cnt]) => ({ user, count: cnt }))
 
+        // Zero or negative amount bookings
         const zeroPaid = recent.filter(b => b.isPaid && (b.amount <= 0))
 
-        res.json({ success: true, flags: {
-            heavyUsers: manyBookingsUsers,
-            zeroPaid
-        }})
+        // Suspicious booking patterns
+        const suspiciousPatterns = [];
+        
+        // Multiple bookings from same IP (if we had IP tracking)
+        // Rapid successive bookings
+        const rapidBookings = recent.filter((booking, index, arr) => {
+            const timeDiff = index > 0 ? 
+                new Date(booking.createdAt) - new Date(arr[index - 1].createdAt) : 
+                Infinity;
+            return timeDiff < 60000; // Less than 1 minute
+        });
+
+        // High-value bookings
+        const highValueBookings = recent.filter(b => b.amount > 1000);
+
+        // Cancellation rate analysis
+        const totalBookings = allRecent.length;
+        const cancelledBookings = allRecent.filter(b => b.status === 'cancelled').length;
+        const cancellationRate = totalBookings > 0 ? (cancelledBookings / totalBookings) * 100 : 0;
+
+        // Revenue anomalies
+        const dailyRevenue = {};
+        allRecent.forEach(b => {
+            const date = new Date(b.createdAt).toISOString().split('T')[0];
+            dailyRevenue[date] = (dailyRevenue[date] || 0) + b.amount;
+        });
+
+        const revenueValues = Object.values(dailyRevenue);
+        const avgRevenue = revenueValues.reduce((a, b) => a + b, 0) / revenueValues.length;
+        const revenueAnomalies = Object.entries(dailyRevenue)
+            .filter(([_, revenue]) => Math.abs(revenue - avgRevenue) > avgRevenue * 0.5)
+            .map(([date, revenue]) => ({ date, revenue, deviation: ((revenue - avgRevenue) / avgRevenue * 100).toFixed(1) }));
+
+        res.json({ 
+            success: true, 
+            flags: {
+                heavyUsers: manyBookingsUsers,
+                zeroPaid,
+                rapidBookings: rapidBookings.length,
+                highValueBookings: highValueBookings.length,
+                cancellationRate: Math.round(cancellationRate * 100) / 100,
+                revenueAnomalies,
+                riskScore: calculateRiskScore({
+                    heavyUsers: manyBookingsUsers.length,
+                    zeroPaid: zeroPaid.length,
+                    rapidBookings: rapidBookings.length,
+                    highValueBookings: highValueBookings.length,
+                    cancellationRate
+                })
+            }
+        })
     } catch (error) {
         console.error(error);
         res.json({ success: false, message: error.message })
     }
+}
+
+// Calculate overall risk score (0-100)
+function calculateRiskScore(metrics) {
+    let score = 0;
+    
+    // Heavy users (0-30 points)
+    score += Math.min(30, metrics.heavyUsers * 5);
+    
+    // Zero paid bookings (0-25 points)
+    score += Math.min(25, metrics.zeroPaid * 10);
+    
+    // Rapid bookings (0-20 points)
+    score += Math.min(20, metrics.rapidBookings * 2);
+    
+    // High value bookings (0-15 points)
+    score += Math.min(15, metrics.highValueBookings * 3);
+    
+    // High cancellation rate (0-10 points)
+    if (metrics.cancellationRate > 20) score += 10;
+    else if (metrics.cancellationRate > 10) score += 5;
+    
+    return Math.min(100, score);
 }
 
 // API to get dashboard data
@@ -152,6 +228,206 @@ export const setCuratedTrending = async (req, res) => {
             { upsert: true, new: true }
         );
         res.json({ success: true, movieIds: doc.movieIds, showIds: doc.showIds });
+    } catch (error) {
+        console.error(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+// Enhanced analytics endpoints
+export const getAnalytics = async (req, res) => {
+    try {
+        const { period = '30d' } = req.query;
+        
+        // Calculate date range
+        const endDate = new Date();
+        const startDate = new Date();
+        switch (period) {
+            case '7d':
+                startDate.setDate(endDate.getDate() - 7);
+                break;
+            case '30d':
+                startDate.setDate(endDate.getDate() - 30);
+                break;
+            case '90d':
+                startDate.setDate(endDate.getDate() - 90);
+                break;
+            case '1y':
+                startDate.setFullYear(endDate.getFullYear() - 1);
+                break;
+            default:
+                startDate.setDate(endDate.getDate() - 30);
+        }
+
+        // Revenue analytics
+        const revenueData = await Booking.aggregate([
+            { $match: { isPaid: true, createdAt: { $gte: startDate, $lte: endDate } } },
+            { $group: {
+                _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }},
+                dailyRevenue: { $sum: "$amount" },
+                bookingCount: { $sum: 1 },
+                avgBookingValue: { $avg: "$amount" }
+            }},
+            { $sort: { _id: 1 }}
+        ]);
+
+        // User analytics
+        const userAnalytics = await User.aggregate([
+            { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
+            { $group: {
+                _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }},
+                newUsers: { $sum: 1 }
+            }},
+            { $sort: { _id: 1 }}
+        ]);
+
+        // Movie performance analytics
+        const movieAnalytics = await Booking.aggregate([
+            { $match: { isPaid: true, createdAt: { $gte: startDate, $lte: endDate } } },
+            { $lookup: {
+                from: 'shows',
+                localField: 'show',
+                foreignField: '_id',
+                as: 'showData'
+            }},
+            { $unwind: '$showData' },
+            { $lookup: {
+                from: 'movies',
+                localField: 'showData.movie',
+                foreignField: '_id',
+                as: 'movieData'
+            }},
+            { $unwind: '$movieData' },
+            { $group: {
+                _id: '$movieData._id',
+                title: { $first: '$movieData.title' },
+                totalBookings: { $sum: 1 },
+                totalRevenue: { $sum: '$amount' },
+                avgRating: { $first: '$movieData.vote_average' }
+            }},
+            { $sort: { totalRevenue: -1 }},
+            { $limit: 10 }
+        ]);
+
+        // Showtime analytics
+        const showtimeAnalytics = await Booking.aggregate([
+            { $match: { isPaid: true, createdAt: { $gte: startDate, $lte: endDate } } },
+            { $lookup: {
+                from: 'shows',
+                localField: 'show',
+                foreignField: '_id',
+                as: 'showData'
+            }},
+            { $unwind: '$showData' },
+            { $group: {
+                _id: { $hour: '$showData.showDateTime' },
+                bookings: { $sum: 1 },
+                revenue: { $sum: '$amount' }
+            }},
+            { $sort: { _id: 1 }}
+        ]);
+
+        // Peak hours analysis
+        const peakHours = showtimeAnalytics
+            .sort((a, b) => b.bookings - a.bookings)
+            .slice(0, 3)
+            .map(hour => ({
+                hour: hour._id,
+                bookings: hour.bookings,
+                revenue: hour.revenue
+            }));
+
+        // Conversion funnel (simplified)
+        const totalVisitors = await User.countDocuments({ createdAt: { $gte: startDate, $lte: endDate } });
+        const totalBookings = await Booking.countDocuments({ createdAt: { $gte: startDate, $lte: endDate } });
+        const paidBookings = await Booking.countDocuments({ isPaid: true, createdAt: { $gte: startDate, $lte: endDate } });
+        
+        const conversionFunnel = {
+            visitors: totalVisitors,
+            bookings: totalBookings,
+            paidBookings: paidBookings,
+            conversionRate: totalVisitors > 0 ? ((totalBookings / totalVisitors) * 100).toFixed(2) : 0,
+            paymentRate: totalBookings > 0 ? ((paidBookings / totalBookings) * 100).toFixed(2) : 0
+        };
+
+        res.json({
+            success: true,
+            analytics: {
+                period,
+                dateRange: { start: startDate, end: endDate },
+                revenue: {
+                    daily: revenueData,
+                    total: revenueData.reduce((sum, day) => sum + day.dailyRevenue, 0),
+                    avgDaily: revenueData.length > 0 ? 
+                        (revenueData.reduce((sum, day) => sum + day.dailyRevenue, 0) / revenueData.length).toFixed(2) : 0
+                },
+                users: {
+                    daily: userAnalytics,
+                    total: userAnalytics.reduce((sum, day) => sum + day.newUsers, 0)
+                },
+                movies: movieAnalytics,
+                showtimes: showtimeAnalytics,
+                peakHours,
+                conversionFunnel
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+// Real-time dashboard metrics
+export const getRealtimeMetrics = async (req, res) => {
+    try {
+        const now = new Date();
+        const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const lastHour = new Date(now.getTime() - 60 * 60 * 1000);
+
+        // Recent activity
+        const [recentBookings, recentUsers, activeShows] = await Promise.all([
+            Booking.find({ createdAt: { $gte: last24h } }).countDocuments(),
+            User.find({ createdAt: { $gte: last24h } }).countDocuments(),
+            Show.find({ showDateTime: { $gte: now, $lte: new Date(now.getTime() + 24 * 60 * 60 * 1000) } }).countDocuments()
+        ]);
+
+        // Current hour activity
+        const currentHourBookings = await Booking.find({ 
+            createdAt: { $gte: lastHour } 
+        }).countDocuments();
+
+        // Live occupancy (shows happening now)
+        const liveShows = await Show.find({
+            showDateTime: { $gte: new Date(now.getTime() - 2 * 60 * 60 * 1000), $lte: now }
+        }).populate('movie');
+
+        const liveOccupancy = liveShows.map(show => {
+            const occupiedSeats = Object.keys(show.occupiedSeats || {}).length;
+            const capacity = 90; // Assuming 90 seats per show
+            return {
+                showId: show._id,
+                movie: show.movie?.title || 'Unknown',
+                occupancy: Math.round((occupiedSeats / capacity) * 100),
+                occupiedSeats,
+                capacity
+            };
+        });
+
+        res.json({
+            success: true,
+            realtime: {
+                last24h: {
+                    bookings: recentBookings,
+                    newUsers: recentUsers,
+                    activeShows
+                },
+                lastHour: {
+                    bookings: currentHourBookings
+                },
+                liveOccupancy,
+                serverTime: now.toISOString()
+            }
+        });
     } catch (error) {
         console.error(error);
         res.json({ success: false, message: error.message });

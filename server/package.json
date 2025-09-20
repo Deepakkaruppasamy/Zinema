@@ -8,7 +8,8 @@
     "server": "nodemon server.js",
     "start": "node server.js",
     "build": "echo 'Build completed'",
-    "dev": "vercel dev"
+    "dev": "vercel dev",
+    "seed:gamification": "node scripts/seedGamification.js"
   },
   "keywords": [],
   "author": "",

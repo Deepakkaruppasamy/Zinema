@@ -1,6 +1,7 @@
 import stripe from "stripe";
 import Booking from '../models/Booking.js'
 import { inngest } from "../inngest/index.js";
+import { updateBookingStats } from "./gamificationController.js";
 
 export const stripeWebhooks = async (request, response)=>{
     const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);
@@ -25,10 +26,15 @@ export const stripeWebhooks = async (request, response)=>{
                 const session = sessionList.data[0];
                 const { bookingId } = session.metadata;
 
-                await Booking.findByIdAndUpdate(bookingId, {
+                const booking = await Booking.findByIdAndUpdate(bookingId, {
                     isPaid: true,
                     paymentLink: ""
                 })
+
+                // Update gamification stats
+                if (booking) {
+                    await updateBookingStats(booking.userId, booking.amount, booking.bookedSeats.length > 1);
+                }
 
                  // Send Confirmation Email
                  await inngest.send({

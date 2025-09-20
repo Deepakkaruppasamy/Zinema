@@ -2,11 +2,14 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { assets, dummyDateTimeData, dummyShowsData } from '../assets/assets'
 import Loading from '../components/Loading'
-import { ArrowRightIcon, ClockIcon } from 'lucide-react'
+import { ArrowRightIcon, ClockIcon, Brain, Eye, Settings } from 'lucide-react'
 import isoTimeFormat from '../lib/isoTimeFormat'
 import BlurCircle from '../components/BlurCircle'
 import toast from 'react-hot-toast'
 import { useAppContext } from '../context/AppContext'
+import AISeatRecommendation from '../components/seatRecommendation/AISeatRecommendation'
+import SeatView360 from '../components/seatRecommendation/SeatView360'
+import VoiceChatBooking from '../components/booking/VoiceChatBooking'
 
 const SeatLayout = () => {
 
@@ -19,6 +22,19 @@ const SeatLayout = () => {
   const [occupiedSeats, setOccupiedSeats] = useState([])
   const [expiresAt, setExpiresAt] = useState(null)
   const timerRef = useRef(null)
+  
+  // AI Features State
+  const [showAIRecommendations, setShowAIRecommendations] = useState(false)
+  const [show360View, setShow360View] = useState(false)
+  const [selectedSeatFor360, setSelectedSeatFor360] = useState(null)
+  const [showVoiceBooking, setShowVoiceBooking] = useState(false)
+  const [aiPreferences, setAiPreferences] = useState({
+    priceSensitivity: 'medium',
+    viewPreference: 'center',
+    seatType: 'standard',
+    groupSize: 1,
+    accessibility: false
+  })
 
   const navigate = useNavigate()
 
@@ -80,18 +96,61 @@ const SeatLayout = () => {
       setSelectedSeats([...next])
   }
 
+  // AI-powered seat selection
+  const handleAISeatSelect = (seatId) => {
+    if (!selectedTime) {
+      return toast("Please select time first")
+    }
+    if(occupiedSeats.includes(seatId)){
+      return toast('This seat is already booked')
+    }
+    if(!selectedSeats.includes(seatId) && selectedSeats.length > 4){
+      return toast("You can only select 5 seats")
+    }
+    
+    setSelectedSeats(prev => prev.includes(seatId) ? prev.filter(seat => seat !== seatId) : [...prev, seatId])
+    setExpiresAt(prev => prev || new Date(Date.now() + 10 * 60 * 1000))
+  }
+
+  // 360° view functionality
+  const handleSeat360View = (seatId) => {
+    if (occupiedSeats.includes(seatId)) {
+      return toast('Cannot preview booked seats')
+    }
+    setSelectedSeatFor360(seatId)
+    setShow360View(true)
+  }
+
   const renderSeats = (row, count = 9)=>(
     <div key={row} className="flex gap-2 mt-2">
             <div className="flex flex-wrap items-center justify-center gap-2">
                 {Array.from({ length: count }, (_, i) => {
                     const seatId = `${row}${i + 1}`;
+                    const isOccupied = occupiedSeats.includes(seatId);
+                    const isSelected = selectedSeats.includes(seatId);
                     return (
-                        <button key={seatId} onClick={(e) => handleSeatClick(e, seatId)} className={`h-8 w-8 rounded border border-primary/60 cursor-pointer transition-all duration-150
-                         hover:shadow-[0_0_0_2px_rgba(248,69,101,0.3)] hover:scale-105 active:scale-95
-                         ${selectedSeats.includes(seatId) && "bg-primary text-white shadow-[0_6px_18px_rgba(248,69,101,0.45)]"} 
-                         ${occupiedSeats.includes(seatId) && "opacity-50"}`}>
-                            {seatId}
-                        </button>
+                        <div key={seatId} className="relative group">
+                            <button 
+                                onClick={(e) => handleSeatClick(e, seatId)} 
+                                className={`h-8 w-8 rounded border border-primary/60 cursor-pointer transition-all duration-150
+                                 hover:shadow-[0_0_0_2px_rgba(248,69,101,0.3)] hover:scale-105 active:scale-95
+                                 ${isSelected && "bg-primary text-white shadow-[0_6px_18px_rgba(248,69,101,0.45)]"} 
+                                 ${isOccupied && "opacity-50 cursor-not-allowed"}`}
+                                disabled={isOccupied}
+                            >
+                                {seatId}
+                            </button>
+                            {/* 360° View Button - only for available seats */}
+                            {!isOccupied && (
+                                <button
+                                    onClick={() => handleSeat360View(seatId)}
+                                    className="absolute -top-1 -right-1 h-4 w-4 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                    title="360° View"
+                                >
+                                    <Eye className="w-2 h-2" />
+                                </button>
+                            )}
+                        </div>
                     );
                 })}
             </div>
@@ -222,7 +281,25 @@ const SeatLayout = () => {
       <div className='relative flex-1 flex flex-col items-center max-md:mt-16'>
           <BlurCircle top="-100px" left="-100px"/>
           <BlurCircle bottom="0" right="0"/>
-          <h1 className='text-2xl font-semibold mb-2'>Select your seat</h1>
+          <div className="flex items-center justify-between w-full mb-4">
+            <h1 className='text-2xl font-semibold'>Select your seat</h1>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowAIRecommendations(!showAIRecommendations)}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-200"
+              >
+                <Brain className="w-4 h-4" />
+                AI Recommendations
+              </button>
+              <button
+                onClick={() => setShowVoiceBooking(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-lg hover:from-green-600 hover:to-teal-600 transition-all duration-200"
+              >
+                <Settings className="w-4 h-4" />
+                Voice Booking
+              </button>
+            </div>
+          </div>
           {/* Accessibility Legend and Timer */}
           <div className='flex flex-col items-center gap-2 mb-4'>
             {timeLeft && (
@@ -266,8 +343,42 @@ const SeatLayout = () => {
             <ArrowRightIcon strokeWidth={3} className="w-4 h-4"/>
           </button>
 
+          {/* AI Recommendations Panel */}
+          {showAIRecommendations && selectedTime && (
+            <div className="mt-8 w-full max-w-4xl">
+              <AISeatRecommendation
+                showId={selectedTime.showId}
+                occupiedSeats={occupiedSeats}
+                onSeatSelect={handleAISeatSelect}
+                userPreferences={aiPreferences}
+              />
+            </div>
+          )}
          
       </div>
+
+      {/* 360° View Modal */}
+      {show360View && selectedSeatFor360 && (
+        <SeatView360
+          seatId={selectedSeatFor360}
+          isOpen={show360View}
+          onClose={() => setShow360View(false)}
+          theatreLayout="standard"
+        />
+      )}
+
+      {/* Voice Booking Modal */}
+      {showVoiceBooking && (
+        <VoiceChatBooking
+          isOpen={showVoiceBooking}
+          onClose={() => setShowVoiceBooking(false)}
+          onBookingComplete={(data) => {
+            if (data.success) {
+              window.location.href = data.url;
+            }
+          }}
+        />
+      )}
     </div>
   ) : (
     <Loading />

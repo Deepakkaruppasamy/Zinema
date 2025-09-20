@@ -1,14 +1,49 @@
-import mongoose from 'mongoose'
+import mongoose from 'mongoose';
 
 const reminderSchema = new mongoose.Schema({
-  user: { type: String, ref: 'User', required: true },
-  show: { type: mongoose.Schema.Types.ObjectId, ref: 'Show', required: true },
-  channel: { type: String, enum: ['email','sms','whatsapp'], default: 'email' },
-  sendAt: { type: Date },
-  createdAt: { type: Date, default: Date.now }
-})
+  userId: {
+    type: String,
+    required: true
+  },
+  movieId: {
+    type: String,
+    required: true
+  },
+  movieTitle: {
+    type: String,
+    required: true
+  },
+  reminderType: {
+    type: String,
+    enum: ['release', 'booking', 'showtime', 'price_drop'],
+    required: true
+  },
+  reminderTime: {
+    type: Date,
+    required: true
+  },
+  enabled: {
+    type: Boolean,
+    default: true
+  },
+  triggered: {
+    type: Boolean,
+    default: false
+  },
+  sendAt: Date,
+  channel: {
+    type: String,
+    enum: ['email', 'sms', 'push', 'whatsapp'],
+    default: 'email'
+  },
+  message: String,
+  metadata: {
+    showId: String,
+    targetPrice: Number,
+    threshold: Number
+  }
+}, {
+  timestamps: true
+});
 
-reminderSchema.index({ user: 1, show: 1 }, { unique: true })
-
-const Reminder = mongoose.model('Reminder', reminderSchema)
-export default Reminder
+export default mongoose.model('Reminder', reminderSchema);

@@ -19,6 +19,11 @@ import waitlistRouter from './routes/waitlistRoutes.js';
 import { stripeWebhooks } from './controllers/stripeWebhooks.js';
 import notificationsRouter from './routes/notificationsRoutes.js';
 import pollRouter from './routes/pollRoutes.js';
+import gamificationRouter from './routes/gamificationRoutes.js';
+import wishlistRouter from './routes/wishlistRoutes.js';
+import pricingAlertRouter from './routes/pricingAlertRoutes.js';
+import aiRecommendationRouter from './routes/aiRecommendationRoutes.js';
+import { startPricingAlertService } from './services/pricingAlertService.js';
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -75,6 +80,10 @@ app.use('/api/support', supportRouter)
 app.use('/api/waitlist', waitlistRouter)
 app.use('/api/notify', notificationsRouter);
 app.use('/api/poll', pollRouter);
+app.use('/api/gamification', gamificationRouter);
+app.use('/api/user', wishlistRouter);
+app.use('/api/user', pricingAlertRouter);
+app.use('/api/discovery', aiRecommendationRouter);
 
 // Catch-all handler for undefined routes
 app.use((req, res) => {
@@ -107,6 +116,9 @@ app.use((err, req, res, next) => {
 // Start the server
 const server = app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
+    
+    // Start pricing alert service
+    startPricingAlertService();
 });
 
 // Handle unhandled promise rejections

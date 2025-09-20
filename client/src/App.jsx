@@ -16,6 +16,8 @@ import ListShows from './pages/admin/ListShows'
 import ListBookings from './pages/admin/ListBookings'
 import Trending from './pages/admin/Trending'
 import AdminSupportTickets from './pages/admin/AdminSupportTickets'
+import Analytics from './pages/admin/Analytics'
+import RiskManagement from './pages/admin/RiskManagement'
 import { useAppContext } from './context/AppContext'
 import { SignIn } from '@clerk/clerk-react'
 import Loading from './components/Loading'
@@ -24,6 +26,8 @@ import SupportBot from './components/SupportBot';
 import Theatre from './pages/Theatre'
 // ThemeToggle moved into Navbar
 import PWAInstallPrompt from './components/PWAInstallPrompt'
+import PWAUtils from './components/PWAUtils'
+import MobileOptimizations from './components/MobileOptimizations'
 import ThreeDView from './pages/ThreeDView'
 import Ticket from './pages/Ticket'
 
@@ -54,6 +58,8 @@ const App = () => {
           </div>
         )}>
           <Route index element={<Dashboard/>}/>
+          <Route path="analytics" element={<Analytics/>}/>
+          <Route path="risk-management" element={<RiskManagement/>}/>
           <Route path="add-shows" element={<AddShows/>}/>
           <Route path="list-shows" element={<ListShows/>}/>
           <Route path="list-bookings" element={<ListBookings/>}/>
@@ -66,6 +72,8 @@ const App = () => {
        {!isAdminRoute && <SupportBot />}
        {/** Theme toggle now in Navbar */}
        {!isAdminRoute && <PWAInstallPrompt />}
+       {!isAdminRoute && <PWAUtils />}
+       {!isAdminRoute && <MobileOptimizations />}
     </>
   )
 }
