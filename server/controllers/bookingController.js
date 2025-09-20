@@ -83,6 +83,36 @@ export const createBooking = async (req, res)=>{
 
         await showData.save();
 
+        // Update gamification stats immediately when booking is created
+        try {
+            const { updateBookingStats } = await import('./gamificationController.js');
+            await updateBookingStats(userId, finalAmount, selectedSeats.length > 1, false); // false = initial booking
+            console.log('Gamification stats updated for booking:', booking._id);
+        } catch (error) {
+            console.error('Error updating gamification stats:', error);
+            // Don't fail the booking for gamification errors
+        }
+
+        // Update admin analytics immediately
+        try {
+            // Log booking creation for admin tracking
+            console.log('Booking created for admin tracking:', {
+                bookingId: booking._id,
+                userId: userId,
+                amount: finalAmount,
+                seats: selectedSeats.length,
+                movie: showData.movie.title,
+                showTime: showData.showDateTime,
+                isPaid: false
+            });
+            
+            // The admin dashboard will automatically pick up this data when it refreshes
+            // No additional action needed as the booking is already in the database
+        } catch (error) {
+            console.error('Error updating admin data:', error);
+            // Don't fail the booking for admin errors
+        }
+
          // Stripe Gateway Initialize
          const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY)
 

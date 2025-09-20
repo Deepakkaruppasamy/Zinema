@@ -114,7 +114,11 @@ function calculateRiskScore(metrics) {
 // API to get dashboard data
 export const getDashboardData = async (req, res) =>{
     try {
-        const [bookings, activeShows, totalUser] = await Promise.all([
+        const [allBookings, paidBookings, activeShows, totalUser] = await Promise.all([
+            Booking.find({}).populate('user').populate({
+                path: 'show',
+                populate: {path: 'movie'}
+            }),
             Booking.find({isPaid: true}),
             Show.find({showDateTime: {$gte: new Date()}}).populate('movie'),
             User.countDocuments()
@@ -153,12 +157,24 @@ export const getDashboardData = async (req, res) =>{
         ])
 
         const dashboardData = {
-            totalBookings: bookings.length,
-            totalRevenue: bookings.reduce((acc, booking)=> acc + booking.amount, 0),
+            totalBookings: allBookings.length,
+            paidBookings: paidBookings.length,
+            unpaidBookings: allBookings.length - paidBookings.length,
+            totalRevenue: paidBookings.reduce((acc, booking)=> acc + booking.amount, 0),
+            pendingRevenue: allBookings.filter(b => !b.isPaid).reduce((acc, booking)=> acc + booking.amount, 0),
             avgOccupancy,
             shows: showsWithOccupancy,
             revenueByDay: revenueByDayAgg.map(r => ({ date: r._id, revenue: r.revenue, count: r.count })),
-            totalUser
+            totalUser,
+            recentBookings: allBookings.slice(0, 10).map(booking => ({
+                id: booking._id,
+                user: booking.user?.name || 'Unknown',
+                movie: booking.show?.movie?.title || 'Unknown',
+                amount: booking.amount,
+                seats: booking.bookedSeats.length,
+                isPaid: booking.isPaid,
+                createdAt: booking.createdAt
+            }))
         }
 
         res.json({success: true, dashboardData})

@@ -273,7 +273,7 @@ const checkForNewBadges = async (gamification, reason = '') => {
 };
 
 // Update booking stats
-export const updateBookingStats = async (userId, amount, isGroupBooking = false) => {
+export const updateBookingStats = async (userId, amount, isGroupBooking = false, isPayment = false) => {
   try {
     let gamification = await Gamification.findOne({ userId });
     
@@ -281,10 +281,15 @@ export const updateBookingStats = async (userId, amount, isGroupBooking = false)
       gamification = new Gamification({ userId });
     }
     
-    // Update stats
-    gamification.totalBookings += 1;
-    gamification.totalSpent += amount;
-    gamification.lastBookingDate = new Date();
+    // Update stats based on whether this is initial booking or payment
+    if (!isPayment) {
+      // Initial booking - count the booking but don't add to total spent yet
+      gamification.totalBookings += 1;
+      gamification.lastBookingDate = new Date();
+    } else {
+      // Payment completion - add to total spent
+      gamification.totalSpent += amount;
+    }
     
     // Update streak
     const today = new Date();

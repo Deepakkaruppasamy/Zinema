@@ -55,10 +55,10 @@ export const stripeWebhooks = async (request, response)=>{
 
                 console.log(`Booking updated successfully: ${bookingId}`);
 
-                // Update gamification stats
+                // Update gamification stats for payment completion
                 try {
-                    await updateBookingStats(booking.userId, booking.amount, booking.bookedSeats.length > 1);
-                    console.log("Gamification stats updated");
+                    await updateBookingStats(booking.userId, booking.amount, booking.bookedSeats.length > 1, true); // true = payment completion
+                    console.log("Gamification stats updated for payment");
                 } catch (error) {
                     console.error("Error updating gamification stats:", error);
                     // Don't fail the webhook for gamification errors
