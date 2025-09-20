@@ -13,6 +13,7 @@ const AddShows = () => {
 
     const currency = import.meta.env.VITE_CURRENCY
     const [nowPlayingMovies, setNowPlayingMovies] = useState([]);
+    const [loadingMovies, setLoadingMovies] = useState(true);
     const [selectedMovie, setSelectedMovie] = useState(null);
     const [dateTimeSelection, setDateTimeSelection] = useState({});
     const [dateTimeInput, setDateTimeInput] = useState("");
@@ -20,17 +21,21 @@ const AddShows = () => {
     const [addingShow, setAddingShow] = useState(false)
 
 
-     const fetchNowPlayingMovies = async () => {
-        try {
-            const { data } = await axios.get('/api/show/now-playing', {
-                headers: { Authorization: `Bearer ${await getToken()}` }})
-                if(data.success){
-                    setNowPlayingMovies(data.movies)
-                }
-        } catch (error) {
-            console.error('Error fetching movies:', error)
-        }
-    };
+      const fetchNowPlayingMovies = async () => {
+         try {
+             setLoadingMovies(true);
+             const { data } = await axios.get('/api/show/now-playing', {
+                 headers: { Authorization: `Bearer ${await getToken()}` }})
+                 if(data.success){
+                     setNowPlayingMovies(data.movies || [])
+                 }
+         } catch (error) {
+             console.error('Error fetching movies:', error)
+             setNowPlayingMovies([]);
+         } finally {
+             setLoadingMovies(false);
+         }
+     };
 
     const handleDateTimeAdd = () => {
         if (!dateTimeInput) return;
@@ -99,7 +104,11 @@ const AddShows = () => {
         }
     }, [user]);
 
-  return nowPlayingMovies.length > 0 ? (
+   if (loadingMovies) {
+     return <Loading />;
+   }
+
+   return nowPlayingMovies.length > 0 ? (
     <>
       <Title text1="Add" text2="Shows" />
       <p className="mt-10 text-lg font-medium">Now Playing Movies</p>
