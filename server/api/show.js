@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import showRouter from '../routes/showRoutes.js';
 
 const app = express();
