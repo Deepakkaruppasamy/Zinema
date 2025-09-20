@@ -18,9 +18,12 @@ showRouter.get('/', (req, res) => {
     });
 });
 
-showRouter.get('/now-playing',protectAdmin, getNowPlayingMovies)
-showRouter.post('/add', protectAdmin, addShow)
+// Public routes (no auth required)
 showRouter.get("/all", getShows)
 showRouter.get("/:movieId", getShow)
+
+// Admin routes (auth required)
+showRouter.get('/now-playing', protectAdmin, getNowPlayingMovies)
+showRouter.post('/add', protectAdmin, addShow)
 
 export default showRouter;
