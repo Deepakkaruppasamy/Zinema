@@ -24,7 +24,8 @@ const app = express();
 const port = process.env.PORT || 5000;
 const __dirname = path.resolve();
 
-await connectDB()
+// Connect to database
+connectDB().catch(console.error);
 
 // Create public directory if it doesn't exist
 const publicDir = path.join(__dirname, 'public');
@@ -46,7 +47,22 @@ app.get('/favicon.ico', (req, res) => {
 });
 
 // API Routes
-app.get('/', (req, res) => res.send('Server is Live!'))
+app.get('/', (req, res) => {
+    console.log('Root route accessed');
+    res.json({ 
+        message: 'Server is Live!', 
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
+
+// Test endpoint
+app.get('/test', (req, res) => {
+    res.json({ 
+        message: 'Test endpoint working!', 
+        timestamp: new Date().toISOString() 
+    });
+});
 app.use('/api/inngest', serve({ client: inngest, functions }))
 app.use('/api/show', showRouter)
 app.use('/api/booking', bookingRouter)
