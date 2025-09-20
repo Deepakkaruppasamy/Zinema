@@ -6,6 +6,23 @@ import User from '../models/User.js';
 // Get user gamification stats
 export const getUserStats = async (req, res) => {
   try {
+    // Check if user is authenticated
+    if (!req.user || !req.user.userId) {
+      return res.json({
+        success: true,
+        gamification: {
+          userId: 'demo-user',
+          level: 1,
+          experience: 0,
+          points: 0,
+          badges: [],
+          rewards: [],
+          achievements: []
+        },
+        message: 'Demo user stats (not authenticated)'
+      });
+    }
+
     const { userId } = req.user;
     
     let gamification = await Gamification.findOne({ userId });

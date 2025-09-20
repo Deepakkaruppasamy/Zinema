@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { FaChair, FaWifi, FaUtensils, FaParking, FaMapMarkerAlt, FaPhoneAlt, FaStar, FaWheelchair, FaTags, FaImages, FaEnvelope } from 'react-icons/fa';
+import { FaChair, FaWifi, FaUtensils, FaParking, FaMapMarkerAlt, FaPhoneAlt, FaStar, FaWheelchair, FaTags, FaImages, FaEnvelope, FaBrain, FaChartLine, FaUsers, FaEye, FaCog, FaTrophy } from 'react-icons/fa';
 import zinemaImg from '../assets/zinema.jpg';
 import FiltersBar from '../components/theatre/FiltersBar';
 import TheatreCard from '../components/theatre/TheatreCard';
 import QuickBookModal from '../components/theatre/QuickBookModal';
 import SeatPickerModal from '../components/theatre/SeatPickerModal';
+import AISeatRecommendation from '../components/theatre/AISeatRecommendation';
+import DynamicPricing from '../components/theatre/DynamicPricing';
+import AdvancedFoodOrdering from '../components/theatre/AdvancedFoodOrdering';
+import InteractiveSeatMap from '../components/theatre/InteractiveSeatMap';
+import SmartRecommendations from '../components/theatre/SmartRecommendations';
+import GamificationSystem from '../components/theatre/GamificationSystem';
+import SocialFeatures from '../components/theatre/SocialFeatures';
 import useTheatreSearch from '../hooks/useTheatreSearch';
 
 const WIFI_PASSWORD = 'grandcinema@123';
@@ -20,7 +27,7 @@ const mockParkingData = [
 const mockMenu = [
   { name: 'Classic Popcorn', price: 120, img: 'https://img.freepik.com/free-photo/popcorn_144627-16132.jpg?w=400' },
   { name: 'Cheese Nachos', price: 180, img: 'https://img.freepik.com/free-photo/nachos-with-cheese-sauce_140725-115.jpg?w=400' },
-  { name: 'Cold Coffee', price: 100, img: 'https://img.freepik.com/free-photo/iced-coffee-glass_144627-16281.jpg?w=400' },
+  { name: 'Cold Coffee', price: 100, img: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&h=400&fit=crop&crop=center' },
   { name: 'Veg Burger', price: 150, img: 'https://img.freepik.com/free-photo/side-view-burger-with-vegetables_141793-15542.jpg?w=400' },
 ];
 
@@ -59,6 +66,17 @@ const Theatre = () => {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportTheatre, setReportTheatre] = useState('');
   const [reportMessage, setReportMessage] = useState('');
+  
+  // New feature states
+  const [showAIFeatures, setShowAIFeatures] = useState(false);
+  const [selectedShowId, setSelectedShowId] = useState(null);
+  const [selectedSeats, setSelectedSeats] = useState([]);
+  const [dynamicPrice, setDynamicPrice] = useState(200);
+  const [foodOrder, setFoodOrder] = useState([]);
+  const [showFoodOrdering, setShowFoodOrdering] = useState(false);
+  const [showSeatMap, setShowSeatMap] = useState(false);
+  const [showRecommendations, setShowRecommendations] = useState(false);
+  const [activeFeature, setActiveFeature] = useState('recommendations');
 
   useEffect(() => {
     // Simulate theatres loading for skeleton UI
@@ -426,6 +444,155 @@ const Theatre = () => {
         ))}
       </div>
 
+      {/* AI Features Toggle */}
+      <div className="max-w-5xl w-full mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/20 rounded-lg">
+              <FaBrain className="text-primary text-xl" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold text-white">AI-Powered Features</h2>
+              <p className="text-gray-400">Experience the future of cinema booking</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowAIFeatures(!showAIFeatures)}
+            className="px-6 py-3 bg-primary hover:bg-primary/80 text-white rounded-xl font-semibold transition-colors flex items-center gap-2"
+          >
+            <FaCog className={showAIFeatures ? 'animate-spin' : ''} />
+            {showAIFeatures ? 'Hide AI Features' : 'Show AI Features'}
+          </button>
+        </div>
+
+        {showAIFeatures && (
+          <div className="space-y-6">
+            {/* Feature Tabs */}
+            <div className="flex space-x-1 bg-gray-800/30 rounded-lg p-1">
+              {[
+                { id: 'recommendations', name: 'Smart Recommendations', icon: <FaBrain /> },
+                { id: 'pricing', name: 'Dynamic Pricing', icon: <FaChartLine /> },
+                { id: 'seats', name: 'AI Seat Selection', icon: <FaChair /> },
+                { id: 'food', name: 'Advanced Food Ordering', icon: <FaUtensils /> },
+                { id: 'map', name: 'Interactive Seat Map', icon: <FaEye /> },
+                { id: 'gamification', name: 'Gamification & Rewards', icon: <FaTrophy /> },
+                { id: 'social', name: 'Social Features', icon: <FaUsers /> }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveFeature(tab.id)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-md transition-colors ${
+                    activeFeature === tab.id
+                      ? 'bg-primary text-white'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  }`}
+                >
+                  {tab.icon}
+                  <span className="text-sm font-medium">{tab.name}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Feature Content */}
+            <div className="min-h-[400px]">
+              {activeFeature === 'recommendations' && (
+                <SmartRecommendations
+                  userId="user123"
+                  onRecommendationSelect={(rec) => {
+                    console.log('Selected recommendation:', rec);
+                    setSelectedShowId(rec.id);
+                  }}
+                  onTheatreSelect={(theatre) => {
+                    console.log('Selected theatre:', theatre);
+                  }}
+                />
+              )}
+
+              {activeFeature === 'pricing' && (
+                <DynamicPricing
+                  showId={selectedShowId || 'show123'}
+                  basePrice={200}
+                  onPriceChange={setDynamicPrice}
+                />
+              )}
+
+              {activeFeature === 'seats' && (
+                <AISeatRecommendation
+                  showId={selectedShowId || 'show123'}
+                  onSeatSelect={(seat) => {
+                    console.log('Selected seat:', seat);
+                    setSelectedSeats(prev => [...prev, seat.seat]);
+                  }}
+                  userPreferences={{
+                    social: 'center',
+                    budget: 'standard',
+                    view: 'optimal'
+                  }}
+                />
+              )}
+
+              {activeFeature === 'food' && (
+                <div className="text-center py-12">
+                  <div className="p-4 bg-primary/20 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                    <FaUtensils className="text-primary text-2xl" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">Advanced Food Ordering</h3>
+                  <p className="text-gray-400 mb-6">Pre-order food and beverages for pickup at the theatre</p>
+                  <button
+                    onClick={() => setShowFoodOrdering(true)}
+                    className="px-6 py-3 bg-primary hover:bg-primary/80 text-white rounded-xl font-semibold transition-colors"
+                  >
+                    Open Food Ordering
+                  </button>
+                </div>
+              )}
+
+              {activeFeature === 'map' && (
+                <InteractiveSeatMap
+                  showId={selectedShowId || 'show123'}
+                  onSeatSelect={(seat) => {
+                    console.log('Selected seat from map:', seat);
+                    setSelectedSeats(prev => [...prev, seat]);
+                  }}
+                  selectedSeats={selectedSeats}
+                  onSeatsChange={setSelectedSeats}
+                  maxSeats={4}
+                  allowGroupBooking={true}
+                />
+              )}
+
+              {activeFeature === 'gamification' && (
+                <GamificationSystem
+                  userId="user123"
+                  onRewardClaim={(reward) => {
+                    console.log('Reward claimed:', reward);
+                    // Handle reward claim logic
+                  }}
+                  onAchievementUnlock={(achievement) => {
+                    console.log('Achievement unlocked:', achievement);
+                    // Handle achievement unlock logic
+                  }}
+                />
+              )}
+
+              {activeFeature === 'social' && (
+                <SocialFeatures
+                  userId="user123"
+                  onUserSelect={(user) => {
+                    console.log('User selected:', user);
+                    // Handle user selection logic
+                  }}
+                  onGroupCreate={(group) => {
+                    console.log('Group created:', group);
+                    // Handle group creation logic
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Photo Gallery Trigger */}
       <div className="max-w-5xl w-full flex items-center justify-between mt-6">
         <button className="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-white flex items-center gap-2" onClick={() => { setGalleryIndex(0); setGalleryOpen(true); }}>
@@ -675,6 +842,17 @@ const Theatre = () => {
         selectedSeats={quickBook.selectedSeats}
         onClose={() => setQuickBook({ open: false, theatre: '', showtime: '', showId: null, selectedSeats: [] })}
       />
+
+      {/* Advanced Food Ordering Modal */}
+      {showFoodOrdering && (
+        <AdvancedFoodOrdering
+          onOrderUpdate={(order) => {
+            setFoodOrder(order);
+            console.log('Food order updated:', order);
+          }}
+          onClose={() => setShowFoodOrdering(false)}
+        />
+      )}
 
       {/* Sticky Summary Bar */}
       {(foodCart.length > 0 || reclinerSelected || parkingSelected) && (

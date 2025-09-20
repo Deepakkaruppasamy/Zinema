@@ -3,38 +3,323 @@ import Show from '../models/Show.js';
 import UserPreferences from '../models/UserPreferences.js';
 import Booking from '../models/Booking.js';
 import Wishlist from '../models/Wishlist.js';
+import Review from '../models/Review.js';
+import Follow from '../models/Follow.js';
+
+// Dynamic AI Recommendation Engine
+class DynamicRecommendationEngine {
+  constructor() {
+    this.weights = {
+      genre: 0.3,
+      rating: 0.25,
+      recency: 0.2,
+      popularity: 0.15,
+      social: 0.1
+    };
+  }
+
+  // Get AI-powered recommendations with dynamic scoring
+  async getRecommendations(userId, limit = 20) {
+    try {
+      // Get user data
+      const [preferences, userBookings, userWishlist, userReviews, userFollows] = await Promise.all([
+        UserPreferences.findOne({ userId }),
+        Booking.find({ userId, isPaid: true }).populate('show').sort({ createdAt: -1 }).limit(50),
+        Wishlist.find({ userId }),
+        Review.find({ userId }).populate('movie'),
+        Follow.find({ follower: userId })
+      ]);
+
+      // Get all available movies with shows
+      const allMovies = await Movie.find({}).limit(200);
+      const availableShows = await Show.find({ 
+        showDateTime: { $gte: new Date() } 
+      }).populate('movie');
+
+      // Create user profile
+      const userProfile = this.createUserProfile(userBookings, userReviews, preferences);
+      
+      // Calculate dynamic recommendations
+      const recommendations = await this.calculateDynamicRecommendations(
+        allMovies,
+        availableShows,
+        userProfile,
+        userFollows
+      );
+
+      return recommendations.slice(0, limit);
+    } catch (error) {
+      console.error('Error in dynamic recommendations:', error);
+      throw error;
+    }
+  }
+
+  // Create comprehensive user profile
+  createUserProfile(bookings, reviews, preferences) {
+    const profile = {
+      favoriteGenres: {},
+      favoriteActors: {},
+      favoriteDirectors: {},
+      ratingPattern: {},
+      timePreferences: {},
+      priceRange: { min: 0, max: 1000 },
+      totalBookings: bookings.length
+    };
+
+    // Analyze booking history
+    bookings.forEach(booking => {
+      const movie = booking.show.movie;
+      const showTime = new Date(booking.show.showDateTime);
+      
+      // Genre preferences
+      movie.genres?.forEach(genre => {
+        profile.favoriteGenres[genre.name] = (profile.favoriteGenres[genre.name] || 0) + 1;
+      });
+
+      // Time preferences
+      const hour = showTime.getHours();
+      const timeSlot = this.getTimeSlot(hour);
+      profile.timePreferences[timeSlot] = (profile.timePreferences[timeSlot] || 0) + 1;
+
+      // Price preferences
+      profile.priceRange.min = Math.min(profile.priceRange.min, booking.show.showPrice);
+      profile.priceRange.max = Math.max(profile.priceRange.max, booking.show.showPrice);
+    });
+
+    // Analyze review patterns
+    reviews.forEach(review => {
+      const movie = review.movie;
+      profile.ratingPattern[movie.vote_average] = (profile.ratingPattern[movie.vote_average] || 0) + 1;
+    });
+
+    // Normalize preferences
+    profile.favoriteGenres = this.normalizePreferences(profile.favoriteGenres);
+    profile.timePreferences = this.normalizePreferences(profile.timePreferences);
+
+    return profile;
+  }
+
+  // Calculate dynamic recommendations with real-time factors
+  async calculateDynamicRecommendations(movies, shows, userProfile, userFollows) {
+    const recommendations = [];
+
+    for (const movie of movies) {
+      const movieShows = shows.filter(show => show.movie._id.toString() === movie._id.toString());
+      
+      if (movieShows.length === 0) continue;
+
+      // Calculate dynamic score
+      const score = await this.calculateDynamicScore(movie, movieShows, userProfile, userFollows);
+      
+      recommendations.push({
+        movie,
+        shows: movieShows,
+        score,
+        reasons: this.generateRecommendationReasons(movie, userProfile, score)
+      });
+    }
+
+    // Sort by score and return
+    return recommendations.sort((a, b) => b.score - a.score);
+  }
+
+  // Calculate dynamic score based on multiple factors
+  async calculateDynamicScore(movie, movieShows, userProfile, userFollows) {
+    let score = 0;
+
+    // Genre matching (30% weight)
+    const genreScore = this.calculateGenreScore(movie, userProfile);
+    score += genreScore * this.weights.genre;
+
+    // Rating alignment (25% weight)
+    const ratingScore = this.calculateRatingScore(movie, userProfile);
+    score += ratingScore * this.weights.rating;
+
+    // Recency factor (20% weight)
+    const recencyScore = this.calculateRecencyScore(movie);
+    score += recencyScore * this.weights.recency;
+
+    // Popularity factor (15% weight)
+    const popularityScore = await this.calculatePopularityScore(movie, movieShows);
+    score += popularityScore * this.weights.popularity;
+
+    // Social factor (10% weight)
+    const socialScore = await this.calculateSocialScore(movie, userFollows);
+    score += socialScore * this.weights.social;
+
+    return Math.round(score * 100) / 100; // Round to 2 decimal places
+  }
+
+  // Calculate genre matching score
+  calculateGenreScore(movie, userProfile) {
+    if (!movie.genres || movie.genres.length === 0) return 0.5;
+    
+    let totalScore = 0;
+    let genreCount = 0;
+
+    movie.genres.forEach(genre => {
+      const userPreference = userProfile.favoriteGenres[genre.name] || 0;
+      totalScore += userPreference;
+      genreCount++;
+    });
+
+    return genreCount > 0 ? totalScore / genreCount : 0.5;
+  }
+
+  // Calculate rating alignment score
+  calculateRatingScore(movie, userProfile) {
+    const movieRating = movie.vote_average || 0;
+    const userAvgRating = this.calculateUserAverageRating(userProfile);
+    
+    // Score based on how close the movie rating is to user's preference
+    const ratingDiff = Math.abs(movieRating - userAvgRating);
+    return Math.max(0, 1 - (ratingDiff / 5)); // Normalize to 0-1
+  }
+
+  // Calculate recency score
+  calculateRecencyScore(movie) {
+    const releaseDate = new Date(movie.release_date);
+    const now = new Date();
+    const daysSinceRelease = (now - releaseDate) / (1000 * 60 * 60 * 24);
+    
+    // Newer movies get higher scores
+    if (daysSinceRelease <= 30) return 1.0;
+    if (daysSinceRelease <= 90) return 0.8;
+    if (daysSinceRelease <= 365) return 0.6;
+    return 0.4;
+  }
+
+  // Calculate popularity score based on current bookings
+  async calculatePopularityScore(movie, movieShows) {
+    let totalOccupancy = 0;
+    let showCount = 0;
+
+    for (const show of movieShows) {
+      const totalSeats = 100; // Assuming 100 seats per show
+      const occupiedSeats = Object.keys(show.occupiedSeats || {}).length;
+      const occupancyRate = occupiedSeats / totalSeats;
+      
+      totalOccupancy += occupancyRate;
+      showCount++;
+    }
+
+    return showCount > 0 ? totalOccupancy / showCount : 0.5;
+  }
+
+  // Calculate social score based on friends' preferences
+  async calculateSocialScore(movie, userFollows) {
+    if (userFollows.length === 0) return 0.5;
+
+    const friendIds = userFollows.map(follow => follow.following);
+    
+    // Get friends' bookings and reviews for this movie
+    const [friendBookings, friendReviews] = await Promise.all([
+      Booking.find({ 
+        userId: { $in: friendIds },
+        isPaid: true 
+      }).populate('show'),
+      Review.find({ 
+        userId: { $in: friendIds },
+        movie: movie._id 
+      })
+    ]);
+
+    let socialScore = 0;
+    let totalFriends = friendIds.length;
+
+    // Check if friends have booked shows for this movie
+    const friendsWhoBooked = new Set();
+    friendBookings.forEach(booking => {
+      if (booking.show.movie._id.toString() === movie._id.toString()) {
+        friendsWhoBooked.add(booking.userId.toString());
+      }
+    });
+
+    // Check if friends have reviewed this movie positively
+    const positiveReviews = friendReviews.filter(review => review.rating >= 4);
+    
+    socialScore = (friendsWhoBooked.size + positiveReviews.length) / totalFriends;
+    return Math.min(socialScore, 1.0);
+  }
+
+  // Generate recommendation reasons
+  generateRecommendationReasons(movie, userProfile, score) {
+    const reasons = [];
+
+    // Genre reasons
+    const topGenres = Object.entries(userProfile.favoriteGenres)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 3);
+    
+    const movieGenres = movie.genres?.map(g => g.name) || [];
+    const matchingGenres = topGenres.filter(([genre]) => movieGenres.includes(genre));
+    
+    if (matchingGenres.length > 0) {
+      reasons.push(`Matches your favorite genres: ${matchingGenres.map(([g]) => g).join(', ')}`);
+    }
+
+    // Rating reasons
+    if (movie.vote_average >= 7.5) {
+      reasons.push('Highly rated movie');
+    }
+
+    // Recency reasons
+    const releaseDate = new Date(movie.release_date);
+    const daysSinceRelease = (Date.now() - releaseDate) / (1000 * 60 * 60 * 24);
+    
+    if (daysSinceRelease <= 30) {
+      reasons.push('New release');
+    }
+
+    return reasons;
+  }
+
+  // Helper methods
+  getTimeSlot(hour) {
+    if (hour >= 6 && hour < 12) return 'morning';
+    if (hour >= 12 && hour < 17) return 'afternoon';
+    if (hour >= 17 && hour < 22) return 'evening';
+    return 'night';
+  }
+
+  normalizePreferences(preferences) {
+    const total = Object.values(preferences).reduce((sum, val) => sum + val, 0);
+    if (total === 0) return {};
+    
+    const normalized = {};
+    Object.entries(preferences).forEach(([key, value]) => {
+      normalized[key] = value / total;
+    });
+    return normalized;
+  }
+
+  calculateUserAverageRating(userProfile) {
+    const ratings = Object.keys(userProfile.ratingPattern);
+    if (ratings.length === 0) return 6.0; // Default to average
+    
+    const weightedSum = ratings.reduce((sum, rating) => {
+      return sum + (parseFloat(rating) * userProfile.ratingPattern[rating]);
+    }, 0);
+    
+    const totalCount = Object.values(userProfile.ratingPattern).reduce((sum, count) => sum + count, 0);
+    return totalCount > 0 ? weightedSum / totalCount : 6.0;
+  }
+}
+
+const recommendationEngine = new DynamicRecommendationEngine();
 
 // Get AI-powered recommendations
 export const getAIRecommendations = async (req, res) => {
   try {
     const { userId } = req.user;
     
-    // Get user preferences
-    const preferences = await UserPreferences.findOne({ userId });
-    
-    // Get user's booking history
-    const userBookings = await Booking.find({ userId, isPaid: true })
-      .populate('show')
-      .sort({ createdAt: -1 })
-      .limit(50);
-    
-    // Get user's wishlist
-    const userWishlist = await Wishlist.find({ userId });
-    
-    // Get all available movies
-    const allMovies = await Movie.find({}).limit(100);
-    
-    // Calculate recommendations
-    const recommendations = calculateRecommendations(
-      allMovies,
-      userBookings,
-      userWishlist,
-      preferences
-    );
+    const recommendations = await recommendationEngine.getRecommendations(userId, 20);
     
     res.json({
       success: true,
-      movies: recommendations.slice(0, 20) // Return top 20 recommendations
+      movies: recommendations,
+      algorithm: 'dynamic-ai-v2',
+      timestamp: new Date().toISOString()
     });
   } catch (error) {
     console.error('Error getting AI recommendations:', error);

@@ -23,6 +23,7 @@ import gamificationRouter from './routes/gamificationRoutes.js';
 import wishlistRouter from './routes/wishlistRoutes.js';
 import pricingAlertRouter from './routes/pricingAlertRoutes.js';
 import aiRecommendationRouter from './routes/aiRecommendationRoutes.js';
+import dynamicRouter from './routes/dynamicRoutes.js';
 import { startPricingAlertService } from './services/pricingAlertService.js';
 
 const app = express();
@@ -84,6 +85,7 @@ app.use('/api/gamification', gamificationRouter);
 app.use('/api/user', wishlistRouter);
 app.use('/api/user', pricingAlertRouter);
 app.use('/api/discovery', aiRecommendationRouter);
+app.use('/api/dynamic', dynamicRouter);
 
 // Catch-all handler for undefined routes
 app.use((req, res) => {
@@ -102,6 +104,7 @@ app.use((req, res) => {
             'GET /api/waitlist/*',
             'GET /api/notify/*',
             'GET /api/poll/*',
+            'GET /api/dynamic/*',
             'GET /api/inngest/*'
         ]
     });

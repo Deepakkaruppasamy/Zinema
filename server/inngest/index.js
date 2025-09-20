@@ -200,38 +200,286 @@ const sendShowReminders = inngest.createFunction(
     }
 )
 
-// Inngest Function to send notifications when a new show is added
+// Dynamic Notification System
+class DynamicNotificationEngine {
+  constructor() {
+    this.notificationTypes = {
+      newShow: { priority: 'high', channels: ['email', 'push'] },
+      priceDrop: { priority: 'medium', channels: ['email'] },
+      reminder: { priority: 'low', channels: ['email', 'sms'] },
+      recommendation: { priority: 'low', channels: ['email'] }
+    };
+  }
+
+  // Send dynamic notifications based on user preferences
+  async sendDynamicNotifications(eventType, data) {
+    try {
+      const users = await User.find({});
+      const results = { sent: 0, failed: 0, skipped: 0 };
+
+      for (const user of users) {
+        try {
+          const shouldSend = await this.shouldSendNotification(user, eventType, data);
+          
+          if (shouldSend) {
+            await this.sendPersonalizedNotification(user, eventType, data);
+            results.sent++;
+          } else {
+            results.skipped++;
+          }
+        } catch (error) {
+          console.error(`Failed to send notification to ${user.email}:`, error);
+          results.failed++;
+        }
+      }
+
+      return results;
+    } catch (error) {
+      console.error('Error in dynamic notifications:', error);
+      throw error;
+    }
+  }
+
+  // Determine if notification should be sent to user
+  async shouldSendNotification(user, eventType, data) {
+    // Get user preferences
+    const preferences = await UserPreferences.findOne({ userId: user._id });
+    
+    // Check notification frequency limits
+    const recentNotifications = await this.getRecentNotifications(user._id, 24); // Last 24 hours
+    if (recentNotifications.length >= 3) return false; // Max 3 notifications per day
+
+    // Check user's notification preferences
+    if (preferences && preferences.notificationSettings) {
+      const settings = preferences.notificationSettings;
+      
+      switch (eventType) {
+        case 'newShow':
+          return settings.newShows !== false;
+        case 'priceDrop':
+          return settings.priceAlerts !== false;
+        case 'reminder':
+          return settings.reminders !== false;
+        case 'recommendation':
+          return settings.recommendations !== false;
+        default:
+          return true;
+      }
+    }
+
+    // Check user engagement level
+    const engagementLevel = await this.calculateEngagementLevel(user._id);
+    if (engagementLevel === 'low' && eventType === 'recommendation') return false;
+
+    return true;
+  }
+
+  // Send personalized notification
+  async sendPersonalizedNotification(user, eventType, data) {
+    const notification = await this.createPersonalizedNotification(user, eventType, data);
+    
+    // Send via email (primary channel)
+    await sendEmail({
+      to: user.email,
+      subject: notification.subject,
+      body: notification.body
+    });
+
+    // Log notification
+    await this.logNotification(user._id, eventType, notification);
+  }
+
+  // Create personalized notification content
+  async createPersonalizedNotification(user, eventType, data) {
+    const userProfile = await this.createUserProfile(user._id);
+    
+    switch (eventType) {
+      case 'newShow':
+        return this.createNewShowNotification(user, data, userProfile);
+      case 'priceDrop':
+        return this.createPriceDropNotification(user, data, userProfile);
+      case 'reminder':
+        return this.createReminderNotification(user, data, userProfile);
+      case 'recommendation':
+        return this.createRecommendationNotification(user, data, userProfile);
+      default:
+        return this.createGenericNotification(user, data);
+    }
+  }
+
+  // Create new show notification
+  createNewShowNotification(user, data, userProfile) {
+    const { movieTitle, movie } = data;
+    
+    // Personalize based on user's genre preferences
+    const genreMatch = this.checkGenreMatch(movie, userProfile);
+    const personalizedMessage = genreMatch 
+      ? `We've added "${movieTitle}" - a ${movie.genres?.[0]?.name || 'great'} movie that matches your taste!`
+      : `We've just added "${movieTitle}" to our library!`;
+
+    return {
+      subject: `🎬 New Show Added: ${movieTitle}`,
+      body: `<div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h1 style="color: #F84565; margin: 0;">Zinema</h1>
+                    <p style="color: #666; margin: 5px 0;">Your Cinema Experience</p>
+                </div>
+                
+                <h2 style="color: #333;">Hi ${user.name},</h2>
+                <p style="font-size: 16px; line-height: 1.6; color: #555;">
+                    ${personalizedMessage}
+                </p>
+                
+                ${movie ? `
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <h3 style="color: #F84565; margin-top: 0;">${movieTitle}</h3>
+                    <p style="color: #666; margin: 10px 0;">${movie.overview || 'A great movie experience awaits!'}</p>
+                    ${movie.vote_average ? `<p style="color: #333;"><strong>Rating:</strong> ⭐ ${movie.vote_average}/10</p>` : ''}
+                    ${movie.genres ? `<p style="color: #333;"><strong>Genres:</strong> ${movie.genres.map(g => g.name).join(', ')}</p>` : ''}
+                </div>
+                ` : ''}
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/movies" 
+                       style="background: #F84565; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                        Book Your Tickets Now
+                    </a>
+                </div>
+                
+                <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; text-align: center; color: #666;">
+                    <p>Thanks for being a valued member!<br/>— Zinema by Dstudio</p>
+                    <p style="font-size: 12px;">
+                        <a href="#" style="color: #666;">Unsubscribe</a> | 
+                        <a href="#" style="color: #666;">Manage Preferences</a>
+                    </p>
+                </div>
+            </div>`
+    };
+  }
+
+  // Create price drop notification
+  createPriceDropNotification(user, data, userProfile) {
+    const { movieTitle, oldPrice, newPrice, discount } = data;
+    
+    return {
+      subject: `💰 Price Drop Alert: ${movieTitle}`,
+      body: `<div style="font-family: Arial, sans-serif; padding: 20px;">
+                <h2>Hi ${user.name},</h2>
+                <p>Great news! The price for "${movieTitle}" has dropped!</p>
+                <div style="background: #e8f5e8; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                    <p><strong>Old Price:</strong> ₹${oldPrice}</p>
+                    <p><strong>New Price:</strong> ₹${newPrice}</p>
+                    <p><strong>You Save:</strong> ₹${discount} (${Math.round((discount/oldPrice)*100)}%)</p>
+                </div>
+                <p>Book now before prices go back up!</p>
+                <p>Thanks,<br/>Zinema by Dstudio</p>
+            </div>`
+    };
+  }
+
+  // Create reminder notification
+  createReminderNotification(user, data, userProfile) {
+    const { movieTitle, showTime, seats } = data;
+    
+    return {
+      subject: `⏰ Reminder: ${movieTitle} starts soon!`,
+      body: `<div style="font-family: Arial, sans-serif; padding: 20px;">
+                <h2>Hi ${user.name},</h2>
+                <p>Don't forget! Your movie "${movieTitle}" starts at ${new Date(showTime).toLocaleString()}.</p>
+                <p><strong>Your seats:</strong> ${seats.join(', ')}</p>
+                <p>We recommend arriving 15 minutes early.</p>
+                <p>Enjoy the show! 🍿</p>
+                <p>Thanks,<br/>Zinema by Dstudio</p>
+            </div>`
+    };
+  }
+
+  // Create recommendation notification
+  createRecommendationNotification(user, data, userProfile) {
+    const { movies } = data;
+    
+    return {
+      subject: `🎯 Personalized Recommendations for You`,
+      body: `<div style="font-family: Arial, sans-serif; padding: 20px;">
+                <h2>Hi ${user.name},</h2>
+                <p>Based on your preferences, we think you'll love these movies:</p>
+                ${movies.map(movie => `
+                    <div style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                        <h3>${movie.title}</h3>
+                        <p>${movie.overview}</p>
+                        <p><strong>Rating:</strong> ⭐ ${movie.vote_average}/10</p>
+                    </div>
+                `).join('')}
+                <p>Thanks,<br/>Zinema by Dstudio</p>
+            </div>`
+    };
+  }
+
+  // Helper methods
+  async createUserProfile(userId) {
+    const bookings = await Booking.find({ userId, isPaid: true })
+      .populate('show')
+      .limit(20);
+    
+    const favoriteGenres = {};
+    bookings.forEach(booking => {
+      booking.show.movie.genres?.forEach(genre => {
+        favoriteGenres[genre.name] = (favoriteGenres[genre.name] || 0) + 1;
+      });
+    });
+    
+    return { favoriteGenres };
+  }
+
+  checkGenreMatch(movie, userProfile) {
+    if (!movie.genres || !userProfile.favoriteGenres) return false;
+    
+    return movie.genres.some(genre => 
+      userProfile.favoriteGenres[genre.name] > 0
+    );
+  }
+
+  async getRecentNotifications(userId, hours) {
+    // This would query a notifications log table
+    // For now, return empty array
+    return [];
+  }
+
+  async calculateEngagementLevel(userId) {
+    const recentBookings = await Booking.find({
+      userId,
+      createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
+    }).countDocuments();
+    
+    if (recentBookings >= 3) return 'high';
+    if (recentBookings >= 1) return 'medium';
+    return 'low';
+  }
+
+  async logNotification(userId, eventType, notification) {
+    // This would log to a notifications table
+    console.log(`Notification sent to user ${userId}: ${eventType}`);
+  }
+}
+
+const notificationEngine = new DynamicNotificationEngine();
+
+// Inngest Function to send dynamic notifications when a new show is added
 const sendNewShowNotifications = inngest.createFunction(
     {id: "send-new-show-notifications"},
     { event: "app/show.added" },
     async ({ event })=>{
-        const { movieTitle } = event.data;
-
-        const users =  await User.find({})
-
-        for(const user of users){
-            const userEmail = user.email;
-            const userName = user.name;
-
-            const subject = `🎬 New Show Added: ${movieTitle}`;
-            const body = `<div style="font-family: Arial, sans-serif; padding: 20px;">
-                    <h2>Hi ${userName},</h2>
-                    <p>We've just added a new show to our library:</p>
-                    <h3 style="color: #F84565;">"${movieTitle}"</h3>
-                    <p>Visit our website</p>
-                    <br/>
-                    <p>Thanks,<br/>Zinema by Dstudio</p>
-                </div>`;
-
-                await sendEmail({
-                    to: userEmail,
-                    subject,
-                    body,
-                })
-        }
-
-        return {message: "Notifications sent." }
+        const { movieTitle, movie } = event.data;
         
+        const results = await notificationEngine.sendDynamicNotifications('newShow', {
+            movieTitle,
+            movie
+        });
+
+        return {
+            message: "Dynamic notifications sent",
+            results
+        };
     }
 )
 

@@ -115,15 +115,20 @@ export const addShow = async (req, res) =>{
             await Show.insertMany(showsToCreate);
         }
 
-         //  Trigger Inngest event
+         //  Trigger Inngest event (with fallback)
          try {
+            // Check if Inngest is properly configured
+            if (!process.env.INNGEST_EVENT_KEY && !process.env.INNGEST_DEV) {
+                throw new Error('Inngest not configured - using fallback');
+            }
+            
             await inngest.send({
                 name: "app/show.added",
-                data: {movieTitle: movie.title}
+                data: {movieTitle: movie.title, movie: movie}
             });
             console.log('✅ Inngest event sent successfully');
         } catch (error) {
-            console.log('❌ Inngest event failed, sending notifications directly:', error.message);
+            console.log('⚠️ Inngest event failed, using fallback notification system:', error.message);
             
             // Fallback: Send notifications directly if Inngest fails
             try {
@@ -167,10 +172,22 @@ export const addShow = async (req, res) =>{
 // API to get all shows from the database
 export const getShows = async (req, res) =>{
     try {
-        const shows = await Show.find({showDateTime: {$gte: new Date()}}).populate('movie').sort({ showDateTime: 1 });
+        // First try to get future shows
+        let shows = await Show.find({showDateTime: {$gte: new Date()}}).populate('movie').sort({ showDateTime: 1 });
+
+        // If no future shows, get all shows
+        if (shows.length === 0) {
+            shows = await Show.find({}).populate('movie').sort({ showDateTime: -1 });
+        }
+
+        // If still no shows, get all movies as fallback
+        if (shows.length === 0) {
+            const movies = await Movie.find({}).limit(20);
+            return res.json({success: true, shows: movies});
+        }
 
         // filter unique shows
-        const uniqueShows = new Set(shows.map(show => show.movie))
+        const uniqueShows = new Set(shows.map(show => show.movie).filter(movie => movie !== null));
 
         res.json({success: true, shows: Array.from(uniqueShows)})
     } catch (error) {
