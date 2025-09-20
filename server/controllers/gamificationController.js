@@ -17,7 +17,11 @@ export const getUserStats = async (req, res) => {
           points: 0,
           badges: [],
           rewards: [],
-          achievements: []
+          achievements: [],
+          rank: 'Bronze',
+          streak: 0,
+          totalBookings: 0,
+          totalSpent: 0
         },
         message: 'Demo user stats (not authenticated)'
       });

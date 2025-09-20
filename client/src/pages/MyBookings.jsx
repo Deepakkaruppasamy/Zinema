@@ -53,10 +53,23 @@ const MyBookings = () => {
       });
       
       if (data.success) {
-        setUserStats(data.stats);
+        // Handle both response structures: data.stats or data.gamification
+        const stats = data.stats || data.gamification || {};
+        setUserStats({
+          level: stats.level || 1,
+          experience: stats.experience || 0,
+          points: stats.points || 0,
+          badges: stats.badges || [],
+          achievements: stats.achievements || [],
+          streak: stats.streak || 0,
+          totalBookings: stats.totalBookings || 0,
+          totalSpent: stats.totalSpent || 0,
+          rank: stats.rank || 'Bronze'
+        });
       }
     } catch (error) {
       console.error('Error loading user stats:', error);
+      // Keep default values on error
     }
   }
 
