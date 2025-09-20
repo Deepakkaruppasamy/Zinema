@@ -1,0 +1,60 @@
+{
+  "name": "zinema",
+  "version": "1.0.0",
+  "description": "Zinema - Movie Booking Platform with PWA support",
+  "main": "server/server.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\"",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run server",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
+    "start": "cd server && npm start",
+    "deploy": "chmod +x deploy.sh && ./deploy.sh",
+    "deploy:vercel": "vercel --prod",
+    "deploy:netlify": "netlify deploy --prod",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install",
+    "test": "npm run test:client && npm run test:server",
+    "test:client": "cd client && npm test",
+    "test:server": "cd server && npm test",
+    "lint": "npm run lint:client && npm run lint:server",
+    "lint:client": "cd client && npm run lint",
+    "lint:server": "cd server && npm run lint",
+    "clean": "rm -rf client/dist server/dist node_modules client/node_modules server/node_modules",
+    "setup": "npm run install:all && npm run build",
+    "pwa:generate": "cd client && npx workbox generateSW",
+    "pwa:analyze": "cd client && npx workbox analyze",
+    "mobile:test": "cd client && npm run build && npx serve dist -p 3000",
+    "production": "NODE_ENV=production npm run build && npm start"
+  },
+  "keywords": [
+    "movie",
+    "booking",
+    "cinema",
+    "pwa",
+    "progressive-web-app",
+    "mobile",
+    "react",
+    "nodejs",
+    "mongodb"
+  ],
+  "author": "Zinema Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/zinema.git"
+  },
+  "homepage": "https://zinema.vercel.app",
+  "bugs": {
+    "url": "https://github.com/your-username/zinema/issues"
+  }
+}
