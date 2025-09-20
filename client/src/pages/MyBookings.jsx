@@ -31,6 +31,17 @@ const MyBookings = () => {
     setIsLoading(false)
   }
 
+  // Auto-refresh every 30 seconds to catch webhook updates
+  useEffect(() => {
+    if (!user) return;
+    
+    const interval = setInterval(() => {
+      getMyBookings();
+    }, 30000); // Refresh every 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [user]);
+
   useEffect(()=>{
     if(user){
       getMyBookings()

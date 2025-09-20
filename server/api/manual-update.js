@@ -8,20 +8,55 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Debug endpoint to check booking status
-app.get('/', (req, res) => {
-    res.json({ 
-        message: 'Booking Debug API is working!', 
-        timestamp: new Date().toISOString(),
-        endpoints: [
-            'GET /check/:bookingId - Check specific booking status',
-            'GET /all - List all bookings with payment status'
-        ]
-    });
+// Manual booking status update endpoint
+app.post('/update-status', async (req, res) => {
+    try {
+        const { bookingId, isPaid = true } = req.body;
+        
+        if (!bookingId) {
+            return res.status(400).json({ error: 'bookingId is required' });
+        }
+        
+        const booking = await Booking.findByIdAndUpdate(
+            bookingId, 
+            { 
+                isPaid: isPaid,
+                paymentLink: isPaid ? "" : booking?.paymentLink // Clear payment link if paid
+            }, 
+            { new: true }
+        ).populate({
+            path: 'show',
+            populate: { path: 'movie' }
+        }).populate('user');
+        
+        if (!booking) {
+            return res.status(404).json({ error: 'Booking not found' });
+        }
+        
+        console.log('Manually updated booking status:', {
+            bookingId: booking._id,
+            isPaid: booking.isPaid,
+            movieTitle: booking.show?.movie?.title
+        });
+        
+        res.json({
+            success: true,
+            message: 'Booking status updated successfully',
+            booking: {
+                id: booking._id,
+                isPaid: booking.isPaid,
+                amount: booking.amount,
+                movieTitle: booking.show?.movie?.title
+            }
+        });
+    } catch (error) {
+        console.error('Error updating booking status:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
-// Check specific booking status
-app.get('/check/:bookingId', async (req, res) => {
+// Get booking details
+app.get('/booking/:bookingId', async (req, res) => {
     try {
         const { bookingId } = req.params;
         const booking = await Booking.findById(bookingId).populate({
@@ -44,13 +79,13 @@ app.get('/check/:bookingId', async (req, res) => {
             updatedAt: booking.updatedAt
         });
     } catch (error) {
-        console.error('Error checking booking:', error);
+        console.error('Error getting booking:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// List all bookings
-app.get('/all', async (req, res) => {
+// Debug endpoint to list all bookings
+app.get('/debug-all', async (req, res) => {
     try {
         const bookings = await Booking.find({})
             .populate({
