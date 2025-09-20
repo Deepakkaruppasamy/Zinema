@@ -167,7 +167,7 @@ export const checkAndTriggerAlerts = async () => {
       enabled: true, 
       triggered: false,
       showDateTime: { $gte: new Date() }
-    });
+    }).maxTimeMS(5000); // Add timeout
     
     const triggeredAlerts = [];
     
@@ -221,7 +221,12 @@ export const checkAndTriggerAlerts = async () => {
     
     return triggeredAlerts;
   } catch (error) {
-    console.error('Error checking pricing alerts:', error);
+    // Only log timeout errors, not all errors
+    if (error.name === 'MongooseError' && error.message.includes('buffering timed out')) {
+      console.log('Pricing alerts check skipped due to database timeout');
+    } else {
+      console.error('Error checking pricing alerts:', error);
+    }
     return [];
   }
 };

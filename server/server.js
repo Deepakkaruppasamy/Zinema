@@ -24,6 +24,8 @@ import wishlistRouter from './routes/wishlistRoutes.js';
 import pricingAlertRouter from './routes/pricingAlertRoutes.js';
 import aiRecommendationRouter from './routes/aiRecommendationRoutes.js';
 import dynamicRouter from './routes/dynamicRoutes.js';
+import notificationRouter from './routes/notificationRoutes.js';
+import chatRouter from './routes/chatRoutes.js';
 import { startPricingAlertService } from './services/pricingAlertService.js';
 
 const app = express();
@@ -86,6 +88,8 @@ app.use('/api/user', wishlistRouter);
 app.use('/api/user', pricingAlertRouter);
 app.use('/api/discovery', aiRecommendationRouter);
 app.use('/api/dynamic', dynamicRouter);
+app.use('/api/notifications', notificationRouter);
+app.use('/api/chat', chatRouter);
 
 // Stripe webhooks (must be before catch-all and use raw body)
 app.use('/api/stripe', express.raw({type: 'application/json'}), stripeWebhooks);

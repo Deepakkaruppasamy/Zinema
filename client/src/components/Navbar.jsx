@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { assets } from '../assets/assets'
-import { MenuIcon, SearchIcon, TicketPlus, XIcon, Moon, Sun } from 'lucide-react'
+import { MenuIcon, SearchIcon, TicketPlus, XIcon, Moon, Sun, MessageCircle } from 'lucide-react'
 import { useClerk, UserButton, useUser } from '@clerk/clerk-react'
 import { useAppContext } from '../context/AppContext'
 import { useTheme } from '../context/ThemeContext'
+import NotificationBell from './NotificationBell'
 
 const Navbar = () => {
 
@@ -32,11 +33,16 @@ const Navbar = () => {
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/theatre'>Theatres</Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/'>Releases</Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/3d-view'>3D View</Link>
+        <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/community' className='flex items-center gap-2'>
+          <MessageCircle className='w-4 h-4' />
+          Community
+        </Link>
        {favoriteMovies.length > 0 && <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/favorite'>Favorites</Link>}
       </div>
 
     <div className='flex items-center gap-4 sm:gap-6'>
         <SearchIcon className='max-md:hidden w-6 h-6 cursor-pointer'/>
+        <NotificationBell />
         <Link
           to='/3d-view'
           onClick={()=> {scrollTo(0,0); setIsOpen(false)}}

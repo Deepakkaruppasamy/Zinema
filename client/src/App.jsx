@@ -31,6 +31,8 @@ import PWAUtils from './components/PWAUtils'
 import MobileOptimizations from './components/MobileOptimizations'
 import ThreeDView from './pages/ThreeDView'
 import Ticket from './pages/Ticket'
+import CommunityChat from './pages/CommunityChat'
+import AdminNotifications from './pages/AdminNotifications'
 
 const App = () => {
 
@@ -53,6 +55,7 @@ const App = () => {
         <Route path='/theatre' element={<Theatre/>} />
         <Route path='/3d-view' element={<ThreeDView/>} />
         <Route path='/ticket/:id' element={<Ticket/>} />
+        <Route path='/community' element={<CommunityChat/>} />
         <Route path='/admin/*' element={user ? <Layout/> : (
           <div className='min-h-screen flex justify-center items-center'>
             <SignIn fallbackRedirectUrl={'/admin'} />
@@ -66,6 +69,7 @@ const App = () => {
           <Route path="list-bookings" element={<ListBookings/>}/>
           <Route path="trending" element={<Trending/>}/>
           <Route path="support-tickets" element={<AdminSupportTickets/>}/>
+          <Route path="notifications" element={<AdminNotifications/>}/>
         </Route>
       </Routes>
        {!isAdminRoute && <Footer />}

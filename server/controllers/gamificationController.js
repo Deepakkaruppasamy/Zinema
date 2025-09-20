@@ -8,6 +8,33 @@ export const getUserStats = async (req, res) => {
   try {
     // Check if user is authenticated
     if (!req.user || !req.user.userId) {
+      // For demo purposes, try to get test user data
+      try {
+        const testGamification = await Gamification.findOne({ userId: '68ce9e2aa941cab26d99762c' });
+        if (testGamification) {
+          return res.json({
+            success: true,
+            gamification: {
+              userId: testGamification.userId,
+              level: testGamification.level,
+              experience: testGamification.experience,
+              points: testGamification.points,
+              badges: testGamification.badges,
+              rewards: testGamification.rewards || [],
+              achievements: testGamification.achievements,
+              rank: testGamification.rank,
+              streak: testGamification.streak,
+              totalBookings: testGamification.totalBookings,
+              totalSpent: testGamification.totalSpent
+            },
+            message: 'Demo user stats (using test data)'
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching test gamification data:', error);
+      }
+      
+      // Fallback to default demo data
       return res.json({
         success: true,
         gamification: {
