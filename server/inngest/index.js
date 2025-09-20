@@ -240,28 +240,47 @@ const expirePaymentLinks = inngest.createFunction(
   { id: "expire-payment-links" },
   { cron: "*/2 * * * *" }, // every 2 minutes
   async () => {
-    const now = new Date();
-    // Find links that are active and expired
-    const links = await PaymentLink.find({ status: "active", expiresAt: { $lte: now } });
-    if (!links.length) return { expired: 0 };
-
-    let expiredCount = 0;
-    for (const link of links) {
-      const show = await Show.findById(link.show);
-      if (show && show.occupiedSeats) {
-        for (const s of link.seats) {
-          if (show.occupiedSeats[s] === `link:${link._id.toString()}`) {
-            delete show.occupiedSeats[s];
-          }
-        }
-        show.markModified("occupiedSeats");
-        await show.save();
+    try {
+      const now = new Date();
+      console.log('Running expire-payment-links function at:', now);
+      
+      // Find links that are active and expired
+      const links = await PaymentLink.find({ status: "active", expiresAt: { $lte: now } });
+      if (!links.length) {
+        console.log('No expired payment links found');
+        return { expired: 0 };
       }
-      link.status = "expired";
-      await link.save();
-      expiredCount++;
+
+      console.log(`Found ${links.length} expired payment links`);
+      let expiredCount = 0;
+      
+      for (const link of links) {
+        try {
+          const show = await Show.findById(link.show);
+          if (show && show.occupiedSeats) {
+            for (const s of link.seats) {
+              if (show.occupiedSeats[s] === `link:${link._id.toString()}`) {
+                delete show.occupiedSeats[s];
+              }
+            }
+            show.markModified("occupiedSeats");
+            await show.save();
+          }
+          link.status = "expired";
+          await link.save();
+          expiredCount++;
+          console.log(`Expired payment link: ${link._id}`);
+        } catch (linkError) {
+          console.error(`Error processing link ${link._id}:`, linkError);
+        }
+      }
+      
+      console.log(`Successfully expired ${expiredCount} payment links`);
+      return { expired: expiredCount };
+    } catch (error) {
+      console.error('Error in expire-payment-links function:', error);
+      throw error;
     }
-    return { expired: expiredCount };
   }
 );
 

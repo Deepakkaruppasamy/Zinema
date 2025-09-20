@@ -22,6 +22,7 @@ const MyBookings = () => {
       })
         if (data.success) {
           setBookings(data.bookings)
+          console.log('Bookings fetched:', data.bookings.map(b => ({ id: b._id, isPaid: b.isPaid })))
         }
 
     } catch (error) {
@@ -44,7 +45,15 @@ const MyBookings = () => {
       <div>
         <BlurCircle bottom="0px" left="600px"/>
       </div>
-      <h1 className='text-lg font-semibold mb-4'>My Bookings</h1>
+      <div className='flex justify-between items-center mb-4'>
+        <h1 className='text-lg font-semibold'>My Bookings</h1>
+        <button 
+          onClick={getMyBookings}
+          className='bg-primary/20 hover:bg-primary/30 px-3 py-1 rounded text-sm transition'
+        >
+          Refresh
+        </button>
+      </div>
 
       {bookings.map((item,index)=>(
         <div key={index} className='flex flex-col md:flex-row justify-between bg-primary/8 border border-primary/20 rounded-lg mt-4 p-2 max-w-3xl'>
@@ -60,16 +69,26 @@ const MyBookings = () => {
           <div className='flex flex-col md:items-end md:text-right justify-between p-4'>
             <div className='flex items-center gap-4'>
               <p className='text-2xl font-semibold mb-3'>{currency}{item.amount}</p>
-              {!item.isPaid && <Link to={item.paymentLink} className='bg-primary px-4 py-1.5 mb-3 text-sm rounded-full font-medium cursor-pointer'>Pay Now</Link>}
-              {item._id && (
-                <Link
-                  to={`/ticket/${item._id}`}
-                  state={{ booking: item }}
-                  className='px-4 py-1.5 mb-3 text-sm rounded-full font-medium cursor-pointer border border-white/15 hover:bg-white/10 transition'
-                >
-                  View Ticket
-                </Link>
-              )}
+              <div className='flex flex-col gap-2'>
+                {item.isPaid ? (
+                  <span className='bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-xs font-medium'>
+                    ✓ Paid
+                  </span>
+                ) : (
+                  <Link to={item.paymentLink} className='bg-primary px-4 py-1.5 text-sm rounded-full font-medium cursor-pointer'>
+                    Pay Now
+                  </Link>
+                )}
+                {item._id && (
+                  <Link
+                    to={`/ticket/${item._id}`}
+                    state={{ booking: item }}
+                    className='px-4 py-1.5 text-sm rounded-full font-medium cursor-pointer border border-white/15 hover:bg-white/10 transition'
+                  >
+                    View Ticket
+                  </Link>
+                )}
+              </div>
             </div>
             <div className='text-sm'>
               <p><span className='text-gray-400'>Total Tickets:</span> {item.bookedSeats.length}</p>

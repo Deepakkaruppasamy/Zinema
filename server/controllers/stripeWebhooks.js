@@ -11,14 +11,22 @@ export const stripeWebhooks = async (request, response)=>{
 
     let event;
 
+    console.log('Stripe webhook received:', request.headers);
+
     try {
         // Helper to finalize booking: set paid, clear link, award points, and send email
         const finalizeBookingAndNotify = async (bookingId) => {
-            if (!bookingId) return;
+            if (!bookingId) {
+                console.log('No bookingId provided to finalizeBookingAndNotify');
+                return;
+            }
+            console.log('Finalizing booking:', bookingId);
             const booking = await Booking.findByIdAndUpdate(bookingId, {
                 isPaid: true,
                 paymentLink: ""
             }, { new: true })
+            
+            console.log('Booking updated:', booking);
 
             if (booking) {
                 const user = await User.findById(booking.user);
@@ -91,21 +99,25 @@ export const stripeWebhooks = async (request, response)=>{
     }
 
     try {
+        console.log('Processing event type:', event.type);
         switch (event.type) {
             case "checkout.session.completed": {
                 const session = event.data.object;
                 const bookingId = session?.metadata?.bookingId;
+                console.log('Checkout session completed, bookingId:', bookingId);
                 await finalizeBookingAndNotify(bookingId);
                 break;
             }
             case "payment_intent.succeeded": {
                 const paymentIntent = event.data.object;
+                console.log('Payment intent succeeded:', paymentIntent.id);
                 const sessionList = await stripeInstance.checkout.sessions.list({
                     payment_intent: paymentIntent.id
                 })
 
                 const session = sessionList.data[0];
                 const bookingId = session?.metadata?.bookingId;
+                console.log('Found session for payment intent, bookingId:', bookingId);
                 await finalizeBookingAndNotify(bookingId);
                 
                 break;
