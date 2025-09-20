@@ -77,7 +77,7 @@ app.use('/api/notify', notificationsRouter);
 app.use('/api/poll', pollRouter);
 
 // Catch-all handler for undefined routes
-app.use('*', (req, res) => {
+app.use((req, res) => {
     res.status(404).json({ 
         error: 'Route not found',
         message: `Cannot ${req.method} ${req.originalUrl}`,
