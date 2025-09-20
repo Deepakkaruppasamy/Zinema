@@ -42,11 +42,7 @@ app.use(express.static(publicDir));
 
 // Favicon handler
 app.get('/favicon.ico', (req, res) => {
-    res.status(204).end();
-});
-
-app.get('/favicon.png', (req, res) => {
-    res.status(204).end();
+    res.sendFile(path.join(__dirname, 'public', 'favicon.ico'));
 });
 
 // API Routes
@@ -64,10 +60,32 @@ app.use('/api/waitlist', waitlistRouter)
 app.use('/api/notify', notificationsRouter);
 app.use('/api/poll', pollRouter);
 
+// Catch-all handler for undefined routes
+app.use('*', (req, res) => {
+    res.status(404).json({ 
+        error: 'Route not found',
+        message: `Cannot ${req.method} ${req.originalUrl}`,
+        availableRoutes: [
+            'GET /',
+            'GET /api/show/*',
+            'GET /api/booking/*',
+            'GET /api/admin/*',
+            'GET /api/user/*',
+            'GET /api/review/*',
+            'GET /api/discovery/*',
+            'GET /api/support/*',
+            'GET /api/waitlist/*',
+            'GET /api/notify/*',
+            'GET /api/poll/*',
+            'GET /api/inngest/*'
+        ]
+    });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).send('Something broke!');
+    res.status(500).json({ error: 'Internal server error' });
 });
 
 // Start the server
