@@ -1,87 +1,100 @@
 import axios from "axios"
 import Movie from "../models/Movie.js";
 import Show from "../models/Show.js";
-import Review from "../models/Review.js";
 import { inngest } from "../inngest/index.js";
 
-// API to get now playing movies from TMDB API
-export const getNowPlayingMovies = async (req, res)=>{
-    try {
-        const { data } = await axios.get('https://api.themoviedb.org/3/movie/now_playing', {
-            headers: {Authorization : `Bearer ${process.env.TMDB_API_KEY}`}
-        })
-
-        const movies = data.results;
-        res.json({success: true, movies: movies})
-    } catch (error) {
-        console.error(error);
-        res.json({success: false, message: error.message})
-    }
-}
-
 // Helper function to make API calls with retry
-const makeApiCallWithRetry = async (url, retries = 3, delay = 1000) => {
+const makeApiCallWithRetry = async (url, retries = 5, delay = 2000) => {
     for (let i = 0; i < retries; i++) {
         try {
             const response = await axios.get(url, {
-                headers: { Authorization: `Bearer ${process.env.TMDB_API_KEY}` },
-                timeout: 10000 // 10 second timeout
+                headers: { 
+                    Authorization: `Bearer ${process.env.TMDB_API_KEY}`,
+                    'User-Agent': 'Zinema-App/1.0',
+                    'Accept': 'application/json'
+                },
+                timeout: 30000, // 30 second timeout
+                maxRedirects: 5,
+                validateStatus: function (status) {
+                    return status >= 200 && status < 300; // default
+                }
             });
+            console.log(`✅ Successfully fetched: ${url}`);
             return response;
         } catch (error) {
-            if (i === retries - 1) throw error; // If this was the last retry, throw the error
-            await new Promise(resolve => setTimeout(resolve, delay * (i + 1))); // Exponential backoff
+            const isRetryableError = 
+                error.code === 'ECONNRESET' ||
+                error.code === 'ENOTFOUND' ||
+                error.code === 'ECONNREFUSED' ||
+                error.code === 'ETIMEDOUT' ||
+                error.code === 'ECONNABORTED' ||
+                (error.response && error.response.status >= 500);
+
+            console.log(`❌ Attempt ${i + 1}/${retries} failed for ${url}:`, {
+                code: error.code,
+                message: error.message,
+                status: error.response?.status,
+                isRetryable: isRetryableError
+            });
+
+            if (i === retries - 1 || !isRetryableError) {
+                throw error;
+            }
+
+            // Exponential backoff with jitter
+            const backoffDelay = delay * Math.pow(2, i) + Math.random() * 1000;
+            console.log(`⏳ Waiting ${Math.round(backoffDelay)}ms before retry...`);
+            await new Promise(resolve => setTimeout(resolve, backoffDelay));
         }
     }
 };
 
+// API to get now playing movies from TMDB API
+export const getNowPlayingMovies = async (req, res)=>{
+    try {
+        const response = await makeApiCallWithRetry('https://api.themoviedb.org/3/movie/now_playing');
+        const movies = response.data.results;
+        res.json({success: true, movies: movies})
+    } catch (error) {
+        console.error('Failed to fetch movies after retries:', error.message);
+        res.json({success: false, message: 'Failed to fetch movies from TMDB API'})
+    }
+}
+
 // API to add a new show to the database
 export const addShow = async (req, res) =>{
     try {
-        const {movieId, showsInput, showPrice} = req.body;
+        const {movieId, showsInput, showPrice} = req.body
 
-        if (!movieId) {
-            return res.status(400).json({ success: false, message: 'Movie ID is required' });
-        }
-
-        let movie = await Movie.findById(movieId);
+        let movie = await Movie.findById(movieId)
 
         if(!movie) {
-            try {
-                // Fetch movie details and credits from TMDB API with retry logic
-                const [movieDetailsResponse, movieCreditsResponse] = await Promise.all([
-                    makeApiCallWithRetry(`https://api.themoviedb.org/3/movie/${movieId}`),
-                    makeApiCallWithRetry(`https://api.themoviedb.org/3/movie/${movieId}/credits`)
-                ]);
+            // Fetch movie details and credits from TMDB API with retry logic
+            const [movieDetailsResponse, movieCreditsResponse] = await Promise.all([
+                makeApiCallWithRetry(`https://api.themoviedb.org/3/movie/${movieId}`),
+                makeApiCallWithRetry(`https://api.themoviedb.org/3/movie/${movieId}/credits`)
+            ]);
 
-                const movieApiData = movieDetailsResponse?.data;
-                const movieCreditsData = movieCreditsResponse?.data;
+            const movieApiData = movieDetailsResponse.data;
+            const movieCreditsData = movieCreditsResponse.data;
 
-                const movieDetails = {
-                    _id: movieId,
-                    title: movieApiData.title,
-                    overview: movieApiData.overview,
-                    poster_path: movieApiData.poster_path,
-                    backdrop_path: movieApiData.backdrop_path,
-                    genres: movieApiData.genres,
-                    casts: movieCreditsData.cast,
-                    release_date: movieApiData.release_date,
-                    original_language: movieApiData.original_language,
-                    tagline: movieApiData.tagline || "",
-                    vote_average: movieApiData.vote_average,
-                    runtime: movieApiData.runtime,
-                };
+             const movieDetails = {
+                _id: movieId,
+                title: movieApiData.title,
+                overview: movieApiData.overview,
+                poster_path: movieApiData.poster_path,
+                backdrop_path: movieApiData.backdrop_path,
+                genres: movieApiData.genres,
+                casts: movieCreditsData.cast,
+                release_date: movieApiData.release_date,
+                original_language: movieApiData.original_language,
+                tagline: movieApiData.tagline || "",
+                vote_average: movieApiData.vote_average,
+                runtime: movieApiData.runtime,
+             }
 
-                // Add movie to the database
-                movie = await Movie.create(movieDetails);
-            } catch (apiError) {
-                console.error('Error fetching from TMDB API:', apiError);
-                return res.status(500).json({ 
-                    success: false, 
-                    message: 'Failed to fetch movie details from TMDB',
-                    error: apiError.message 
-                });
-            }
+             // Add movie to the database
+             movie = await Movie.create(movieDetails);
         }
 
         const showsToCreate = [];
@@ -103,15 +116,51 @@ export const addShow = async (req, res) =>{
         }
 
          //  Trigger Inngest event
-         await inngest.send({
-            name: "app/show.added",
-             data: {movieTitle: movie.title}
-         })
+         try {
+            await inngest.send({
+                name: "app/show.added",
+                data: {movieTitle: movie.title}
+            });
+            console.log('✅ Inngest event sent successfully');
+        } catch (error) {
+            console.log('❌ Inngest event failed, sending notifications directly:', error.message);
+            
+            // Fallback: Send notifications directly if Inngest fails
+            try {
+                const User = (await import('../models/User.js')).default;
+                const sendEmail = (await import('../configs/nodeMailer.js')).default;
+                
+                const users = await User.find({});
+                console.log(`📧 Sending notifications to ${users.length} users directly...`);
+                
+                for (const user of users) {
+                    try {
+                        await sendEmail({
+                            to: user.email,
+                            subject: `🎬 New Show Added: ${movie.title}`,
+                            body: `<div style="font-family: Arial, sans-serif; padding: 20px;">
+                                    <h2>Hi ${user.name},</h2>
+                                    <p>We've just added a new show to our library:</p>
+                                    <h3 style="color: #F84565;">"${movie.title}"</h3>
+                                    <p>Visit our website to book your tickets!</p>
+                                    <br/>
+                                    <p>Thanks,<br/>Zinema by Dstudio</p>
+                                </div>`
+                        });
+                        console.log(`✅ Notification sent to ${user.email}`);
+                    } catch (emailError) {
+                        console.log(`❌ Failed to send notification to ${user.email}:`, emailError.message);
+                    }
+                }
+            } catch (fallbackError) {
+                console.log('❌ Fallback notification system also failed:', fallbackError.message);
+            }
+        }
 
         res.json({success: true, message: 'Show Added successfully.'})
     } catch (error) {
-        console.error(error);
-        res.json({success: false, message: error.message})
+        console.error('Error adding show:', error);
+        res.status(500).json({success: false, message: error.message})
     }
 }
 
@@ -125,8 +174,8 @@ export const getShows = async (req, res) =>{
 
         res.json({success: true, shows: Array.from(uniqueShows)})
     } catch (error) {
-        console.error(error);
-        res.json({ success: false, message: error.message });
+        console.error('Error fetching shows:', error);
+        res.status(500).json({ success: false, message: error.message });
     }
 }
 
@@ -148,16 +197,9 @@ export const getShow = async (req, res) =>{
             dateTime[date].push({ time: show.showDateTime, showId: show._id })
         })
 
-        // Aggregate user reviews for this movie
-        const agg = await Review.aggregate([
-            { $match: { movie: movieId } },
-            { $group: { _id: "$movie", count: { $sum: 1 }, avg: { $avg: "$rating" } } }
-        ]);
-        const userRating = agg.length ? { count: agg[0].count, avg: Number(agg[0].avg.toFixed(1)) } : { count: 0, avg: 0 };
-
-        res.json({success: true, movie, dateTime, userRating})
+        res.json({success: true, movie, dateTime})
     } catch (error) {
-        console.error(error);
-        res.json({ success: false, message: error.message });
+        console.error('Error fetching show:', error);
+        res.status(500).json({ success: false, message: error.message });
     }
 }
