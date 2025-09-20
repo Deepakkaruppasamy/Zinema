@@ -5,10 +5,6 @@ import connectDB from '../configs/db.js';
 import { clerkMiddleware } from '@clerk/express';
 import { serve } from "inngest/express";
 import { inngest, functions } from "../inngest/index.js";
-import showRouter from '../routes/showRoutes.js';
-import bookingRouter from '../routes/bookingRoutes.js';
-import adminRouter from '../routes/adminRoutes.js';
-import userRouter from '../routes/userRoutes.js';
 import { stripeWebhooks } from '../controllers/stripeWebhooks.js';
 
 const app = express();
@@ -16,21 +12,37 @@ const app = express();
 // Connect to database
 connectDB().catch(console.error);
 
-// Stripe Webhooks Route
-app.use('/api/stripe', express.raw({type: 'application/json'}), stripeWebhooks)
-
 // Middleware
 app.use(express.json())
 app.use(cors())
 app.use(clerkMiddleware())
 
-// API Routes
-app.get('/', (req, res)=> res.send('Server is Live!'))
+// Root route
+app.get('/', (req, res) => {
+    res.json({ 
+        message: 'Zinema Backend API is Live!', 
+        timestamp: new Date().toISOString(),
+        endpoints: [
+            'GET /api/show - Show management',
+            'GET /api/booking - Booking management', 
+            'GET /api/admin - Admin functions',
+            'GET /api/user - User management',
+            'POST /api/stripe - Stripe webhooks',
+            'POST /api/inngest - Inngest functions'
+        ]
+    });
+});
+
+// Health check
+app.get('/health', (req, res) => {
+    res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Stripe Webhooks Route
+app.use('/api/stripe', express.raw({type: 'application/json'}), stripeWebhooks)
+
+// Inngest functions
 app.use('/api/inngest', serve({ client: inngest, functions }))
-app.use('/api/show', showRouter)
-app.use('/api/booking', bookingRouter)
-app.use('/api/admin', adminRouter)
-app.use('/api/user', userRouter)
 
 // Export the app for Vercel
 export default app;
