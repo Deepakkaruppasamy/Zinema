@@ -6,6 +6,7 @@ import Movies from './pages/Movies'
 import MovieDetails from './pages/MovieDetails'
 import SeatLayout from './pages/SeatLayout'
 import MyBookings from './pages/MyBookings'
+import LoadingPage from './pages/Loading'
 import Favorite from './pages/Favorite'
 import { Toaster } from 'react-hot-toast'
 import Footer from './components/Footer'
@@ -47,7 +48,7 @@ const App = () => {
         <Route path='/movies/:id' element={<MovieDetails/>} />
         <Route path='/movies/:id/:date' element={<SeatLayout/>} />
         <Route path='/my-bookings' element={<MyBookings/>} />
-        <Route path='/loading/:nextUrl' element={<Loading/>} />
+        <Route path='/loading/:nextUrl' element={<LoadingPage/>} />
         <Route path='/favorite' element={<Favorite/>} />
         <Route path='/theatre' element={<Theatre/>} />
         <Route path='/3d-view' element={<ThreeDView/>} />

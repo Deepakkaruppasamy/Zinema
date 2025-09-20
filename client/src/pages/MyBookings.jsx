@@ -84,6 +84,18 @@ const MyBookings = () => {
     return () => clearInterval(interval);
   }, [user]);
 
+  // Refresh when user returns to tab (from Stripe payment)
+  useEffect(() => {
+    const handleFocus = () => {
+      if (user) {
+        getMyBookings();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [user]);
+
   useEffect(()=>{
     if(user){
       getMyBookings()

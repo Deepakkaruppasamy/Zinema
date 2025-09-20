@@ -87,6 +87,9 @@ app.use('/api/user', pricingAlertRouter);
 app.use('/api/discovery', aiRecommendationRouter);
 app.use('/api/dynamic', dynamicRouter);
 
+// Stripe webhooks (must be before catch-all and use raw body)
+app.use('/api/stripe', express.raw({type: 'application/json'}), stripeWebhooks);
+
 // Catch-all handler for undefined routes
 app.use((req, res) => {
     res.status(404).json({ 
