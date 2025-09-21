@@ -80,6 +80,7 @@ export const AppProvider = ({ children })=>{
 
     const value = {
         api,
+        axios: api, // Alias for backward compatibility
         fetchIsAdmin,
         user, getToken, navigate, isAdmin, shows, 
         favoriteMovies, fetchFavoriteMovies, image_base_url
