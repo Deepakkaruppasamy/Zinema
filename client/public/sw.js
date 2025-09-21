@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zinema-v3';
+const CACHE_NAME = 'zinema-v4';
 const CORE_ASSETS = [
   '/',
   '/index.html',
