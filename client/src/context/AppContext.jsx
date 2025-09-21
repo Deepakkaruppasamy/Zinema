@@ -1,11 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from "react";
-import axios from "axios";
+import { api } from "../lib/api.js";
 import { useAuth, useUser } from "@clerk/clerk-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-axios.defaults.baseURL = import.meta.env.VITE_BASE_URL || 'https://zinema-clvk.onrender.com'
+// API base URL is configured in lib/api.js
 
 export const AppContext = createContext()
 
@@ -26,7 +26,7 @@ export const AppProvider = ({ children })=>{
         try {
             const token = await getToken()
             if (!token) return
-            const {data} = await axios.get('/api/admin/is-admin', { headers: { Authorization: `Bearer ${token}` } })
+            const {data} = await api.get('/api/admin/is-admin', { headers: { Authorization: `Bearer ${token}` } })
             setIsAdmin(data.isAdmin)
 
             if(!data.isAdmin && location.pathname.startsWith('/admin')){
@@ -40,7 +40,7 @@ export const AppProvider = ({ children })=>{
 
     const fetchShows = async ()=>{
         try {
-            const { data } = await axios.get('/api/show/all')
+            const { data } = await api.get('/api/show/all')
             if(data.success){
                 setShows(data.shows)
             }else{
@@ -55,7 +55,7 @@ export const AppProvider = ({ children })=>{
         try {
             const token = await getToken()
             if (!token) return
-            const { data } = await axios.get('/api/user/favorites', { headers: { Authorization: `Bearer ${token}` } })
+            const { data } = await api.get('/api/user/favorites', { headers: { Authorization: `Bearer ${token}` } })
 
             if(data.success){
                 setFavoriteMovies(data.movies)
@@ -79,7 +79,7 @@ export const AppProvider = ({ children })=>{
     },[user])
 
     const value = {
-        axios,
+        api,
         fetchIsAdmin,
         user, getToken, navigate, isAdmin, shows, 
         favoriteMovies, fetchFavoriteMovies, image_base_url

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaBell, FaFilm, FaGift, FaInfoCircle, FaExclamationTriangle, FaCheck, FaTimes, FaSearch, FaFilter, FaSync, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
-import axios from 'axios';
+import { api } from '../lib/api.js';
 
 const AdminNotifications = () => {
   const [notifications, setNotifications] = useState([]);
@@ -126,7 +126,7 @@ const AdminNotifications = () => {
   const fetchNotifications = useCallback(async () => {
     try {
       setRefreshing(true);
-      const response = await axios.get('/api/notifications/admin/all');
+      const response = await api.get('/api/notifications/admin/all');
       if (response.data.success) {
         setNotifications(response.data.notifications);
       }
@@ -140,7 +140,7 @@ const AdminNotifications = () => {
 
   const fetchMovies = async () => {
     try {
-      const response = await axios.get('/api/show/all');
+      const response = await api.get('/api/show/all');
       if (response.data.success) {
         setMovies(response.data.shows || []);
       }
@@ -151,7 +151,7 @@ const AdminNotifications = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get('/api/notifications/admin/stats');
+      const response = await api.get('/api/notifications/admin/stats');
       if (response.data.success) {
         setStats(response.data.stats);
       }
@@ -175,9 +175,9 @@ const AdminNotifications = () => {
       }
 
       if (editingNotification) {
-        await axios.put(`/api/notifications/admin/${editingNotification._id}`, notificationData);
+        await api.put(`/api/notifications/admin/${editingNotification._id}`, notificationData);
       } else {
-        await axios.post('/api/notifications', notificationData);
+        await api.post('/api/notifications', notificationData);
       }
 
       setShowForm(false);
@@ -217,7 +217,7 @@ const AdminNotifications = () => {
     if (!window.confirm('Are you sure you want to delete this notification?')) return;
     
     try {
-      await axios.delete(`/api/notifications/admin/${notificationId}`);
+      await api.delete(`/api/notifications/admin/${notificationId}`);
       fetchNotifications();
     } catch (error) {
       console.error('Error deleting notification:', error);
@@ -226,7 +226,7 @@ const AdminNotifications = () => {
 
   const toggleNotificationStatus = async (notificationId, currentStatus) => {
     try {
-      await axios.put(`/api/notifications/admin/${notificationId}`, {
+      await api.put(`/api/notifications/admin/${notificationId}`, {
         isActive: !currentStatus
       });
       fetchNotifications();

@@ -5,7 +5,7 @@ import {
   FaEllipsisV, FaShare, FaBookmark, FaFlag, FaCrown, FaStar,
   FaThumbsUp, FaThumbsDown, FaTimes
 } from 'react-icons/fa';
-import axios from 'axios';
+import { api } from '../lib/api.js';
 import { useAppContext } from '../context/AppContext';
 import { useAuth } from '@clerk/clerk-react';
 
@@ -67,7 +67,7 @@ const CommunityChat = () => {
 
   const fetchMessages = async () => {
     try {
-      const response = await axios.get('/api/chat/messages');
+      const response = await api.get('/api/chat/messages');
       if (response.data.success) {
         setMessages(response.data.messages);
       }
@@ -80,7 +80,7 @@ const CommunityChat = () => {
 
   const fetchChatStats = async () => {
     try {
-      const response = await axios.get('/api/chat/stats');
+      const response = await api.get('/api/chat/stats');
       if (response.data.success) {
         setChatStats(response.data.stats);
       }
@@ -129,7 +129,7 @@ const CommunityChat = () => {
 
     setSending(true);
     try {
-      const response = await axios.post('/api/chat/messages', {
+      const response = await api.post('/api/chat/messages', {
         content: newMessage,
         movieId: selectedMovie?._id,
         messageType: selectedMovie ? 'movie_mention' : 'text',
@@ -152,7 +152,7 @@ const CommunityChat = () => {
 
   const likeMessage = async (messageId) => {
     try {
-      const response = await axios.put(`/api/chat/messages/${messageId}/like`);
+      const response = await api.put(`/api/chat/messages/${messageId}/like`);
       if (response.data.success) {
         setMessages(prev => 
           prev.map(msg => 
@@ -174,7 +174,7 @@ const CommunityChat = () => {
 
   const replyToMessage = async (messageId, replyContent) => {
     try {
-      const response = await axios.post(`/api/chat/messages/${messageId}/reply`, {
+      const response = await api.post(`/api/chat/messages/${messageId}/reply`, {
         content: replyContent
       });
       if (response.data.success) {
@@ -194,7 +194,7 @@ const CommunityChat = () => {
 
   const editMessage = async (messageId, newContent) => {
     try {
-      const response = await axios.put(`/api/chat/messages/${messageId}`, {
+      const response = await api.put(`/api/chat/messages/${messageId}`, {
         content: newContent
       });
       if (response.data.success) {
@@ -216,7 +216,7 @@ const CommunityChat = () => {
     if (!window.confirm('Are you sure you want to delete this message?')) return;
     
     try {
-      const response = await axios.delete(`/api/chat/messages/${messageId}`);
+      const response = await api.delete(`/api/chat/messages/${messageId}`);
       if (response.data.success) {
         setMessages(prev => 
           prev.map(msg => 

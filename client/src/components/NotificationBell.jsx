@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FaBell, FaBellSlash, FaTimes, FaCheck, FaExclamationTriangle, FaInfoCircle, FaGift, FaFilm } from 'react-icons/fa';
-import axios from 'axios';
+import { api } from '../lib/api.js';
 
 const NotificationBell = () => {
   const [notifications, setNotifications] = useState([]);
@@ -17,7 +17,7 @@ const NotificationBell = () => {
 
   const fetchNotifications = async () => {
     try {
-      const response = await axios.get('/api/notifications');
+      const response = await api.get('/api/notifications');
       if (response.data.success) {
         setNotifications(response.data.notifications);
         setUnreadCount(response.data.notifications.filter(n => !n.isRead).length);
@@ -29,7 +29,7 @@ const NotificationBell = () => {
 
   const markAsRead = async (notificationId) => {
     try {
-      await axios.put(`/api/notifications/${notificationId}/read`);
+      await api.put(`/api/notifications/${notificationId}/read`);
       setNotifications(prev => 
         prev.map(n => n._id === notificationId ? { ...n, isRead: true } : n)
       );
@@ -41,7 +41,7 @@ const NotificationBell = () => {
 
   const markAllAsRead = async () => {
     try {
-      await axios.put('/api/notifications/read-all');
+      await api.put('/api/notifications/read-all');
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (error) {

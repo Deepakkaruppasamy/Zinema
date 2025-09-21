@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Send, X, LifeBuoy } from 'lucide-react';
-import axios from 'axios';
+import { api } from '../lib/api.js';
 import { useUser } from '@clerk/clerk-react';
 
 const FAQS = [
@@ -77,7 +77,7 @@ export default function ChatWidget() {
     if (!message.trim()) return;
     try {
       setSubmitting(true);
-      await axios.post('/api/support/ticket', {
+      await api.post('/api/support/ticket', {
         name: name || 'Guest',
         email,
         subject: subject || 'Support Request',
