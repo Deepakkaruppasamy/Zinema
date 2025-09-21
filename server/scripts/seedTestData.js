@@ -5,7 +5,7 @@ import Movie from '../models/Movie.js';
 import Gamification from '../models/Gamification.js';
 import User from '../models/User.js';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/zinema';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://Deepak:123@cluster0.5pdgn48.mongodb.net';
 
 async function seedTestData() {
   try {

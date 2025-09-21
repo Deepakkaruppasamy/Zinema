@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const connectDB = async () =>{
     // Use environment variable or fallback to local connection
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/zinema';
+    const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://Deepak:123@cluster0.5pdgn48.mongodb.net';
     
     try {
         mongoose.connection.on('connected', ()=> console.log('Database connected'));
@@ -27,7 +27,7 @@ const connectDB = async () =>{
         if (mongoUri.includes('mongodb.net')) {
             console.log('🔄 Trying local MongoDB as fallback...');
             try {
-                await mongoose.connect('mongodb://localhost:27017/zinema', {
+                await mongoose.connect('mongodb+srv://Deepak:123@cluster0.5pdgn48.mongodb.net', {
                     serverSelectionTimeoutMS: 5000,
                     connectTimeoutMS: 5000
                 });

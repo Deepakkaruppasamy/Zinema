@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import Notification from '../models/Notification.js';
 import Movie from '../models/Movie.js';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/zinema';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://Deepak:123@cluster0.5pdgn48.mongodb.net';
 
 async function seedNotifications() {
   try {
