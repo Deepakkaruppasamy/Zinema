@@ -20,6 +20,10 @@ const MovieCard = ({movie}) => {
       movie.backdrop_path ? (image_base_url + movie.backdrop_path) : 'https://placehold.co/500x300?text=No+Image'
     ), [movie?.backdrop_path, image_base_url])
 
+    const handleImageError = (e) => {
+      e.target.src = 'https://placehold.co/500x300?text=No+Image'
+    }
+
     const onMouseMove = (e) => {
       const el = cardRef.current
       if (!el) return
@@ -58,7 +62,7 @@ const MovieCard = ({movie}) => {
           src={posterUrl}
           alt={movie.title}
           className='rounded-lg h-52 w-full object-cover object-right-bottom cursor-pointer transition-all duration-300 group-hover:brightness-105'
-          onError={(e)=>{ e.currentTarget.onerror = null; e.currentTarget.src = 'https://placehold.co/500x300?text=No+Image'; }}
+          onError={handleImageError}
         />
         {/* Inline trailer preview on hover (muted autoplay) */}
         <div className='absolute inset-0 rounded-lg overflow-hidden pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
