@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: zinema-backend
+    env: node
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    rootDir: server
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        value: mongodb+srv://Deepak:123@cluster0.5pdgn48.mongodb.net
+      - key: CLERK_PUBLISHABLE_KEY
+        value: pk_test_ZHJpdmVuLXBhcnJvdC01LmNsZXJrLmFjY291bnRzLmRldiQ
+      - key: CLERK_SECRET_KEY
+        value: sk_test_dBImOa1mHi3jf2DIDPejgitfvpVbnzkrh4lTfsFWCs
+      - key: TMDB_API_KEY
+        value: eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4NTMwYWJjYjY2ZWFhN2VhZjgzYTYxYjYyMDQxYTgzMyIsIm5iZiI6MTc1NDIzMzMwOC40OTMsInN1YiI6IjY4OGY3OWRjZTg1ZTkxNDM2ZWYzZTJhMSIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.lZ0Gu4hAgUm8wcn1DgaQ0_0BweS90sRiXj3PuMc7Ohc
+      - key: SENDER_EMAIL
+        value: deepakkl8754764540@gmail.com
+      - key: SMTP_USER
+        value: 957e9d001@smtp-brevo.com
+      - key: SMTP_PASS
+        value: xsmtpsib-96cddd5d3cafc481a7f8bce240a0a522c89d21dd620c94d5a99b8c3b1f36a660-WxkXQCz9dpO5bhYA
+      - key: SMTP_HOST
+        value: smtp-relay.brevo.com
+      - key: SMTP_PORT
+        value: 2525
+      - key: SMTP_SECURE
+        value: false
+      - key: SMTP_ALT_PORT
+        value: 2525
+      - key: BREVO_API_KEY
+        value: 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
+      - key: INNGEST_EVENT_KEY
+        value: qoRilihQIKuO314WBVeXAo3P8VaDilWs3agxVI0noCnmItp9WH_X-f97DHNvDcOLLtfSYAS6VZ4VDP6Mu1-BBA
+      - key: INNGEST_SIGNING_KEY
+        value: signkey-prod-079a0ad02983324a33fcfd13172ef759a20fa389da817a7ebdab4db1b76791ed
+      - key: STRIPE_PUBLISHABLE_KEY
+        value: pk_test_51S7Jf0BfgnGO1jm17laYbnaTu1H4AqZrE65QIme3CIcSRVqyEbsB5HRveaUkAVY5krGIUsJWyaEzQUjRM3idLZcp00uYy5KzRD
+      - key: STRIPE_SECRET_KEY
+        value: sk_test_51S7Jf0BfgnGO1jm1EzEM3k4OgUFsrcxsssnvRKkNkLbohoS0aWgMgWHczNi5zCv7VbPeetyf9sjZxfHY1VgHp46L00pkEF5i07
+      - key: STRIPE_WEBHOOK_SECRET
+        value: whsec_jFWWzI0YHY2czvciF376kJlwcEPmPqlW
