@@ -21,7 +21,7 @@ const QuickBookModal = ({ open, onClose, theatreName, showtime, onConfirm, showI
       }
       setSubmitting(true);
       const token = await getToken();
-      const res = await fetch(`${import.meta.env.VITE_BASE_URL}/api/booking/create`, {
+      const res = await fetch(`${import.meta.env.VITE_BASE_URL || 'https://zinema-clvk.onrender.com'}/api/booking/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -15,7 +15,7 @@ export default function SeatPickerModal({ open, onClose, theatreName, showtime, 
     const controller = new AbortController();
     setLoading(true);
     setError('');
-    fetch(`${import.meta.env.VITE_BASE_URL}/api/booking/seats/${showId}`, { signal: controller.signal })
+    fetch(`${import.meta.env.VITE_BASE_URL || 'https://zinema-clvk.onrender.com'}/api/booking/seats/${showId}`, { signal: controller.signal })
       .then((r) => r.json())
       .then((data) => {
         if (data?.success) {
