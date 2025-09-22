@@ -1,3 +1,34 @@
+## Assistant API (Gemini)
+
+POST `/api/deepai/assistant`
+
+Body:
+
+```json
+{
+  "messages": [ { "role": "user", "text": "Recommend some comedy movies" } ],
+  "user": { "name": "Deepa" }
+}
+```
+
+Response:
+
+```json
+{
+  "text": "I’ve found these comedy movies for you: ...",
+  "intent": "recommend_by_genre",
+  "entities": { "genre": "comedy" },
+  "data": { "movies": [ { "_id": "...", "title": "..." } ] }
+}
+```
+
+Deep-links:
+- When booking intent is detected, response may include `data.showId`, `data.movie._id`, and `data.showDateTime`.
+- The client will suggest a link: `/movies/{movieId}/{YYYY-MM-DD}?showId={showId}` which opens seat selection with the time preselected.
+
+Environment:
+- `GEMINI_API_KEY` (required)
+- `GEMINI_MODEL` (optional, defaults to `gemini-1.5-flash`)
 # 🎬 Zinema - Movie Booking Platform
 
 A modern, mobile-first movie booking platform with Progressive Web App (PWA) support, allowing users to book movies, view showtimes, and manage their bookings seamlessly across all devices.

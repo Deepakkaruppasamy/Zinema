@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, Send, X, LifeBuoy } from 'lucide-react';
-import { api } from '../lib/api.js';
+import { api, assistantChat, buildUserMessage } from '../lib/api.js';
 import { useUser } from '@clerk/clerk-react';
 
 const FAQS = [
@@ -36,16 +36,41 @@ export default function ChatWidget() {
     }
   }, [messages, open]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
     const userMsg = { from: 'user', text: input };
     setMessages(msgs => [...msgs, userMsg]);
+    const conversation = [...messages, userMsg].map(m => ({ role: m.from === 'user' ? 'user' : 'assistant', text: m.text }));
     setInput('');
     setTyping(true);
-    setTimeout(() => {
-      setMessages(msgs => [...msgs, { from: 'bot', text: getBotReply(input) }]);
+    try {
+      const resp = await assistantChat(conversation, { name: user?.fullName || undefined, email: user?.primaryEmailAddress?.emailAddress || undefined });
+      const botText = resp?.text || "I'm sorry, I couldn't process that.";
+      setMessages(msgs => [...msgs, { from: 'bot', text: botText }]);
+      // Handle navigation intent
+      if (resp?.nav?.target) {
+        setTimeout(() => { window.location.href = resp.nav.target; }, 600);
+      }
+      // Surface quick actions when movies list is present
+      const movies = resp?.data?.movies;
+      if (Array.isArray(movies) && movies.length > 0) {
+        const list = movies.slice(0, 5).map(m => m.title).filter(Boolean).join(', ');
+        setMessages(msgs => [...msgs, { from: 'bot', text: `Quick picks: ${list}. You can say "Tell me about [Movie]" or "Book tickets for [Movie]".` }]);
+      }
+      // Booking suggestion CTA
+      if (resp?.intent === 'book_tickets' && resp?.data?.showId) {
+        const showId = resp.data.showId;
+        const movieTitle = resp?.data?.movie?.title || 'your movie';
+        const movieId = resp?.data?.movie?._id;
+        const dateStr = new Date(resp?.data?.showDateTime).toISOString().split('T')[0];
+        const deepLink = movieId ? `/movies/${movieId}/${dateStr}?showId=${showId}` : `/booking?showId=${showId}`;
+        setMessages(msgs => [...msgs, { from: 'bot', text: `Proceed to seat selection for ${movieTitle}? Click: ${deepLink}` }]);
+      }
+    } catch (e) {
+      setMessages(msgs => [...msgs, { from: 'bot', text: 'Sorry, the assistant is unavailable right now.' }]);
+    } finally {
       setTyping(false);
-    }, 800);
+    }
   };
 
   const getBotReply = (msg) => {

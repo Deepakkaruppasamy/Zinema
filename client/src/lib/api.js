@@ -43,3 +43,14 @@ api.interceptors.response.use(
 )
 
 export default api
+
+// Assistant client helpers
+export async function assistantChat(messages, user = {}) {
+  const url = (import.meta.env.VITE_API_URL || API_CONFIG.API_URL) + '/deepai/assistant'
+  const resp = await api.post(url, { messages, user })
+  return resp.data
+}
+
+export function buildUserMessage(text) {
+  return { role: 'user', text }
+}

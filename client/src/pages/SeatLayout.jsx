@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { assets, dummyDateTimeData, dummyShowsData } from '../assets/assets'
 import Loading from '../components/Loading'
 import { ArrowRightIcon, ClockIcon, Brain, Eye, Settings } from 'lucide-react'
@@ -37,6 +37,7 @@ const SeatLayout = () => {
   })
 
   const navigate = useNavigate()
+  const location = useLocation()
 
   const {axios, getToken, user} = useAppContext();
 
@@ -45,6 +46,13 @@ const SeatLayout = () => {
       const { data } = await axios.get(`/api/show/${id}`)
       if (data.success){
         setShow(data)
+        // If deep-linked with showId, auto-select the matching time
+        const params = new URLSearchParams(location.search)
+        const showIdParam = params.get('showId')
+        if (showIdParam && data?.dateTime?.[date]) {
+          const match = data.dateTime[date].find(x => String(x.showId) === String(showIdParam))
+          if (match) setSelectedTime(match)
+        }
       }
     } catch (error) {
       console.log(error)

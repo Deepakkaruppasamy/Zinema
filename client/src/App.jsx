@@ -24,6 +24,7 @@ import { SignIn } from '@clerk/clerk-react'
 import Loading from './components/Loading'
 import ZineBot from './components/ZineBot';
 import SupportBot from './components/SupportBot';
+import DeepAI from './components/DeepAI';
 import Theatre from './pages/Theatre'
 // ThemeToggle moved into Navbar
 import PWAInstallPrompt from './components/PWAInstallPrompt'
@@ -79,6 +80,7 @@ const App = () => {
        {!isAdminRoute && <PWAInstallPrompt />}
        {!isAdminRoute && <PWAUtils />}
        {!isAdminRoute && <MobileOptimizations />}
+       {!isAdminRoute && <DeepAI />}
     </>
   )
 }
