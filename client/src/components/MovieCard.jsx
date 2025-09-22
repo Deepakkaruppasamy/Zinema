@@ -64,15 +64,19 @@ const MovieCard = ({movie}) => {
           className='rounded-lg h-52 w-full object-cover object-right-bottom cursor-pointer transition-all duration-300 group-hover:brightness-105'
           onError={handleImageError}
         />
-        {/* Inline trailer preview on hover (muted autoplay) */}
-        <div className='absolute inset-0 rounded-lg overflow-hidden pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
-          <iframe
-            className='w-full h-full scale-[1.02]'
-            src={`https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(`${movie.title} official trailer`)}&autoplay=1&mute=1&controls=0&modestbranding=1&playsinline=1&rel=0`}
-            title={`${movie.title} trailer preview`}
-            allow='autoplay; encrypted-media; picture-in-picture'
-          />
-        </div>
+        {/* Inline trailer preview on hover (muted autoplay). Render only when hovered to avoid many contexts */}
+        {hover && (
+          <div className='absolute inset-0 rounded-lg overflow-hidden pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
+            <iframe
+              className='w-full h-full scale-[1.02]'
+              src={`https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(`${movie.title} official trailer`)}&autoplay=1&mute=1&controls=0&modestbranding=1&playsinline=1&rel=0`}
+              title={`${movie.title} trailer preview`}
+              allow='autoplay; encrypted-media; picture-in-picture'
+              referrerPolicy='origin-when-cross-origin'
+              loading='lazy'
+            />
+          </div>
+        )}
         {/* Trailer hover overlay */}
         <button
           onClick={() => setTrailerOpen(true)}

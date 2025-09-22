@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 const TrailerModal = ({ open, onClose, title }) => {
   if (!open) return null;
   const q = encodeURIComponent(`${title} official trailer`);
-  const src = `https://www.youtube.com/embed?listType=search&list=${q}&autoplay=1`;
+  const src = `https://www.youtube-nocookie.com/embed?listType=search&list=${q}&autoplay=1&modestbranding=1&rel=0&playsinline=1`;
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
       <div className="relative w-full max-w-4xl aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-white/10">
@@ -16,6 +16,7 @@ const TrailerModal = ({ open, onClose, title }) => {
           src={src}
           title={`${title} trailer`}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          referrerPolicy="origin-when-cross-origin"
           allowFullScreen
         />
       </div>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { PlayCircle } from 'lucide-react';
 
 const TRAILER_THUMB = 'https://image.tmdb.org/t/p/original/74xTEgt7R36Fpooo50r9T25onhq.jpg'; // The Batman
-const TRAILER_URL = 'https://www.youtube.com/embed/mqqft2x_Aa4?autoplay=1'; // The Batman Official Trailer
+const TRAILER_URL = 'https://www.youtube-nocookie.com/embed/mqqft2x_Aa4?autoplay=1&modestbranding=1&rel=0&playsinline=1'; // The Batman Official Trailer
 
 const FeaturedTrailerSection = () => {
   const [open, setOpen] = useState(false);
@@ -30,7 +30,9 @@ const FeaturedTrailerSection = () => {
             title="Featured Trailer"
             frameBorder="0"
             allow="autoplay; encrypted-media"
+            referrerPolicy="origin-when-cross-origin"
             allowFullScreen
+            loading="lazy"
           />
         )}
       </div>
