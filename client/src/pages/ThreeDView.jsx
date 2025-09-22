@@ -42,9 +42,41 @@ function Model({ url }) {
   );
 }
 
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error) {
+    // no-op; could log to monitoring here
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className='h-full w-full flex items-center justify-center'>
+          <div className='px-4 py-3 rounded bg-black/60 text-white text-sm max-w-xl text-center'>
+            <p className='font-medium'>Failed to load 3D model.</p>
+            <p className='opacity-80 mt-1'>
+              Ensure the GLB is a real binary (not a Git LFS pointer) and accessible.
+            </p>
+            <p className='opacity-80 mt-1'>
+              You can provide a model URL via query: <code>?src=https://your-cdn/theatre.glb</code>
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const ThreeDView = () => {
   const q = useQuery();
-  const src = q.get('src') || '/models/theature.glb';
+  const defaultSrc = import.meta.env.VITE_3D_MODEL_URL || '/models/theature.glb';
+  const src = q.get('src') || defaultSrc;
   const controlsRef = useRef();
   const [autoRotate, setAutoRotate] = useState(true);
   const [bgTransparent, setBgTransparent] = useState(false);
@@ -70,16 +102,18 @@ const ThreeDView = () => {
         </div>
       </div>
       <div className='h-[calc(100vh-4rem)]'>
-        <Canvas camera={{ position: [2, 2, 4], fov: 50 }}>
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[5, 5, 5]} intensity={1} />
-          <Suspense fallback={<Loader />}>
-            <Model url={src} />
-            <Environment preset='city' />
-          </Suspense>
-          <OrbitControls ref={controlsRef} enableDamping makeDefault autoRotate={autoRotate} autoRotateSpeed={0.5} />
-          <Stats className='!left-auto !right-2 !top-20' />
-        </Canvas>
+        <ErrorBoundary>
+          <Canvas camera={{ position: [2, 2, 4], fov: 50 }}>
+            <ambientLight intensity={0.5} />
+            <directionalLight position={[5, 5, 5]} intensity={1} />
+            <Suspense fallback={<Loader />}>
+              <Model url={src} />
+              <Environment preset='city' />
+            </Suspense>
+            <OrbitControls ref={controlsRef} enableDamping makeDefault autoRotate={autoRotate} autoRotateSpeed={0.5} />
+            <Stats className='!left-auto !right-2 !top-20' />
+          </Canvas>
+        </ErrorBoundary>
       </div>
     </div>
   );
