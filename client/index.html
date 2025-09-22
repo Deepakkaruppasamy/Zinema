@@ -10,6 +10,22 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>Zinema -D Studio</title>
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('zinema_theme');
+          var theme = (saved === 'light' || saved === 'dark') ? saved : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          document.addEventListener('DOMContentLoaded', function () {
+            document.body.classList.remove('light','dark');
+            document.body.classList.add(theme);
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) {
+              meta.setAttribute('content', theme === 'dark' ? '#09090B' : '#f7f7f8');
+            }
+          });
+        } catch (e) { /* noop */ }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
