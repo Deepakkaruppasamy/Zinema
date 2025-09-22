@@ -45,8 +45,25 @@ if (!fs.existsSync(publicDir)) {
 
 // Middleware
 app.use(express.json())
+const staticAllowed = new Set([
+  'https://zinema-iota.vercel.app',
+  'https://zinema-mu.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:5173',
+  process.env.FRONTEND_URL,
+  process.env.ALT_FRONTEND_URL
+].filter(Boolean))
+
 app.use(cors({
-  origin: ['https://zinema-iota.vercel.app', 'https://zinema-mu.vercel.app', 'http://localhost:3000', 'http://localhost:5173'],
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true)
+    try {
+      const url = new URL(origin)
+      const isVercel = /\.vercel\.app$/i.test(url.hostname)
+      if (staticAllowed.has(origin) || isVercel) return callback(null, true)
+    } catch (_) {}
+    return callback(new Error('Not allowed by CORS'))
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'x-clerk-auth-token']
