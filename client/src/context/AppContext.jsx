@@ -15,7 +15,8 @@ export const AppProvider = ({ children })=>{
     const [shows, setShows] = useState([])
     const [favoriteMovies, setFavoriteMovies] = useState([])
 
-    const image_base_url = import.meta.env.VITE_TMDB_IMAGE_BASE_URL || 'https://image.tmdb.org/t/p/w500';
+    // Route TMDB images through our proxy to avoid CORS and allow canvas usage
+    const image_base_url = import.meta.env.VITE_TMDB_IMAGE_BASE_URL || '/api/tmdb-image?path=';
 
     const {user} = useUser()
     const {getToken} = useAuth()

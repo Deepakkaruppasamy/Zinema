@@ -4,6 +4,7 @@ import 'dotenv/config';
 import path from 'path';
 import fs from 'fs';
 import connectDB from './configs/db.js';
+import fetch from 'node-fetch';
 import { clerkMiddleware } from '@clerk/express';
 import { serve } from "inngest/express";
 import { inngest, functions } from "./inngest/index.js";
@@ -95,6 +96,29 @@ app.use('/api/discovery', aiRecommendationRouter);
 app.use('/api/dynamic', dynamicRouter);
 app.use('/api/notifications', notificationRouter);
 app.use('/api/chat', chatRouter);
+
+// Simple TMDB image proxy to avoid CORS and allow canvas operations
+app.get('/api/tmdb-image', async (req, res) => {
+  try {
+    const pathParam = req.query.path || '';
+    if (typeof pathParam !== 'string' || !pathParam.startsWith('/')) {
+      return res.status(400).json({ error: 'Invalid path' });
+    }
+    const upstream = 'https://image.tmdb.org/t/p' + pathParam;
+    const upstreamRes = await fetch(upstream);
+    if (!upstreamRes.ok) {
+      return res.status(upstreamRes.status).end();
+    }
+    // Forward content-type; default to image/jpeg
+    const contentType = upstreamRes.headers.get('content-type') || 'image/jpeg';
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=86400, immutable');
+    res.setHeader('Content-Type', contentType);
+    upstreamRes.body.pipe(res);
+  } catch (e) {
+    res.status(500).json({ error: 'Proxy failure' });
+  }
+});
 
 // Stripe webhooks (must be before catch-all and use raw body)
 app.use('/api/stripe', express.raw({type: 'application/json'}), stripeWebhooks);
