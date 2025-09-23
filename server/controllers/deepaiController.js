@@ -2,34 +2,39 @@ import 'dotenv/config'
 import fetch from 'node-fetch'
 import Movie from '../models/Movie.js'
 import Show from '../models/Show.js'
-import { getNowPlayingMovies, getMovieDetails, makeTmdbRequest } from '../utils/tmdbApi.js'
 
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
 
 function buildPrompt(messages = [], userProfile = {}) {
-  const system = `You are DeepAI, a specialized movie assistant for Zinema with only 4 core functions:
-  1. Show available movies - Display movies currently playing in theaters
-  2. Show available seats - Check seat availability for specific shows
-  3. Suggest best movies from internet - Provide movie recommendations using online data
-  4. Compare movies - Compare two or more movies side by side
+  const system = `You are DeepAI, a personalized Gemini-powered assistant for Zinema.
+  Core capabilities (Gemini-only, no external browsing):
+  1) Show available movies
+  2) Show available seats
+  3) Recommend movies (general or by genre)
+  4) Compare movies
+  5) Offer opinions/decision support (pros/cons, which to pick and why)
+  6) Site Q&A and navigation help (include <nav target="/path"> when helpful)
+  7) General movie knowledge (within your training limits)
 
-  - Be concise and helpful. Focus only on these 4 functions.
-  - For movie recommendations, use current internet data and trends.
-  - For comparisons, highlight key differences in plot, cast, ratings, and genres.
-  - Keep responses under 150 words.
-  - Also include a JSON block fenced with <json> ... </json> that specifies an intent and entities you extracted.
-  - The JSON must follow this schema:
+  - Be concise and helpful. Prefer bullet points.
+  - Never fabricate showtimes or seats; suggest where to check in the app.
+  - Keep answers under 150 words.
+  - Always include a JSON block fenced with <json> ... </json> that specifies intent and entities.
+  - JSON schema:
     {
-      "intent": "show_movies | show_seats | recommend_movies | compare_movies",
+      "intent": "show_movies | show_seats | recommend_movies | compare_movies | opinions | site_qna | navigate | knowledge",
       "entities": {
         "movieTitle": string | null,
         "movieTitles": string[] | null,
         "showId": string | null,
         "genre": string | null,
-        "comparisonType": "general | detailed" | null
+        "question": string | null,
+        "page": string | null,
+        "comparisonType": "general" | "detailed" | null
       }
     }
-  - Keep natural reply first, then the fenced JSON block on a new line.`
+  - Put the natural reply first, then the fenced JSON on a new line.
+  - For navigation, include an inline tag like <nav target="/favorite"> when relevant.`
 
   const history = [
     { role: 'user', parts: [{ text: system }] },
@@ -125,106 +130,81 @@ async function getSeatAvailability(showId) {
   }
 }
 
-// 3. Suggest best movies from internet
+// 3. Suggest best movies from internet (Gemini-only, no external browsing)
 async function getInternetMovieRecommendations(genre = null) {
   try {
-    let endpoint = '/movie/popular'
-    if (genre) {
-      endpoint = `/discover/movie?with_genres=${genre}&sort_by=popularity.desc`
-    }
-    
-    const response = await makeTmdbRequest(endpoint)
-    const movies = response.results?.slice(0, 10) || []
-    
-    // Get additional details for each movie
-    const detailedMovies = await Promise.all(
-      movies.map(async (movie) => {
-        try {
-          const details = await getMovieDetails(movie.id)
-          return {
-            id: movie.id,
-            title: movie.title,
-            overview: movie.overview,
-            releaseDate: movie.release_date,
-            rating: movie.vote_average,
-            posterPath: movie.poster_path,
-            backdropPath: movie.backdrop_path,
-            genres: details.genres || [],
-            runtime: details.runtime,
-            tagline: details.tagline
-          }
-        } catch (error) {
-          console.error(`Error fetching details for movie ${movie.id}:`, error)
-          return {
-            id: movie.id,
-            title: movie.title,
-            overview: movie.overview,
-            releaseDate: movie.release_date,
-            rating: movie.vote_average,
-            posterPath: movie.poster_path,
-            backdropPath: movie.backdrop_path,
-            genres: [],
-            runtime: null,
-            tagline: null
-          }
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) return []
+
+    const prompt = `Recommend 8 widely loved movies${genre ? ` in the ${genre} genre` : ''}.
+Return ONLY a JSON array named movies. Each item must have:
+{"title":"string","year":number,"genres":[string],"rating":number,"overview":"string"}`
+
+    const body = {
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: prompt }]
         }
-      })
-    )
-    
-    return detailedMovies
+      ]
+    }
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${apiKey}`
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+    if (!resp.ok) return []
+    const data = await resp.json()
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '[]'
+    const match = text.match(/\[([\s\S]*)\]/)
+    const jsonStr = match ? `[${match[1]}]` : text
+    const parsed = JSON.parse(jsonStr)
+    return Array.isArray(parsed) ? parsed.slice(0, 8) : (parsed.movies || []).slice(0, 8)
   } catch (error) {
-    console.error('Error fetching internet movie recommendations:', error)
+    console.error('Error fetching Gemini recommendations:', error)
     return []
   }
 }
 
-// 4. Compare movies
+// 4. Compare movies (Gemini-only, no external browsing)
 async function compareMovies(movieTitles) {
   try {
     if (!movieTitles || movieTitles.length < 2) {
       return { error: 'Please provide at least 2 movie titles to compare' }
     }
-    
-    const movieDetails = await Promise.all(
-      movieTitles.map(async (title) => {
-        try {
-          // First search for the movie
-          const searchResponse = await makeTmdbRequest(`/search/movie?query=${encodeURIComponent(title)}`)
-          const movie = searchResponse.results?.[0]
-          
-          if (!movie) {
-            return { title, found: false, error: 'Movie not found' }
-          }
-          
-          // Get detailed information
-          const details = await getMovieDetails(movie.id)
-          return {
-            title: details.title,
-            originalTitle: details.original_title,
-            overview: details.overview,
-            releaseDate: details.release_date,
-            rating: details.vote_average,
-            voteCount: details.vote_count,
-            posterPath: details.poster_path,
-            backdropPath: details.backdrop_path,
-            genres: details.genres || [],
-            runtime: details.runtime,
-            tagline: details.tagline,
-            budget: details.budget,
-            revenue: details.revenue,
-            status: details.status,
-            found: true
-          }
-        } catch (error) {
-          console.error(`Error fetching movie ${title}:`, error)
-          return { title, found: false, error: error.message }
+
+    const apiKey = process.env.GEMINI_API_KEY
+    if (!apiKey) return { movies: [] }
+
+    const prompt = `Compare these movies side-by-side: ${movieTitles.join(', ')}.
+Return ONLY JSON with shape {"movies":[{"title":"string","year":number,"genres":[string],"rating":number,"highlights":["..."],"pros":["..."],"cons":["..."]}]} .`
+
+    const body = {
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: prompt }]
         }
-      })
-    )
-    
-    return { movies: movieDetails }
+      ]
+    }
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${apiKey}`
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+    if (!resp.ok) return { movies: [] }
+    const data = await resp.json()
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '{}'
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    const jsonStr = jsonMatch ? jsonMatch[0] : text
+    const parsed = JSON.parse(jsonStr)
+    return { movies: Array.isArray(parsed) ? parsed : parsed.movies || [] }
   } catch (error) {
-    console.error('Error comparing movies:', error)
+    console.error('Error comparing movies with Gemini:', error)
     return { error: 'Failed to compare movies' }
   }
 }
@@ -268,7 +248,7 @@ export async function deepaiAssistant(req, res) {
     const entities = parsedIntent?.entities || {}
     let payload = {}
 
-    // Handle the 4 core functions only
+    // Handle intents
     if (intent === 'show_movies') {
       const movies = await getAvailableMovies()
       payload = { movies }
@@ -281,9 +261,43 @@ export async function deepaiAssistant(req, res) {
     } else if (intent === 'compare_movies') {
       const comparison = await compareMovies(entities.movieTitles)
       payload = { comparison }
+    } else if (intent === 'opinions') {
+      // Gemini-only opinionated guidance
+      const apiKey = process.env.GEMINI_API_KEY
+      const topic = (messages?.slice(-1)?.[0]?.text || '').slice(0, 500)
+      const prompt = `Give a brief opinionated recommendation with pros/cons and a final suggestion about: ${topic}. Return under 100 words.`
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${apiKey}`
+      const resp2 = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }) })
+      const data2 = await resp2.json().catch(() => ({}))
+      const text2 = data2?.candidates?.[0]?.content?.parts?.[0]?.text || ''
+      payload = { opinion: text2.trim() }
+    } else if (intent === 'site_qna') {
+      // Lightweight site Q&A based on keywords
+      const q = (entities.question || messages?.slice(-1)?.[0]?.text || '').toLowerCase()
+      let answer = ''
+      if (q.includes('booking') || q.includes('tickets')) answer = 'Go to Movies → pick a show → select seats → checkout.'
+      else if (q.includes('favorites') || q.includes('wishlist')) answer = 'Open Favorites from the top menu to see your saved movies.'
+      else if (q.includes('profile') || q.includes('account')) answer = 'Open Profile to manage your details and bookings.'
+      else answer = 'Use the navigation bar: Movies, Trending, Favorites, Profile.'
+      payload = { answer }
+    } else if (intent === 'navigate') {
+      const page = entities.page || ''
+      const map = { favorites: '/favorite', wishlist: '/favorite', movies: '/movies', trending: '/trending', profile: '/profile' }
+      const target = map[page] || '/'
+      payload = { nav: { target } }
+    } else if (intent === 'knowledge') {
+      // General movie knowledge via Gemini
+      const apiKey = process.env.GEMINI_API_KEY
+      const q = (messages?.slice(-1)?.[0]?.text || '').slice(0, 500)
+      const prompt = `Answer briefly (<=100 words): ${q}`
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${apiKey}`
+      const resp2 = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }) })
+      const data2 = await resp2.json().catch(() => ({}))
+      const text2 = data2?.candidates?.[0]?.content?.parts?.[0]?.text || ''
+      payload = { answer: text2.trim() }
       } else {
       // Default response for unrecognized intents
-      payload = { message: 'I can only help with: showing available movies, checking seat availability, recommending movies from the internet, and comparing movies.' }
+      payload = { message: 'I can help with: available movies, seats, recommendations, comparisons, opinions, site help, navigation, and knowledge.' }
     }
 
     const text = modelText.replace(/<json>[\s\S]*?<\/json>/, '').trim() || 'Here is what I found.'

@@ -5,13 +5,12 @@ import { useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import { useUser } from '@clerk/clerk-react'
 
-const WELCOME = `Hi, I'm DeepAI 🎬. I specialize in 4 core functions:
-1. Show available movies
-2. Check seat availability 
-3. Recommend best movies from the internet
-4. Compare movies
-
-Ask me things like "show available movies", "check seats for show 123", "recommend action movies", or "compare Avengers and Batman".`
+const WELCOME = `Hi, I'm DeepAI 🎬. I can help with:
+- Available movies and seats
+- Recommendations and comparisons
+- Opinions (pros/cons) and what to pick
+- Site help & navigation (try: open favorites)
+- Movie knowledge\n\nAsk me: "show available movies", "check seats for show 123", "recommend sci‑fi", "compare Avengers vs Batman", or "open favorites".`
 
 function useScrollToEnd(ref) {
   useEffect(() => {
@@ -44,18 +43,22 @@ export default function DeepAI() {
   const quick = useMemo(() => ([
     { label: 'Available Movies', text: 'Show available movies' },
     { label: 'Check Seats', text: 'Check seat availability' },
-    { label: 'Recommend Movies', text: 'Recommend best movies from internet' },
-    { label: 'Compare Movies', text: 'Compare movies' },
+    { label: 'Recommend', text: 'Recommend movies' },
+    { label: 'Compare', text: 'Compare movies' },
+    { label: 'Opinions', text: 'Which should I watch and why?' },
+    { label: 'Site Help', text: 'How do I find my bookings?' },
   ]), [])
 
   const reply = async (userText) => {
     setTyping(true)
     try {
       const history = messages.map(m => ({ role: m.from === 'user' ? 'user' : 'assistant', text: m.text })).slice(-10)
-      const { data } = await api.post('/api/deepai/chat', {
+      // Prefer structured assistant endpoint when available
+      const payload = await api.post('/api/deepai/assistant', {
         messages: history.concat([{ role: 'user', text: userText }])
       })
-      const text = data?.text || 'Sorry, I could not find an answer.'
+      const data = payload?.data
+      const text = data?.text || data?.data?.answer || data?.data?.opinion || 'Sorry, I could not find an answer.'
       // Lightweight navigation tag support: <nav target="/favorite">
       const navMatch = text.match(/<nav\s+target="([^"]+)"\s*>/i)
       if (navMatch && navMatch[1]) {
