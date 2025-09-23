@@ -5,7 +5,13 @@ import { useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import { useUser } from '@clerk/clerk-react'
 
-const WELCOME = `Hi, I'm DeepAI 🎬. I can help with movies, showtimes, and suggestions. Ask me things like "top rated now", "find action movies", or "book tickets for tonight".`
+const WELCOME = `Hi, I'm DeepAI 🎬. I specialize in 4 core functions:
+1. Show available movies
+2. Check seat availability 
+3. Recommend best movies from the internet
+4. Compare movies
+
+Ask me things like "show available movies", "check seats for show 123", "recommend action movies", or "compare Avengers and Batman".`
 
 function useScrollToEnd(ref) {
   useEffect(() => {
@@ -36,10 +42,10 @@ export default function DeepAI() {
   useEffect(() => { try { localStorage.setItem('deepai_messages', JSON.stringify(messages)) } catch {} }, [messages])
 
   const quick = useMemo(() => ([
-    { label: 'Top Rated', text: 'Show top rated movies' },
-    { label: 'Trending', text: 'What is trending now?' },
-    { label: 'Tonight', text: 'Find shows tonight' },
-    { label: 'Favorites', text: 'Open favorites' },
+    { label: 'Available Movies', text: 'Show available movies' },
+    { label: 'Check Seats', text: 'Check seat availability' },
+    { label: 'Recommend Movies', text: 'Recommend best movies from internet' },
+    { label: 'Compare Movies', text: 'Compare movies' },
   ]), [])
 
   const reply = async (userText) => {

@@ -2,29 +2,31 @@ import 'dotenv/config'
 import fetch from 'node-fetch'
 import Movie from '../models/Movie.js'
 import Show from '../models/Show.js'
+import { getNowPlayingMovies, getMovieDetails, makeTmdbRequest } from '../utils/tmdbApi.js'
 
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
 
 function buildPrompt(messages = [], userProfile = {}) {
-  const system = `You are DeepAI, a friendly movie and ticket-booking assistant for Zinema.
-  - Help users discover films, showtimes, genres, and guide them to book tickets.
-  - Be concise and actionable. Offer steps (e.g., "Go to Movies → pick show → select seats").
-  - If user intent is navigation (favorites, trending, theatre, my bookings), reply with a short instruction plus a tag like <nav target="/favorite"> so the client can navigate.
-  - Never fabricate showtimes; if exact data is needed, suggest where to find it in the app.
-  - Personalize lightly with the provided profile if available.
-  - Keep responses under 120 words.
+  const system = `You are DeepAI, a specialized movie assistant for Zinema with only 4 core functions:
+  1. Show available movies - Display movies currently playing in theaters
+  2. Show available seats - Check seat availability for specific shows
+  3. Suggest best movies from internet - Provide movie recommendations using online data
+  4. Compare movies - Compare two or more movies side by side
+
+  - Be concise and helpful. Focus only on these 4 functions.
+  - For movie recommendations, use current internet data and trends.
+  - For comparisons, highlight key differences in plot, cast, ratings, and genres.
+  - Keep responses under 150 words.
   - Also include a JSON block fenced with <json> ... </json> that specifies an intent and entities you extracted.
   - The JSON must follow this schema:
     {
-      "intent": "book_tickets | navigate | recommend_by_genre | movie_info | faq | listings",
+      "intent": "show_movies | show_seats | recommend_movies | compare_movies",
       "entities": {
         "movieTitle": string | null,
+        "movieTitles": string[] | null,
+        "showId": string | null,
         "genre": string | null,
-        "city": string | null,
-        "time": string | null,
-        "numTickets": number | null,
-        "seatType": "Regular" | "Premium" | null,
-        "date": string | null
+        "comparisonType": "general | detailed" | null
       }
     }
   - Keep natural reply first, then the fenced JSON block on a new line.`
@@ -68,49 +70,163 @@ export async function deepaiChat(req, res) {
   }
 }
 
-// --- Helper resolvers for intents ---
-async function findMoviesByGenre(genreName) {
-  if (!genreName) return []
-  const regex = new RegExp(`^${genreName}$`, 'i')
-  const movies = await Movie.find({ 'genres.name': regex }).limit(10).lean()
-  return movies
+// --- Helper functions for the 4 core functions ---
+
+// 1. Show available movies
+async function getAvailableMovies() {
+  try {
+    // Get movies from local database that have upcoming shows
+    const upcomingShows = await Show.find({ showDateTime: { $gte: new Date() } })
+      .populate('movie')
+      .sort({ showDateTime: 1 })
+      .lean()
+    
+    const uniqueMovies = new Map()
+    upcomingShows.forEach(show => {
+      if (show.movie) {
+        uniqueMovies.set(String(show.movie._id), {
+          ...show.movie,
+          nextShowTime: show.showDateTime,
+          showId: show._id
+        })
+      }
+    })
+    
+    return Array.from(uniqueMovies.values()).slice(0, 20) // Limit to 20 movies
+  } catch (error) {
+    console.error('Error fetching available movies:', error)
+    return []
+  }
 }
 
-async function findMovieByTitle(title) {
-  if (!title) return null
-  const movie = await Movie.findOne({ title: { $regex: new RegExp(title, 'i') } }).lean()
-  return movie
+// 2. Show available seats
+async function getSeatAvailability(showId) {
+  try {
+    const show = await Show.findById(showId).populate('movie').lean()
+    if (!show) return { available: false, totalSeats: 0, availableSeats: 0, movie: null }
+    
+    const occupied = show.occupiedSeats || {}
+    const totalSeats = 100 // Assuming 100 seats per theater
+    const occupiedCount = Object.keys(occupied).length
+    const availableSeats = Math.max(0, totalSeats - occupiedCount)
+    
+    return {
+      available: availableSeats > 0,
+      totalSeats,
+      availableSeats,
+      occupiedSeats: occupiedCount,
+      movie: show.movie,
+      showDateTime: show.showDateTime,
+      price: show.showPrice
+    }
+  } catch (error) {
+    console.error('Error fetching seat availability:', error)
+    return { available: false, totalSeats: 0, availableSeats: 0, movie: null }
+  }
 }
 
-async function getUpcomingShowtimes(movieId) {
-  if (!movieId) return []
-  const shows = await Show.find({ movie: movieId, showDateTime: { $gte: new Date() } })
-    .sort({ showDateTime: 1 })
-    .lean()
-  return shows
+// 3. Suggest best movies from internet
+async function getInternetMovieRecommendations(genre = null) {
+  try {
+    let endpoint = '/movie/popular'
+    if (genre) {
+      endpoint = `/discover/movie?with_genres=${genre}&sort_by=popularity.desc`
+    }
+    
+    const response = await makeTmdbRequest(endpoint)
+    const movies = response.results?.slice(0, 10) || []
+    
+    // Get additional details for each movie
+    const detailedMovies = await Promise.all(
+      movies.map(async (movie) => {
+        try {
+          const details = await getMovieDetails(movie.id)
+          return {
+            id: movie.id,
+            title: movie.title,
+            overview: movie.overview,
+            releaseDate: movie.release_date,
+            rating: movie.vote_average,
+            posterPath: movie.poster_path,
+            backdropPath: movie.backdrop_path,
+            genres: details.genres || [],
+            runtime: details.runtime,
+            tagline: details.tagline
+          }
+        } catch (error) {
+          console.error(`Error fetching details for movie ${movie.id}:`, error)
+          return {
+            id: movie.id,
+            title: movie.title,
+            overview: movie.overview,
+            releaseDate: movie.release_date,
+            rating: movie.vote_average,
+            posterPath: movie.poster_path,
+            backdropPath: movie.backdrop_path,
+            genres: [],
+            runtime: null,
+            tagline: null
+          }
+        }
+      })
+    )
+    
+    return detailedMovies
+  } catch (error) {
+    console.error('Error fetching internet movie recommendations:', error)
+    return []
+  }
 }
 
-function summarizeShowtimes(shows, city) {
-  // City is not modeled; ignore but keep param for future
-  const byDate = {}
-  shows.forEach(s => {
-    const date = new Date(s.showDateTime).toISOString().split('T')[0]
-    if (!byDate[date]) byDate[date] = []
-    byDate[date].push({ time: s.showDateTime, showId: s._id, price: s.showPrice })
-  })
-  return byDate
-}
-
-async function getSeatAvailabilityAndPrice(showId, requestedSeats = 1) {
-  const show = await Show.findById(showId).lean()
-  if (!show) return { available: false, price: 0, availableCount: 0 }
-  const occupied = show.occupiedSeats || {}
-  const totalSeats = 100
-  const taken = Object.keys(occupied).length
-  const availableCount = Math.max(0, totalSeats - taken)
-  const available = availableCount >= requestedSeats
-  const price = (show.showPrice || 0) * requestedSeats
-  return { available, price, availableCount }
+// 4. Compare movies
+async function compareMovies(movieTitles) {
+  try {
+    if (!movieTitles || movieTitles.length < 2) {
+      return { error: 'Please provide at least 2 movie titles to compare' }
+    }
+    
+    const movieDetails = await Promise.all(
+      movieTitles.map(async (title) => {
+        try {
+          // First search for the movie
+          const searchResponse = await makeTmdbRequest(`/search/movie?query=${encodeURIComponent(title)}`)
+          const movie = searchResponse.results?.[0]
+          
+          if (!movie) {
+            return { title, found: false, error: 'Movie not found' }
+          }
+          
+          // Get detailed information
+          const details = await getMovieDetails(movie.id)
+          return {
+            title: details.title,
+            originalTitle: details.original_title,
+            overview: details.overview,
+            releaseDate: details.release_date,
+            rating: details.vote_average,
+            voteCount: details.vote_count,
+            posterPath: details.poster_path,
+            backdropPath: details.backdrop_path,
+            genres: details.genres || [],
+            runtime: details.runtime,
+            tagline: details.tagline,
+            budget: details.budget,
+            revenue: details.revenue,
+            status: details.status,
+            found: true
+          }
+        } catch (error) {
+          console.error(`Error fetching movie ${title}:`, error)
+          return { title, found: false, error: error.message }
+        }
+      })
+    )
+    
+    return { movies: movieDetails }
+  } catch (error) {
+    console.error('Error comparing movies:', error)
+    return { error: 'Failed to compare movies' }
+  }
 }
 
 function extractIntentFromText(text) {
@@ -151,67 +267,27 @@ export async function deepaiAssistant(req, res) {
     let intent = parsedIntent?.intent || 'unknown'
     const entities = parsedIntent?.entities || {}
     let payload = {}
-    let nav = null
 
-    if (intent === 'recommend_by_genre') {
-      const movies = await findMoviesByGenre(entities.genre)
+    // Handle the 4 core functions only
+    if (intent === 'show_movies') {
+      const movies = await getAvailableMovies()
       payload = { movies }
-    } else if (intent === 'movie_info') {
-      const movie = await findMovieByTitle(entities.movieTitle)
-      if (movie) {
-        const shows = await getUpcomingShowtimes(movie._id)
-        payload = { movie, showtimes: summarizeShowtimes(shows, entities.city) }
+    } else if (intent === 'show_seats') {
+      const seatInfo = await getSeatAvailability(entities.showId)
+      payload = { seatInfo }
+    } else if (intent === 'recommend_movies') {
+      const recommendations = await getInternetMovieRecommendations(entities.genre)
+      payload = { recommendations }
+    } else if (intent === 'compare_movies') {
+      const comparison = await compareMovies(entities.movieTitles)
+      payload = { comparison }
       } else {
-        payload = { movie: null, showtimes: {} }
-      }
-    } else if (intent === 'book_tickets') {
-      const movie = await findMovieByTitle(entities.movieTitle)
-      if (movie) {
-        const upcoming = await getUpcomingShowtimes(movie._id)
-        // Pick closest matching time if provided
-        let chosenShow = null
-        if (entities.time) {
-          const target = entities.time.toLowerCase()
-          chosenShow = upcoming.find(s => new Date(s.showDateTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase().includes(target)) || null
-        }
-        chosenShow = chosenShow || upcoming[0] || null
-        if (chosenShow) {
-          const seatInfo = await getSeatAvailabilityAndPrice(chosenShow._id, Math.max(1, entities.numTickets || 1))
-          payload = {
-            movie,
-            showId: chosenShow._id,
-            showDateTime: chosenShow.showDateTime,
-            seatInfo
-          }
-        } else {
-          payload = { movie, showId: null, seatInfo: { available: false, price: 0, availableCount: 0 } }
-        }
-      } else {
-        payload = { movie: null }
-      }
-    } else if (intent === 'navigate') {
-      // Basic mapping based on entities
-      if (entities?.movieTitle) nav = { target: `/movie/${encodeURIComponent(entities.movieTitle)}` }
-    } else if (intent === 'listings') {
-      // Return a lightweight list of movies that have upcoming shows
-      const upcomingShows = await Show.find({ showDateTime: { $gte: new Date() } }).populate('movie').limit(50).lean()
-      const unique = new Map()
-      upcomingShows.forEach(s => { if (s.movie) unique.set(String(s.movie._id), s.movie) })
-      payload = { movies: Array.from(unique.values()) }
-    } else if (intent === 'faq') {
-      // Lightweight FAQ fallback based on common keywords
-      const lc = (messages?.slice(-1)?.[0]?.text || '').toLowerCase()
-      const faqMap = [
-        { k: ['payment', 'methods'], a: 'We accept credit/debit cards and PayPal.' },
-        { k: ['refund'], a: 'Refunds are available within 24 hours of booking per our policy.' },
-        { k: ['change', 'date'], a: 'You can modify your booking date if seats are available.' },
-      ]
-      const hit = faqMap.find(f => f.k.every(x => lc.includes(x)))
-      payload = hit ? { faqAnswer: hit.a } : {}
+      // Default response for unrecognized intents
+      payload = { message: 'I can only help with: showing available movies, checking seat availability, recommending movies from the internet, and comparing movies.' }
     }
 
     const text = modelText.replace(/<json>[\s\S]*?<\/json>/, '').trim() || 'Here is what I found.'
-    return res.json({ text, intent, entities, data: payload, nav })
+    return res.json({ text, intent, entities, data: payload })
   } catch (e) {
     console.error('DeepAI assistant error:', e)
     return res.status(500).json({ error: 'Internal error' })
