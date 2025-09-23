@@ -85,7 +85,8 @@ export default function DeepAI() {
       onClick={() => setOpen(true)}
       aria-label="Open DeepAI"
       title="DeepAI"
-      className="fixed right-6 top-1/2 -translate-y-1/2 z-[2147483000] rounded-full p-3 shadow-lg border border-gray-700 bg-gray-900/90 backdrop-blur hover:bg-gray-800 transition-colors"
+      className="fixed right-4 bottom-4 sm:right-6 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 z-[2147483000] rounded-full p-3 shadow-lg border border-gray-700 bg-gray-900/90 backdrop-blur hover:bg-gray-800 transition-colors"
+      style={{ WebkitTapHighlightColor: 'transparent' }}
     >
       <MessageCircle className="w-5 h-5 text-primary" />
     </button>
@@ -97,7 +98,7 @@ export default function DeepAI() {
 
   const panel = (
     <div
-      className="fixed right-6 top-1/2 -translate-y-1/2 w-80 max-w-[92vw] backdrop-blur-xl bg-zinc-900/85 text-zinc-100 rounded-xl shadow-2xl border border-zinc-800 overflow-hidden"
+      className="fixed right-4 left-4 sm:left-auto sm:right-6 top-auto bottom-4 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 w-auto sm:w-80 max-w-[92vw] backdrop-blur-xl bg-zinc-900/85 text-zinc-100 rounded-xl shadow-2xl border border-zinc-800 overflow-hidden"
       style={{ zIndex: 2147483647 }}
     >
       <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-fuchsia-600 via-pink-600 to-rose-600">
