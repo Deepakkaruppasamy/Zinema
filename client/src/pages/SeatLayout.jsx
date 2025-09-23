@@ -165,8 +165,15 @@ const SeatLayout = () => {
         </div>
   )
 
+  const isValidObjectId = (val) => /^[a-fA-F0-9]{24}$/.test(String(val || ''))
+
   const getOccupiedSeats = async ()=>{
     try {
+      if (!selectedTime?.showId || !isValidObjectId(selectedTime.showId)) {
+        // Guard against mock/demo showIds like 's_zinema_1000'
+        setOccupiedSeats([])
+        return toast('This is a demo showtime. Please pick a real show to load seats.')
+      }
       const { data } = await axios.get(`/api/booking/seats/${selectedTime.showId}`)
       if (data.success) {
         setOccupiedSeats(data.occupiedSeats)

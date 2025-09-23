@@ -304,12 +304,6 @@ const SmartRecommendations = ({ userId, onRecommendationSelect, onTheatreSelect 
                     className="bg-gray-800/30 rounded-xl p-6 border border-white/10"
                   >
                     <div className="flex items-start gap-4">
-                      <img
-                        src={currentRecommendations[currentIndex]?.image}
-                        alt={currentRecommendations[currentIndex]?.title}
-                        className="w-24 h-32 object-cover rounded-lg"
-                      />
-                      
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-2">
                           <div>
@@ -425,12 +419,6 @@ const SmartRecommendations = ({ userId, onRecommendationSelect, onTheatreSelect 
                   className="bg-gray-800/30 rounded-xl p-4 border border-white/10 hover:border-primary/30 transition-colors"
                 >
                   <div className="flex items-start gap-4">
-                    <img
-                      src={theatre.image}
-                      alt={theatre.name}
-                      className="w-20 h-16 object-cover rounded-lg"
-                    />
-                    
                     <div className="flex-1">
                       <div className="flex items-start justify-between mb-2">
                         <div>

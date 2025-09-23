@@ -15,6 +15,7 @@ function buildPrompt(messages = [], userProfile = {}) {
   5) Offer opinions/decision support (pros/cons, which to pick and why)
   6) Site Q&A and navigation help (include <nav target="/path"> when helpful)
   7) General movie knowledge (within your training limits)
+  8) Answer general questions outside the app when the user asks (act like Gemini)
 
   - Be concise and helpful. Prefer bullet points.
   - Never fabricate showtimes or seats; suggest where to check in the app.
@@ -22,15 +23,18 @@ function buildPrompt(messages = [], userProfile = {}) {
   - Always include a JSON block fenced with <json> ... </json> that specifies intent and entities.
   - JSON schema:
     {
-      "intent": "show_movies | show_seats | recommend_movies | compare_movies | opinions | site_qna | navigate | knowledge",
+      "intent": "show_movies | show_seats | recommend_movies | compare_movies | opinions | site_qna | navigate | knowledge | save_preferences | notify_me",
       "entities": {
         "movieTitle": string | null,
         "movieTitles": string[] | null,
         "showId": string | null,
         "genre": string | null,
+        "genres": string[] | null,
+        "languages": string[] | null,
         "question": string | null,
         "page": string | null,
-        "comparisonType": "general" | "detailed" | null
+        "comparisonType": "general" | "detailed" | null,
+        "minutesBefore": number | null
       }
     }
   - Put the natural reply first, then the fenced JSON on a new line.
@@ -295,9 +299,66 @@ export async function deepaiAssistant(req, res) {
       const data2 = await resp2.json().catch(() => ({}))
       const text2 = data2?.candidates?.[0]?.content?.parts?.[0]?.text || ''
       payload = { answer: text2.trim() }
+    } else if (intent === 'save_preferences') {
+      // Persist minimal preferences if model provides them (genres/languages)
+      try {
+        const UserPreferences = (await import('../models/UserPreferences.js')).default
+        const userId = user?.id || req.auth?.()?.userId || 'anonymous'
+        const pref = await UserPreferences.findOneAndUpdate(
+          { userId },
+          {
+            userId,
+            $set: {
+              'moviePreferences.genres': entities.genres || [],
+              'moviePreferences.languages': entities.languages || []
+            }
+          },
+          { new: true, upsert: true, setDefaultsOnInsert: true }
+        )
+        payload = { saved: true, preferences: pref }
+      } catch (e) {
+        payload = { saved: false }
+      }
+    } else if (intent === 'notify_me') {
+      // Create a lightweight reminder if showId provided
+      const minutes = Math.max(5, Number(entities.minutesBefore || 30))
+      const showId = entities.showId
+      if (!showId) {
+        payload = { success: false, message: 'showId required' }
       } else {
-      // Default response for unrecognized intents
-      payload = { message: 'I can help with: available movies, seats, recommendations, comparisons, opinions, site help, navigation, and knowledge.' }
+        try {
+          const Reminder = (await import('../models/Reminder.js')).default
+          const ShowModel = (await import('../models/Show.js')).default
+          const show = await ShowModel.findById(showId)
+          if (!show) {
+            payload = { success: false, message: 'Show not found' }
+          } else {
+            const when = new Date(new Date(show.showDateTime).getTime() - minutes * 60000)
+            const reminder = await Reminder.create({
+              userId: user?.id || 'anonymous',
+              movieId: String(show.movie),
+              movieTitle: 'Show reminder',
+              reminderType: 'showtime',
+              reminderTime: when,
+              channel: 'email',
+            })
+            payload = { success: true, reminder }
+          }
+        } catch (_) {
+          payload = { success: false }
+        }
+      }
+    } else {
+      // Fallback: general Q&A via Gemini (act like Gemini)
+      const apiKey = process.env.GEMINI_API_KEY
+      const q = (messages?.slice(-1)?.[0]?.text || '').slice(0, 1000)
+      const prompt = `Answer clearly and concisely (<=120 words): ${q}`
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${apiKey}`
+      const resp2 = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] }) })
+      const data2 = await resp2.json().catch(() => ({}))
+      const text2 = data2?.candidates?.[0]?.content?.parts?.[0]?.text || ''
+      payload = { answer: text2.trim() }
+      intent = 'general_qa'
     }
 
     const text = modelText.replace(/<json>[\s\S]*?<\/json>/, '').trim() || 'Here is what I found.'

@@ -15,6 +15,13 @@ export default function SeatPickerModal({ open, onClose, theatreName, showtime, 
     const controller = new AbortController();
     setLoading(true);
     setError('');
+    const isValidObjectId = /^[a-fA-F0-9]{24}$/;
+    if (!isValidObjectId.test(String(showId))) {
+      setOccupied(new Set());
+      setError('Demo showtime selected. Choose a real show to load seats.');
+      setLoading(false);
+      return () => controller.abort();
+    }
     fetch(`${import.meta.env.VITE_BASE_URL || 'https://zinema-clvk.onrender.com'}/api/booking/seats/${showId}`, { signal: controller.signal })
       .then((r) => r.json())
       .then((data) => {
