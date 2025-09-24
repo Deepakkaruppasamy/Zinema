@@ -4,35 +4,25 @@ import toast from 'react-hot-toast'
 
 const TEN_MIN_MS = 10 * 60 * 1000
 const THREE_MIN_MS = 3 * 60 * 1000
+const CHECK_INTERVAL_MS = 15 * 1000
+
+const STORAGE_KEY_LAST_SHOWN_AT = 'feedbackLastShownAt'
 
 const getNow = () => Date.now()
 
-const getLoginAt = () => {
-  const raw = sessionStorage.getItem('loginAt')
+const getLastShownAt = () => {
+  const raw = sessionStorage.getItem(STORAGE_KEY_LAST_SHOWN_AT)
   const parsed = raw ? Number(raw) : NaN
   return Number.isFinite(parsed) ? parsed : null
 }
 
-const hasShown = () => sessionStorage.getItem('feedbackShown') === '1'
-const markShown = () => sessionStorage.setItem('feedbackShown', '1')
-
-const withinWindow = (now, loginAt) => {
-  if (!loginAt) return false
-  const elapsed = now - loginAt
-  return elapsed >= TEN_MIN_MS && elapsed < (TEN_MIN_MS + THREE_MIN_MS)
+const setLastShownAt = (ts) => {
+  try { sessionStorage.setItem(STORAGE_KEY_LAST_SHOWN_AT, String(ts)) } catch {}
 }
 
-const computeOpenDelay = (now, loginAt) => {
-  if (!loginAt) return null
-  const untilTen = TEN_MIN_MS - (now - loginAt)
-  if (untilTen <= 0) return 0
-  return untilTen
-}
-
-const computeAutoClose = (now, loginAt) => {
-  const endAt = loginAt + TEN_MIN_MS + THREE_MIN_MS
-  const remaining = Math.max(0, endAt - now)
-  return Math.min(THREE_MIN_MS, remaining)
+const shouldOpen = (now, lastShownAt) => {
+  const last = lastShownAt ?? 0
+  return now - last >= TEN_MIN_MS
 }
 
 const FeedbackPrompt = () => {
@@ -44,57 +34,40 @@ const FeedbackPrompt = () => {
   const [subject, setSubject] = useState('Quick Feedback')
   const [rating, setRating] = useState(0)
 
-  const timers = useRef({ openTimer: null, closeTimer: null })
+  const timers = useRef({ checkTimer: null, closeTimer: null })
 
   const userName = useMemo(() => user?.fullName || user?.firstName || user?.username || '', [user])
   const userEmail = useMemo(() => user?.primaryEmailAddress?.emailAddress || '', [user])
 
   useEffect(() => {
-    // Skip if already shown in this session
-    if (hasShown()) return
+    // Initialize lastShownAt so first prompt appears after 10 minutes, not immediately
+    if (getLastShownAt() == null) setLastShownAt(getNow())
 
-    const loginAt = getLoginAt()
-    if (!loginAt) return
-
-    const now = getNow()
-
-    // If already within window, open immediately
-    if (withinWindow(now, loginAt)) {
-      setOpen(true)
-      const auto = computeAutoClose(now, loginAt)
-      timers.current.closeTimer = setTimeout(() => {
-        setOpen(false)
-        markShown()
-      }, auto)
-      return () => {}
+    const runCheck = () => {
+      const now = getNow()
+      const last = getLastShownAt()
+      if (!open && shouldOpen(now, last)) {
+        // Open and schedule auto-close. Record the show time immediately to throttle.
+        setOpen(true)
+        setLastShownAt(now)
+        timers.current.closeTimer = setTimeout(() => {
+          setOpen(false)
+        }, THREE_MIN_MS)
+      }
     }
 
-    // If window already passed, do nothing
-    if (now >= loginAt + TEN_MIN_MS + THREE_MIN_MS) return
-
-    // Otherwise schedule open at the 10-min mark
-    const delay = computeOpenDelay(now, loginAt)
-    if (delay !== null && delay >= 0) {
-      timers.current.openTimer = setTimeout(() => {
-        if (!hasShown()) {
-          setOpen(true)
-          timers.current.closeTimer = setTimeout(() => {
-            setOpen(false)
-            markShown()
-          }, THREE_MIN_MS)
-        }
-      }, delay)
-    }
+    // Periodic checks
+    timers.current.checkTimer = setInterval(runCheck, CHECK_INTERVAL_MS)
 
     return () => {
-      if (timers.current.openTimer) clearTimeout(timers.current.openTimer)
+      if (timers.current.checkTimer) clearInterval(timers.current.checkTimer)
       if (timers.current.closeTimer) clearTimeout(timers.current.closeTimer)
     }
-  }, [])
+  }, [open])
 
   const close = () => {
     setOpen(false)
-    markShown()
+    setLastShownAt(getNow())
   }
 
   const onSubmit = async (e) => {
