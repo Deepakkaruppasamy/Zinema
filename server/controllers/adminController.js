@@ -156,16 +156,23 @@ export const getDashboardData = async (req, res) =>{
             { $sort: { _id: 1 }}
         ])
 
+        // Robust totals and fallbacks
+        const paidRevenue = paidBookings.reduce((acc, b) => acc + (b.amount || 0), 0)
+        const totalAmountAllBookings = allBookings.reduce((acc, b) => acc + (b.amount || 0), 0)
+        const totalRevenue = paidRevenue > 0 ? paidRevenue : totalAmountAllBookings
+        const distinctUsersFromBookings = new Set(allBookings.map(b => b.user?._id || b.user).filter(Boolean)).size
+        const totalUsersResolved = totalUser > 0 ? totalUser : distinctUsersFromBookings
+
         const dashboardData = {
             totalBookings: allBookings.length,
             paidBookings: paidBookings.length,
             unpaidBookings: allBookings.length - paidBookings.length,
-            totalRevenue: paidBookings.reduce((acc, booking)=> acc + booking.amount, 0),
-            pendingRevenue: allBookings.filter(b => !b.isPaid).reduce((acc, booking)=> acc + booking.amount, 0),
+            totalRevenue,
+            pendingRevenue: allBookings.filter(b => !b.isPaid).reduce((acc, booking)=> acc + (booking.amount || 0), 0),
             avgOccupancy,
             shows: showsWithOccupancy,
             revenueByDay: revenueByDayAgg.map(r => ({ date: r._id, revenue: r.revenue, count: r.count })),
-            totalUser,
+            totalUser: totalUsersResolved,
             recentBookings: allBookings.slice(0, 10).map(booking => ({
                 id: booking._id,
                 user: booking.user?.name || 'Unknown',
