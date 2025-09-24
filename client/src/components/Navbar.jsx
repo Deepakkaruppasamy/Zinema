@@ -41,6 +41,7 @@ const Navbar = () => {
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/'>{t('nav.home')}</Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/movies'>{t('nav.movies')}</Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/theatre'>{t('nav.theatres')}</Link>
+        <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/events'>Events</Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/'>{t('nav.releases')}</Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/3d-view'>{t('nav.view3d')}</Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/community' className='flex items-center gap-2'>

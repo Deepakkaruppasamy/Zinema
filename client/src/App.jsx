@@ -36,6 +36,8 @@ import CommunityChat from './pages/CommunityChat'
 import AdminNotifications from './pages/AdminNotifications'
 import Concessions from './pages/admin/Concessions'
 import Feedbacks from './pages/admin/Feedbacks'
+import Events from './pages/Events'
+import EventDetails from './pages/EventDetails'
 
 const App = () => {
 
@@ -59,6 +61,8 @@ const App = () => {
         <Route path='/3d-view' element={<ThreeDView/>} />
         <Route path='/ticket/:id' element={<Ticket/>} />
         <Route path='/community' element={<CommunityChat/>} />
+        <Route path='/events' element={<Events/>} />
+        <Route path='/events/:id' element={<EventDetails/>} />
         <Route path='/admin/*' element={user ? <Layout/> : (
           <div className='min-h-screen flex justify-center items-center'>
             <SignIn fallbackRedirectUrl={'/admin'} />
