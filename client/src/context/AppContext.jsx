@@ -74,6 +74,10 @@ export const AppProvider = ({ children })=>{
 
     useEffect(()=>{
         if(user){
+            // Record login timestamp for this session if not already set
+            if (!sessionStorage.getItem('loginAt')) {
+                try { sessionStorage.setItem('loginAt', String(Date.now())) } catch {}
+            }
             fetchIsAdmin()
             fetchFavoriteMovies()
         }

@@ -14,6 +14,7 @@ import SocialMediaSection from '../components/SocialMediaSection'
 import AppPromotionSection from '../components/AppPromotionSection'
 import FeaturedSection from '../components/FeaturedSection'
 import TrailersSection from '../components/TrailersSection'
+import FeedbackPrompt from '../components/FeedbackPrompt'
 
 const Home = () => {
   return (
@@ -33,6 +34,7 @@ const Home = () => {
       <AppPromotionSection />
       <FeaturedSection />
       <TrailersSection />
+      <FeedbackPrompt />
     </>
   )
 }

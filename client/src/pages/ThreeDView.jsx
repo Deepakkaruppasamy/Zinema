@@ -75,7 +75,8 @@ class ErrorBoundary extends React.Component {
 
 const ThreeDView = () => {
   const q = useQuery();
-  const defaultSrc = import.meta.env.VITE_3D_MODEL_URL || '/models/theature.glb';
+  // Prefer env URL; otherwise fall back to a stable public GLB to ensure the view loads
+  const defaultSrc = import.meta.env.VITE_3D_MODEL_URL || 'https://modelviewer.dev/shared-assets/models/Astronaut.glb';
   const src = q.get('src') || defaultSrc;
   const controlsRef = useRef();
   const [autoRotate, setAutoRotate] = useState(true);
@@ -121,5 +122,4 @@ const ThreeDView = () => {
 
 export default ThreeDView;
 
-// drei GLTF loader needs this for Vite to avoid warnings
-useGLTF.preload('/models/theature.glb');
+// Optional: callers may add their own preload via env or query
