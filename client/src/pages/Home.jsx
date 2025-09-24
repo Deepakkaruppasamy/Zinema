@@ -15,11 +15,13 @@ import AppPromotionSection from '../components/AppPromotionSection'
 import FeaturedSection from '../components/FeaturedSection'
 import TrailersSection from '../components/TrailersSection'
 import FeedbackPrompt from '../components/FeedbackPrompt'
+import EventsSection from '../components/EventsSection'
 
 const Home = () => {
   return (
     <>
       <HeroSection />
+      <EventsSection />
       <MyCollectionSection />
       <RecommendationsSection />
       <PersonalizedCarousel />
