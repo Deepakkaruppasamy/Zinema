@@ -35,6 +35,7 @@ import Ticket from './pages/Ticket'
 import CommunityChat from './pages/CommunityChat'
 import AdminNotifications from './pages/AdminNotifications'
 import Concessions from './pages/admin/Concessions'
+import Feedbacks from './pages/admin/Feedbacks'
 
 const App = () => {
 
@@ -73,6 +74,7 @@ const App = () => {
           <Route path="support-tickets" element={<AdminSupportTickets/>}/>
           <Route path="notifications" element={<AdminNotifications/>}/>
           <Route path="concessions" element={<Concessions/>}/>
+          <Route path="feedbacks" element={<Feedbacks/>}/>
         </Route>
       </Routes>
        {!isAdminRoute && <Footer />}

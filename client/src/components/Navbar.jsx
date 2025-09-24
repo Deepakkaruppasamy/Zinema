@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { assets } from '../assets/assets'
 import { MenuIcon, SearchIcon, TicketPlus, XIcon, Moon, Sun, MessageCircle } from 'lucide-react'
@@ -6,6 +6,8 @@ import { useClerk, UserButton, useUser } from '@clerk/clerk-react'
 import { useAppContext } from '../context/AppContext'
 import { useTheme } from '../context/ThemeContext'
 import NotificationBell from './NotificationBell'
+import { useTranslation } from 'react-i18next'
+import LanguageSwitcher from './LanguageSwitcher'
 
 const Navbar = () => {
 
@@ -17,6 +19,14 @@ const Navbar = () => {
 
  const {favoriteMovies} = useAppContext()
  const { theme, toggleTheme } = useTheme()
+ const { t, i18n } = useTranslation()
+
+ useEffect(() => {
+   try {
+     const saved = localStorage.getItem('lang')
+     if (saved && saved !== i18n.language) i18n.changeLanguage(saved)
+   } catch {}
+ }, [])
 
   return (
     <div className='fixed top-0 left-0 z-50 w-full flex items-center justify-between px-6 md:px-16 lg:px-36 py-5'>
@@ -28,16 +38,16 @@ const Navbar = () => {
 
         <XIcon className='md:hidden absolute top-6 right-6 w-6 h-6 cursor-pointer' onClick={()=> setIsOpen(!isOpen)}/>
 
-        <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/'>Home</Link>
-        <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/movies'>Movies</Link>
-        <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/theatre'>Theatres</Link>
-        <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/'>Releases</Link>
-        <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/3d-view'>3D View</Link>
+        <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/'>{t('nav.home')}</Link>
+        <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/movies'>{t('nav.movies')}</Link>
+        <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/theatre'>{t('nav.theatres')}</Link>
+        <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/'>{t('nav.releases')}</Link>
+        <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/3d-view'>{t('nav.view3d')}</Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/community' className='flex items-center gap-2'>
           <MessageCircle className='w-4 h-4' />
-          Community
+          {t('nav.community')}
         </Link>
-       {favoriteMovies.length > 0 && <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/favorite'>Favorites</Link>}
+       {favoriteMovies.length > 0 && <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/favorite'>{t('nav.favorites')}</Link>}
       </div>
 
     <div className='flex items-center gap-4 sm:gap-6'>
@@ -47,7 +57,8 @@ const Navbar = () => {
           to='/3d-view'
           onClick={()=> {scrollTo(0,0); setIsOpen(false)}}
           className='hidden md:inline px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 transition text-sm'
-        >3D View</Link>
+        >{t('nav.view3d')}</Link>
+        <LanguageSwitcher />
         <button
           aria-label="Toggle theme"
           title="Toggle theme"
@@ -62,7 +73,7 @@ const Navbar = () => {
         </button>
         {
             !user ? (
-                <button onClick={openSignIn} className='px-4 py-1 sm:px-7 sm:py-2 bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer'>Login</button>
+                <button onClick={openSignIn} className='px-4 py-1 sm:px-7 sm:py-2 bg-primary hover:bg-primary-dull transition rounded-full font-medium cursor-pointer'>{t('nav.login')}</button>
             ) : (
                 <UserButton>
                     <UserButton.MenuItems>

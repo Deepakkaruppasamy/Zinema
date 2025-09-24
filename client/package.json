@@ -25,6 +25,8 @@
     "react-player": "^2.16.0",
     "react-router-dom": "^7.6.1",
     "react-slick": "^0.31.0",
+    "i18next": "^23.12.2",
+    "react-i18next": "^15.0.1",
     "slick-carousel": "^1.8.1",
     "tailwindcss": "^4.1.8",
     "@stripe/react-stripe-js": "^2.7.3",

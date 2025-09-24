@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Slider from 'react-slick';
 import { assets } from '../assets/assets';
 import { ArrowRight, CalendarIcon, ClockIcon } from 'lucide-react';
@@ -67,6 +68,7 @@ const movies = [
 ];
 
 const HeroSection = () => {
+  const { t } = useTranslation()
   const navigate = useNavigate();
   const settings = {
     dots: true,
@@ -111,7 +113,7 @@ const HeroSection = () => {
               className='flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-full text-lg font-semibold mt-2 hover:bg-red-700 transition-all'
               onClick={() => navigate('/movies')}
             >
-              Explore Movies <ArrowRight size={20} />
+              {t('hero.exploreMovies')} <ArrowRight size={20} />
             </button>
           </div>
         </div>

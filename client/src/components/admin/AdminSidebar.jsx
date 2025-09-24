@@ -7,7 +7,8 @@ import {
     BarChart3Icon,
     ShieldIcon,
     HelpCircleIcon,
-    BellIcon
+    BellIcon,
+    MessageSquareIcon
 } from 'lucide-react'
 import React from 'react'
 import { NavLink } from 'react-router-dom'
@@ -31,6 +32,7 @@ const AdminSidebar = () => {
         { name: 'Trending', path: '/admin/trending', icon: FlameIcon },
         { name: 'Support Tickets', path: '/admin/support-tickets', icon: HelpCircleIcon },
         { name: 'Notifications', path: '/admin/notifications', icon: BellIcon },
+        { name: 'Feedbacks', path: '/admin/feedbacks', icon: MessageSquareIcon },
     ]
 
   return (

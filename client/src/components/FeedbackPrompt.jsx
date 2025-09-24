@@ -21,8 +21,9 @@ const setLastShownAt = (ts) => {
 }
 
 const shouldOpen = (now, lastShownAt) => {
-  const last = lastShownAt ?? 0
-  return now - last >= TEN_MIN_MS
+  // If never shown before, open immediately
+  if (lastShownAt == null) return true
+  return now - lastShownAt >= TEN_MIN_MS
 }
 
 const FeedbackPrompt = () => {
@@ -40,14 +41,10 @@ const FeedbackPrompt = () => {
   const userEmail = useMemo(() => user?.primaryEmailAddress?.emailAddress || '', [user])
 
   useEffect(() => {
-    // Initialize lastShownAt so first prompt appears after 10 minutes, not immediately
-    if (getLastShownAt() == null) setLastShownAt(getNow())
-
     const runCheck = () => {
       const now = getNow()
       const last = getLastShownAt()
       if (!open && shouldOpen(now, last)) {
-        // Open and schedule auto-close. Record the show time immediately to throttle.
         setOpen(true)
         setLastShownAt(now)
         timers.current.closeTimer = setTimeout(() => {
@@ -56,7 +53,8 @@ const FeedbackPrompt = () => {
       }
     }
 
-    // Periodic checks
+    // Run immediately on mount for first-time popup, then poll periodically
+    runCheck()
     timers.current.checkTimer = setInterval(runCheck, CHECK_INTERVAL_MS)
 
     return () => {
@@ -82,11 +80,11 @@ const FeedbackPrompt = () => {
         name: userName || 'Guest',
         email: userEmail,
         subject: subject || 'Quick Feedback',
-        message: rating ? `Rating: ${rating}/5\n\n${message}` : message,
-        category: 'general',
-        priority: 'low'
+        message,
+        rating,
+        meta: { source: 'popup' }
       }
-      const { data } = await api.post('/api/support/ticket', payload)
+      const { data } = await api.post('/api/feedback', payload)
       if (data?.success) {
         toast.success('Thanks for your feedback!')
         close()

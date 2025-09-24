@@ -29,6 +29,7 @@ import notificationRouter from './routes/notificationRoutes.js';
 import chatRouter from './routes/chatRoutes.js';
 import deepaiRouter from './routes/deepaiRoutes.js';
 import concessionRouter from './routes/concessionRoutes.js';
+import feedbackRouter from './routes/feedbackRoutes.js';
 import { startPricingAlertService } from './services/pricingAlertService.js';
 
 const app = express();
@@ -117,6 +118,7 @@ app.use('/api/notifications', notificationRouter);
 app.use('/api/chat', chatRouter);
 app.use('/api/deepai', deepaiRouter);
 app.use('/api/concessions', concessionRouter);
+app.use('/api/feedback', feedbackRouter);
 
 // Simple TMDB image proxy to avoid CORS and allow canvas operations
 app.get('/api/tmdb-image', async (req, res) => {
