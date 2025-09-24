@@ -27,6 +27,8 @@
     "react-slick": "^0.31.0",
     "slick-carousel": "^1.8.1",
     "tailwindcss": "^4.1.8",
+    "@stripe/react-stripe-js": "^2.7.3",
+    "@stripe/stripe-js": "^4.8.0",
     "three": "^0.179.1"
   },
   "devDependencies": {

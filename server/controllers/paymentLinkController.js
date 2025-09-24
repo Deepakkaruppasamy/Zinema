@@ -2,6 +2,7 @@ import PaymentLink from "../models/PaymentLink.js";
 import Show from "../models/Show.js";
 import Booking from "../models/Booking.js";
 import stripe from "stripe";
+import ConcessionOrder from '../models/ConcessionOrder.js'
 
 const checkSeatsAvailability = async (showId, seats) => {
   const show = await Show.findById(showId);
@@ -118,3 +119,27 @@ export const checkoutPaymentLink = async (req, res) => {
     res.json({ success: false, message: err.message });
   }
 };
+
+export const createConcessionPaymentIntent = async (req, res) => {
+  try {
+    const { orderId } = req.body
+    if (!orderId) return res.json({ success: false, message: 'orderId required' })
+    const order = await ConcessionOrder.findById(orderId)
+    if (!order) return res.json({ success: false, message: 'Order not found' })
+
+    const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY)
+    const intent = await stripeInstance.paymentIntents.create({
+      amount: Math.round(order.total * 100),
+      currency: (order.currency || 'USD').toLowerCase(),
+      metadata: { concessionOrderId: String(order._id) },
+      automatic_payment_methods: { enabled: true }
+    })
+
+    order.paymentIntentId = intent.id
+    await order.save()
+
+    return res.json({ success: true, clientSecret: intent.client_secret })
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message })
+  }
+}

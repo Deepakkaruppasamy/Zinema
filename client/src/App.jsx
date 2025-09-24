@@ -34,6 +34,7 @@ import ThreeDView from './pages/ThreeDView'
 import Ticket from './pages/Ticket'
 import CommunityChat from './pages/CommunityChat'
 import AdminNotifications from './pages/AdminNotifications'
+import Concessions from './pages/admin/Concessions'
 
 const App = () => {
 
@@ -71,6 +72,7 @@ const App = () => {
           <Route path="trending" element={<Trending/>}/>
           <Route path="support-tickets" element={<AdminSupportTickets/>}/>
           <Route path="notifications" element={<AdminNotifications/>}/>
+          <Route path="concessions" element={<Concessions/>}/>
         </Route>
       </Routes>
        {!isAdminRoute && <Footer />}

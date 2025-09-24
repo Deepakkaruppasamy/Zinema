@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaUtensils, FaShoppingCart, FaHeart, FaStar, FaFilter, FaSearch, FaClock, FaLeaf, FaFire, FaIceCream, FaCoffee, FaPizzaSlice, FaHamburger, FaPlus, FaMinus, FaTrash, FaCheck } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
+import ConcessionsCheckout from './ConcessionsCheckout'
 
 const AdvancedFoodOrdering = ({ onOrderUpdate, onClose }) => {
   const [foodItems, setFoodItems] = useState([]);
@@ -15,6 +16,8 @@ const AdvancedFoodOrdering = ({ onOrderUpdate, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [showCart, setShowCart] = useState(false);
   const [favorites, setFavorites] = useState(new Set());
+  const [clientSecret, setClientSecret] = useState('');
+  const [couponCode, setCouponCode] = useState('');
   const [dietaryPreferences, setDietaryPreferences] = useState({
     vegetarian: false,
     vegan: false,
@@ -30,7 +33,12 @@ const AdvancedFoodOrdering = ({ onOrderUpdate, onClose }) => {
   const fetchFoodItems = async () => {
     setLoading(true);
     try {
-      // Simulate API call to get food items
+      // Try API first; fallback to mock data if unavailable
+      const { fetchConcessionItems } = await import('../../lib/concessions')
+      let apiItems = []
+      try {
+        apiItems = await fetchConcessionItems()
+      } catch (_) {}
       const mockFoodItems = [
         {
           id: 1,
@@ -162,7 +170,23 @@ const AdvancedFoodOrdering = ({ onOrderUpdate, onClose }) => {
 
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-      setFoodItems(mockFoodItems);
+      const normalized = (apiItems || []).map((it) => ({
+        id: it._id,
+        name: it.name,
+        description: it.description,
+        price: it.basePrice,
+        category: it.category || 'snacks',
+        image: it.imageUrl,
+        rating: 4.5,
+        prepTime: 5,
+        dietary: [],
+        allergens: [],
+        calories: 150,
+        isPopular: false,
+        isNew: false,
+        nutrition: {}
+      }))
+      setFoodItems((normalized && normalized.length > 0) ? normalized : mockFoodItems);
     } catch (error) {
       console.error('Error fetching food items:', error);
     } finally {
@@ -572,14 +596,36 @@ const AdvancedFoodOrdering = ({ onOrderUpdate, onClose }) => {
                   ))}
                   
                   <div className="border-t border-white/10 pt-4">
+                    <div className="mb-3 flex gap-2">
+                      <input
+                        value={couponCode}
+                        onChange={(e)=>setCouponCode(e.target.value)}
+                        placeholder="Coupon code"
+                        className="flex-1 bg-gray-800 p-2 rounded text-white placeholder-gray-400"
+                      />
+                      <button type="button" className="px-3 py-2 bg-gray-700 rounded" onClick={()=>setCouponCode(couponCode.trim().toUpperCase())}>Apply</button>
+                    </div>
                     <div className="flex justify-between items-center text-xl font-bold text-white mb-4">
                       <span>Total</span>
                       <span>₹{getCartTotal()}</span>
                     </div>
                     <button
-                      onClick={() => {
-                        onOrderUpdate(cart);
-                        onClose();
+                      onClick={async () => {
+                        try {
+                          const { createConcessionOrder, createConcessionPaymentIntent } = await import('../../lib/concessions')
+                          const pickup = new Date(Date.now() + 15 * 60 * 1000)
+                          const order = await createConcessionOrder({
+                            items: cart.map(c => ({ itemId: c.id, quantity: c.quantity })),
+                            pickupTime: pickup.toISOString(),
+                            pickupLocation: 'Concessions Counter',
+                            notes: '',
+                            couponCode: couponCode || undefined
+                          })
+                          const pi = await createConcessionPaymentIntent(order._id)
+                          setClientSecret(pi.clientSecret)
+                        } catch (e) {
+                          console.error('Order failed', e)
+                        }
                       }}
                       className="w-full py-3 bg-primary hover:bg-primary/80 text-white rounded-lg font-semibold transition-colors"
                     >
@@ -592,6 +638,18 @@ const AdvancedFoodOrdering = ({ onOrderUpdate, onClose }) => {
           )}
         </AnimatePresence>
       </motion.div>
+      {clientSecret && (
+        <ConcessionsCheckout
+          clientSecret={clientSecret}
+          onClose={() => setClientSecret('')}
+          onSuccess={() => {
+            onOrderUpdate?.(cart)
+            setCart([])
+            setClientSecret('')
+            onClose?.()
+          }}
+        />
+      )}
     </div>
   );
 };
