@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import API_CONFIG from '../config/api'
 
-const API_BASE = '/api/events'
+const API_BASE = `${API_CONFIG.API_URL}/events`
 
 const EventDetails = () => {
   const { id } = useParams()
@@ -16,6 +17,11 @@ const EventDetails = () => {
       setLoading(true)
       try {
         const res = await fetch(`${API_BASE}/${id}`, { signal: controller.signal })
+        const contentType = res.headers.get('content-type') || ''
+        if (!res.ok || !contentType.includes('application/json')) {
+          const text = await res.text()
+          throw new Error('Failed to load event')
+        }
         const data = await res.json()
         if (!data.success) throw new Error(data.message || 'Failed to load event')
         setEvent(data.event)

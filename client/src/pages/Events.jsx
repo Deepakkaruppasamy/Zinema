@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
+import API_CONFIG from '../config/api'
 
-const API_BASE = '/api/events'
+const API_BASE = `${API_CONFIG.API_URL}/events`
 
 const EventCard = ({ event }) => {
   const navigate = useNavigate()
@@ -45,6 +46,11 @@ const Events = () => {
         if (city) query.set('city', city)
         if (q) query.set('q', q)
         const res = await fetch(`${API_BASE}/all?${query.toString()}`, { signal: controller.signal })
+        const contentType = res.headers.get('content-type') || ''
+        if (!res.ok || !contentType.includes('application/json')) {
+          const text = await res.text()
+          throw new Error('Failed to load events')
+        }
         const data = await res.json()
         if (!data.success) throw new Error(data.message || 'Failed to load events')
         setEvents(data.events)
