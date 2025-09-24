@@ -6,7 +6,7 @@ import timeFormat from '../lib/timeFormat'
 import { dateFormat } from '../lib/dateFormat'
 import { useAppContext } from '../context/AppContext'
 import { Link } from 'react-router-dom'
-import { Trophy, Star, Zap, Crown, Target, Award, Gift, Coins, Flame, Calendar, Heart, Eye, CheckCircle, Lock, Unlock, Bell, DollarSign } from 'lucide-react'
+import { Trophy, Star, Zap, Crown, Target, Award, Gift, Coins, Flame, Calendar, Heart, Eye, CheckCircle, Lock, Unlock, Bell, DollarSign, CalendarPlus } from 'lucide-react'
 import GamificationSystem from '../components/gamification/GamificationSystem'
 import DynamicPricingAlerts from '../components/pricing/DynamicPricingAlerts'
 
@@ -214,6 +214,24 @@ const MyBookings = () => {
                       >
                         View Ticket
                       </Link>
+                    )}
+                    {item._id && (
+                      <div className='flex gap-2'>
+                        <a
+                          href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(item.show.movie.title)}&dates=${new Date(item.show.showDateTime).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/, 'Z')}/${new Date(new Date(item.show.showDateTime).getTime()+2*60*60*1000).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/, 'Z')}&details=${encodeURIComponent('Seats: ' + item.bookedSeats.join(', '))}&location=${encodeURIComponent('Cinema')}`}
+                          target='_blank'
+                          rel='noreferrer'
+                          className='px-4 py-1.5 text-sm rounded-full font-medium cursor-pointer bg-green-600 hover:bg-green-700 text-white flex items-center gap-2'
+                        >
+                          <CalendarPlus className='w-4 h-4' /> Add to Google
+                        </a>
+                        <a
+                          href={`/api/booking/${item._id}/ics`}
+                          className='px-4 py-1.5 text-sm rounded-full font-medium cursor-pointer border border-white/15 hover:bg-white/10 transition'
+                        >
+                          Download .ics
+                        </a>
+                      </div>
                     )}
                   </div>
                 </div>

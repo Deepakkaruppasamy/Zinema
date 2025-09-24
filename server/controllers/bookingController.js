@@ -6,6 +6,7 @@ import User from "../models/User.js"
 import { updateBookingStats } from "./gamificationController.js";
 
 import stripe from 'stripe'
+import { buildICS } from '../utils/ics.js'
 
 
 // Function to check availability of selected seats for a movie
@@ -171,5 +172,33 @@ export const getOccupiedSeats = async (req, res)=>{
     } catch (error) {
         console.log(error.message);
         res.json({success: false, message: error.message})
+    }
+}
+
+// GET /api/booking/:id/ics
+export const getBookingIcs = async (req, res) => {
+    try {
+        const bookingId = req.params.id
+        const booking = await Booking.findById(bookingId).populate({
+            path: 'show',
+            populate: { path: 'movie', model: 'Movie' }
+        })
+        if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' })
+
+        const start = new Date(booking.show.showDateTime)
+        const ics = buildICS({
+            title: booking.show.movie.title,
+            description: `Seats: ${booking.bookedSeats.join(', ')} | Order: ${booking._id}`,
+            start,
+            end: new Date(start.getTime() + 2 * 60 * 60 * 1000),
+            location: 'Cinema',
+            organizer: process.env.SENDER_EMAIL || 'noreply@zinema.app',
+            url: `${req.headers.origin || ''}/ticket/${booking._id}`
+        })
+        res.setHeader('Content-Type', 'text/calendar; charset=utf-8')
+        res.setHeader('Content-Disposition', `attachment; filename="${String(booking._id)}.ics"`)
+        return res.send(ics)
+    } catch (e) {
+        return res.status(500).json({ success: false, message: 'Failed to generate ICS' })
     }
 }

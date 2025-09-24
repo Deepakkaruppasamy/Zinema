@@ -48,6 +48,8 @@ const Navbar = () => {
           {t('nav.community')}
         </Link>
        {favoriteMovies.length > 0 && <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/favorite'>{t('nav.favorites')}</Link>}
+        {/* Secondary language switcher inside nav menu for visibility on mobile */}
+        <LanguageSwitcher />
       </div>
 
     <div className='flex items-center gap-4 sm:gap-6'>
@@ -58,7 +60,10 @@ const Navbar = () => {
           onClick={()=> {scrollTo(0,0); setIsOpen(false)}}
           className='hidden md:inline px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 transition text-sm'
         >{t('nav.view3d')}</Link>
-        <LanguageSwitcher />
+        {/* Primary switcher on the right actions (desktop) */}
+        <div className='hidden md:block'>
+          <LanguageSwitcher />
+        </div>
         <button
           aria-label="Toggle theme"
           title="Toggle theme"
