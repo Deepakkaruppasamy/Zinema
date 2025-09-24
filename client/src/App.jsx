@@ -36,6 +36,7 @@ import CommunityChat from './pages/CommunityChat'
 import AdminNotifications from './pages/AdminNotifications'
 import Concessions from './pages/admin/Concessions'
 import Feedbacks from './pages/admin/Feedbacks'
+import EventsAdmin from './pages/admin/EventsAdmin'
 import Events from './pages/Events'
 import EventDetails from './pages/EventDetails'
 
@@ -79,6 +80,7 @@ const App = () => {
           <Route path="notifications" element={<AdminNotifications/>}/>
           <Route path="concessions" element={<Concessions/>}/>
           <Route path="feedbacks" element={<Feedbacks/>}/>
+          <Route path="events" element={<EventsAdmin/>}/>
         </Route>
       </Routes>
        {!isAdminRoute && <Footer />}
