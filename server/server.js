@@ -50,7 +50,6 @@ if (!fs.existsSync(publicDir)) {
 // Middleware
 app.use(express.json())
 const staticAllowed = new Set([
-  'https://zinema-iota.vercel.app',
   'https://zinema-mu.vercel.app',
   'http://localhost:3000',
   'http://localhost:5173',

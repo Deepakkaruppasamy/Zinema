@@ -5,7 +5,7 @@ export const API_CONFIG = {
   API_URL: 'https://zinema-clvk.onrender.com/api',
   
   // Frontend URL
-  FRONTEND_URL: 'https://zinema-iota.vercel.app',
+  FRONTEND_URL: 'https://zinema-mu.vercel.app',
   
   // API Endpoints
   ENDPOINTS: {
