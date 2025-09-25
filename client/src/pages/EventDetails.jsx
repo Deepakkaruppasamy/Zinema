@@ -1,15 +1,22 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useAuth, useUser } from '@clerk/clerk-react'
 import API_CONFIG from '../config/api'
+import toast from 'react-hot-toast'
 
 const API_BASE = `${API_CONFIG.API_URL}/events`
+const API_REGS = `${API_CONFIG.API_URL}/event-registrations`
 
 const EventDetails = () => {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user, isSignedIn } = useUser()
+  const { getToken } = useAuth()
   const [event, setEvent] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [registering, setRegistering] = useState(false)
+  const [tickets, setTickets] = useState(1)
 
   useEffect(() => {
     const controller = new AbortController()
@@ -34,6 +41,51 @@ const EventDetails = () => {
     fetchEvent()
     return () => controller.abort()
   }, [id])
+
+  const handleRegistration = async () => {
+    if (!isSignedIn) {
+      toast.error('Please sign in to register for events')
+      return
+    }
+
+    if (!event) return
+
+    setRegistering(true)
+    try {
+      const token = await getToken()
+      const registrationData = {
+        event: event._id,
+        userId: user.id,
+        name: user.fullName || user.firstName + ' ' + user.lastName,
+        email: user.primaryEmailAddress.emailAddress,
+        tickets: tickets,
+        amountPaid: event.price * tickets,
+        status: 'registered'
+      }
+
+      const res = await fetch(API_REGS, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(registrationData)
+      })
+
+      const data = await res.json()
+      if (data.success) {
+        toast.success('Successfully registered for the event!')
+        // Optionally redirect to a confirmation page or show success message
+      } else {
+        toast.error(data.message || 'Registration failed')
+      }
+    } catch (error) {
+      console.error('Registration error:', error)
+      toast.error('Something went wrong. Please try again.')
+    } finally {
+      setRegistering(false)
+    }
+  }
 
   if (loading) return <div className='px-6 md:px-16 lg:px-36 xl:px-44 pt-24 text-gray-400'>Loading...</div>
   if (error) return <div className='px-6 md:px-16 lg:px-36 xl:px-44 pt-24 text-red-400'>{error}</div>
@@ -69,7 +121,26 @@ const EventDetails = () => {
             </div>
           </div>
           <div className='mt-6'>
-            <button className='px-6 py-3 bg-primary hover:bg-primary-dull transition rounded-md font-medium'>Book Now</button>
+            <div className='flex items-center gap-4 mb-4'>
+              <label className='text-gray-300'>Tickets:</label>
+              <select 
+                value={tickets} 
+                onChange={(e) => setTickets(Number(e.target.value))}
+                className='bg-white/10 border border-gray-700 rounded px-3 py-2 text-white'
+              >
+                {[1,2,3,4,5].map(num => (
+                  <option key={num} value={num}>{num}</option>
+                ))}
+              </select>
+              <span className='text-gray-300'>Total: ₹{event.price * tickets}</span>
+            </div>
+            <button 
+              onClick={handleRegistration}
+              disabled={registering}
+              className='px-6 py-3 bg-primary hover:bg-primary-dull transition rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed'
+            >
+              {registering ? 'Registering...' : 'Register Now'}
+            </button>
           </div>
         </div>
       </div>

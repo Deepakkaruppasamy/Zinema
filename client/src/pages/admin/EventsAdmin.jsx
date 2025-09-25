@@ -14,6 +14,7 @@ export default function EventsAdmin() {
   const [form, setForm] = useState(emptyEvent)
   const [regs, setRegs] = useState([])
   const [selectedEvent, setSelectedEvent] = useState('')
+  const [loadingRegs, setLoadingRegs] = useState(false)
 
   useEffect(() => { loadEvents() }, [])
 
@@ -34,13 +35,21 @@ export default function EventsAdmin() {
   async function loadRegs(eventId) {
     setSelectedEvent(eventId)
     if (!eventId) return setRegs([])
+    setLoadingRegs(true)
     try {
+      console.log('Loading registrations for event:', eventId)
       const res = await fetch(`${API_REGS}/all?event=${eventId}`)
+      console.log('Registration API response:', res)
       const data = await res.json()
+      console.log('Registration data:', data)
       if (!data.success) throw new Error(data.message || 'Failed to load registrations')
       setRegs(data.registrations)
+      console.log('Registrations loaded:', data.registrations)
     } catch (e) {
-      console.error(e)
+      console.error('Error loading registrations:', e)
+      setError('Failed to load registrations: ' + e.message)
+    } finally {
+      setLoadingRegs(false)
     }
   }
 
@@ -145,32 +154,38 @@ export default function EventsAdmin() {
 
           <div className='bg-gray-900/70 border border-gray-800 rounded-xl p-4 mt-6'>
             <h2 className='text-lg font-semibold text-white mb-2'>Registrations</h2>
-            {!selectedEvent && <div className='text-gray-400'>Select an event to view registrations</div>}
+            {!selectedEvent && <div className='text-gray-400'>Click "Registrations" button on an event to view registrations</div>}
             {selectedEvent && (
-              <div className='overflow-x-auto'>
-                <table className='w-full text-left text-sm'>
-                  <thead className='text-gray-400'>
-                    <tr>
-                      <th className='py-2'>Name</th>
-                      <th className='py-2'>Email</th>
-                      <th className='py-2'>Tickets</th>
-                      <th className='py-2'>Amount</th>
-                      <th className='py-2'>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className='text-gray-200'>
-                    {regs.map(r => (
-                      <tr key={r._id} className='border-t border-gray-800'>
-                        <td className='py-2'>{r.name}</td>
-                        <td className='py-2'>{r.email}</td>
-                        <td className='py-2'>{r.tickets}</td>
-                        <td className='py-2'>₹{r.amountPaid}</td>
-                        <td className='py-2'>{r.status}</td>
-                      </tr>
-                    ))}
-                    {regs.length === 0 && <tr><td className='py-2 text-gray-400' colSpan='5'>No registrations</td></tr>}
-                  </tbody>
-                </table>
+              <div>
+                {loadingRegs && <div className='text-gray-400 mb-4'>Loading registrations...</div>}
+                {!loadingRegs && (
+                  <div className='overflow-x-auto'>
+                    <div className='text-gray-300 text-sm mb-2'>Event ID: {selectedEvent}</div>
+                    <table className='w-full text-left text-sm'>
+                      <thead className='text-gray-400'>
+                        <tr>
+                          <th className='py-2'>Name</th>
+                          <th className='py-2'>Email</th>
+                          <th className='py-2'>Tickets</th>
+                          <th className='py-2'>Amount</th>
+                          <th className='py-2'>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className='text-gray-200'>
+                        {regs.map(r => (
+                          <tr key={r._id} className='border-t border-gray-800'>
+                            <td className='py-2'>{r.name}</td>
+                            <td className='py-2'>{r.email}</td>
+                            <td className='py-2'>{r.tickets}</td>
+                            <td className='py-2'>₹{r.amountPaid}</td>
+                            <td className='py-2'>{r.status}</td>
+                          </tr>
+                        ))}
+                        {regs.length === 0 && <tr><td className='py-2 text-gray-400' colSpan='5'>No registrations found for this event</td></tr>}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
           </div>
