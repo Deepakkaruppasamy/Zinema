@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import API_CONFIG from '../../config/api'
 
-const API_EVENTS = '/api/events'
-const API_REGS = '/api/event-registrations'
+const API_EVENTS = `${API_CONFIG.API_URL}/events`
+const API_REGS = `${API_CONFIG.API_URL}/event-registrations`
 
 const emptyEvent = { title: '', type: 'standup', description: '', venue: '', city: '', dateTime: '', price: 0, imageUrl: '' }
 
