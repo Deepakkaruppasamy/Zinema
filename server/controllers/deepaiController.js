@@ -3,7 +3,8 @@ import fetch from 'node-fetch'
 import Movie from '../models/Movie.js'
 import Show from '../models/Show.js'
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-pro'
+// Use a model alias that Google serves consistently on v1beta
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-pro-latest'
 
 function buildPrompt(messages = [], userProfile = {}) {
   const system = `You are DeepAI, a personalized Gemini-powered assistant for Zinema.
@@ -68,7 +69,8 @@ export async function deepaiChat(req, res) {
 
     if (!resp.ok) {
       const text = await resp.text().catch(() => '')
-      return res.status(resp.status).json({ error: 'Gemini request failed', detail: text })
+      // Do not leak upstream 404 to client as route 404; use 502 Bad Gateway
+      return res.status(502).json({ error: 'Gemini request failed', detail: text })
     }
     const data = await resp.json()
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I could not generate a response.'
@@ -242,7 +244,7 @@ export async function deepaiAssistant(req, res) {
 
     if (!resp.ok) {
       const text = await resp.text().catch(() => '')
-      return res.status(resp.status).json({ error: 'Gemini request failed', detail: text })
+      return res.status(502).json({ error: 'Gemini request failed', detail: text })
     }
     const data = await resp.json()
     const modelText = data?.candidates?.[0]?.content?.parts?.[0]?.text || ''
