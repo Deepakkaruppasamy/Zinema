@@ -1,17 +1,17 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
-const ThemeContext = createContext({ theme: 'dark', toggleTheme: () => {} });
+const ThemeContext = createContext({ theme: 'dark', toggleTheme: () => {}, setTheme: () => {} });
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
     const saved = localStorage.getItem('zinema_theme');
-    if (saved === 'light' || saved === 'dark') return saved;
+    if (saved === 'light' || saved === 'dark' || saved === 'cinema') return saved;
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     return prefersDark ? 'dark' : 'light';
   });
 
   useEffect(() => {
-    document.body.classList.remove('light', 'dark');
+    document.body.classList.remove('light', 'dark', 'cinema');
     document.body.classList.add(theme);
     localStorage.setItem('zinema_theme', theme);
 
@@ -19,7 +19,7 @@ export const ThemeProvider = ({ children }) => {
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
       // Match the CSS body backgrounds in index.css
-      const color = theme === 'dark' ? '#09090B' : '#f7f7f8';
+      const color = theme === 'dark' ? '#09090B' : theme === 'cinema' ? '#0b0b10' : '#f7f7f8';
       meta.setAttribute('content', color);
     }
   }, [theme]);
@@ -27,7 +27,7 @@ export const ThemeProvider = ({ children }) => {
   const value = useMemo(() => ({
     theme,
     setTheme,
-    toggleTheme: () => setTheme((t) => (t === 'dark' ? 'light' : 'dark')),
+    toggleTheme: () => setTheme((t) => (t === 'dark' ? 'light' : t === 'light' ? 'cinema' : 'dark')),
   }), [theme]);
 
   return (

@@ -25,6 +25,24 @@ body.light{
   background-color: #f7f7f8;
 }
 
+/* Cinema theme: immersive dark with subtle vignette and glow tokens */
+body.cinema{
+  color: #f1f1f5;
+  background-color: #0b0b10;
+  background-image:
+    radial-gradient(1200px 600px at 50% -10%, rgba(248,69,101,0.08), transparent 60%),
+    radial-gradient(800px 400px at 50% 110%, rgba(102,153,255,0.06), transparent 60%);
+}
+
+/* Cinema tokens: can be applied via genre classes on containers */
+.cinema .cinema-accent{ color: var(--cinema-accent, #F84565); }
+.cinema .cinema-glow{ box-shadow: 0 0 20px rgba(248,69,101,0.25); }
+.cinema .cinema-vignette:before{
+  content: '';
+  position: fixed; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.6));
+}
+
 body.light ::-webkit-calendar-picker-indicator {
   filter: invert(0);
 }
