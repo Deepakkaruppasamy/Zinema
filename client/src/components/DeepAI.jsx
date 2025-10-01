@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { MessageCircle, Send, X, Film, Star, Calendar, Heart } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import api from '../lib/api'
+import { useAppContext } from '../context/AppContext'
 import { useUser } from '@clerk/clerk-react'
 
 const WELCOME = `Hi, I'm DeepAI 🎬. I can help with:
@@ -21,6 +22,7 @@ function useScrollToEnd(ref) {
 export default function DeepAI() {
   const navigate = useNavigate()
   const { isSignedIn } = useUser()
+  const { shows } = useAppContext()
 
   const [open, setOpen] = useState(() => {
     try { return JSON.parse(localStorage.getItem('deepai_open') || 'false') } catch { return false }
@@ -49,9 +51,46 @@ export default function DeepAI() {
     { label: 'Site Help', text: 'How do I find my bookings?' },
   ]), [])
 
+  // Lightweight local intent handling before calling backend
+  const localIntent = (text) => {
+    const q = text.toLowerCase()
+    const genres = ['action','adventure','animation','biography','comedy','crime','documentary','drama','family','fantasy','history','horror','mystery','romance','sci-fi','sport','thriller','war','western']
+    const matchedGenre = genres.find(g => q.includes(g) || q.includes(g.replace('-', ' ')))
+
+    // If user asks for available seats
+    if (q.includes('available seat') || q.includes('show seat') || q.includes('check seat')) {
+      // try to find the most recent title mentioned in chat
+      const lastUserMovie = [...messages].reverse().map(m => m.text.toLowerCase()).find(t => shows.some(s => (s.title||'').toLowerCase() && t.includes((s.title||'').toLowerCase())))
+      const title = lastUserMovie ? (shows.find(s => lastUserMovie.includes((s.title||'').toLowerCase()))?.title) : null
+      if (!title) {
+        const top = shows.slice(0,5).map(s => `• ${s.title}`).join('\n')
+        return `Which movie? Please pick one:\n${top}`
+      }
+      const match = shows.find(s => (s.title||'').toLowerCase() === title.toLowerCase())
+      if (!match || !match.dateTime) return `I couldn't find showtimes for ${title}.`
+      const todayKey = Object.keys(match.dateTime)[0]
+      const times = (match.dateTime[todayKey]||[]).slice(0,3).map(t => t.time).join(', ')
+      return `Seats for ${title}: next showtimes ${times}. Open seat map? <nav target="/movies/${match._id}/${todayKey}">`
+    }
+
+    // Genre-based discovery
+    if (matchedGenre) {
+      const list = shows.filter(s => (s.genre||'').toLowerCase().includes(matchedGenre)).slice(0,6)
+      if (!list.length) return null
+      const lines = list.map(s => `• ${s.title} — ${new Date(s.release_date||Date.now()).getFullYear()}`).join('\n')
+      return `Here are some ${matchedGenre} picks you can book now:\n${lines}\nSay "show seats for <title>" to continue.`
+    }
+    return null
+  }
+
   const reply = async (userText) => {
     setTyping(true)
     try {
+      const local = localIntent(userText)
+      if (local) {
+        setMessages(m => [...m, { from: 'bot', text: local }])
+        return
+      }
       const history = messages.map(m => ({ role: m.from === 'user' ? 'user' : 'assistant', text: m.text })).slice(-10)
       // Prefer structured assistant endpoint when available
       const payload = await api.post('/api/deepai/assistant', {
