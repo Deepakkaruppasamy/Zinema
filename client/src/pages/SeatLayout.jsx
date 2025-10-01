@@ -29,6 +29,9 @@ const SeatLayout = () => {
   const [show360View, setShow360View] = useState(false)
   const [selectedSeatFor360, setSelectedSeatFor360] = useState(null)
   const [showVoiceBooking, setShowVoiceBooking] = useState(false)
+  
+  // Derived UI states
+  const isActionDisabled = !selectedTime
   const [showSmartSeatSelector, setShowSmartSeatSelector] = useState(false)
   const [aiPreferences, setAiPreferences] = useState({
     priceSensitivity: 'medium',
@@ -234,6 +237,24 @@ const SeatLayout = () => {
     return () => timerRef.current && clearInterval(timerRef.current)
   }, [expiresAt])
 
+  // Keyboard shortcuts for quick access: A (AI), S (Smart), V (Voice)
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return
+      if (e.key.toLowerCase() === 'a' && !isActionDisabled) {
+        setShowAIRecommendations((v) => !v)
+      }
+      if (e.key.toLowerCase() === 's' && !isActionDisabled) {
+        setShowSmartSeatSelector((v) => !v)
+      }
+      if (e.key.toLowerCase() === 'v' && !isActionDisabled) {
+        setShowVoiceBooking(true)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [isActionDisabled])
+
   // Lightweight confetti (no deps)
   const confettiRef = useRef(null)
   const runConfetti = () => {
@@ -302,28 +323,62 @@ const SeatLayout = () => {
             <h1 className='text-2xl font-semibold'>Select your seat</h1>
             <div className="flex items-center gap-2">
               <button
+                type="button"
+                aria-label="Toggle AI seat recommendations (Shortcut: A)"
+                title={isActionDisabled ? 'Select a time to enable' : 'AI Recommendations (A)'}
+                disabled={isActionDisabled}
                 onClick={() => setShowAIRecommendations(!showAIRecommendations)}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-200"
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                  isActionDisabled
+                    ? 'bg-gray-600/40 text-white/60 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:from-purple-600 hover:to-blue-600'
+                }`}
               >
                 <Brain className="w-4 h-4" />
                 AI Recommendations
+                {!isActionDisabled && (
+                  <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-white/20">A</span>
+                )}
               </button>
               <button
+                type="button"
+                aria-label="Toggle Smart Seat Selector (Shortcut: S)"
+                title={isActionDisabled ? 'Select a time to enable' : 'Smart Seat Selector (S)'}
+                disabled={isActionDisabled}
                 onClick={() => setShowSmartSeatSelector(!showSmartSeatSelector)}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200"
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                  isActionDisabled
+                    ? 'bg-gray-600/40 text-white/60 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600'
+                }`}
               >
                 <Settings className="w-4 h-4" />
                 Smart Seat Selector
+                {!isActionDisabled && (
+                  <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-white/20">S</span>
+                )}
               </button>
               <button
+                type="button"
+                aria-label="Open Voice Booking (Shortcut: V)"
+                title={isActionDisabled ? 'Select a time to enable' : 'Voice Booking (V)'}
+                disabled={isActionDisabled}
                 onClick={() => setShowVoiceBooking(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-lg hover:from-green-600 hover:to-teal-600 transition-all duration-200"
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                  isActionDisabled
+                    ? 'bg-gray-600/40 text-white/60 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-green-500 to-teal-500 text-white hover:from-green-600 hover:to-teal-600'
+                }`}
               >
                 <Settings className="w-4 h-4" />
                 Voice Booking
+                {!isActionDisabled && (
+                  <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-white/20">V</span>
+                )}
               </button>
             </div>
           </div>
+          <p className='sr-only'>Use keyboard shortcuts A, S, V to toggle AI, Smart Selector, and Voice Booking when a time is selected.</p>
           {/* Accessibility Legend and Timer */}
           <div className='flex flex-col items-center gap-2 mb-4'>
             {timeLeft && (
