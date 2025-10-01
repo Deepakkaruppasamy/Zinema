@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   Plus, 
   X, 
@@ -20,21 +20,72 @@ import {
   MessageCircle,
   Bookmark,
   RotateCcw,
-  Shuffle
+  Shuffle,
+  AlertCircle,
+  RefreshCw,
+  Save,
+  Loader2
 } from 'lucide-react';
 
-const MovieComparison = ({ onClose }) => {
-  const [selectedMovies, setSelectedMovies] = useState([]);
+const MovieComparison = ({ onClose, initialMovies = [] }) => {
+  // Core state
+  const [selectedMovies, setSelectedMovies] = useState(initialMovies);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [showSearch, setShowSearch] = useState(false);
   const [comparisonData, setComparisonData] = useState(null);
+  
+  // UI state
   const [hoveredMovie, setHoveredMovie] = useState(null);
   const [animationKey, setAnimationKey] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [showTips, setShowTips] = useState(true);
   const [favorites, setFavorites] = useState(new Set());
   const [recentSearches, setRecentSearches] = useState([]);
+  
+  // Error handling
+  const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
+  
+  // Persistence
+  const [savedComparisons, setSavedComparisons] = useState([]);
+  const [autoSave, setAutoSave] = useState(true);
+
+  // Load data from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('movieComparisonData');
+      if (saved) {
+        const data = JSON.parse(saved);
+        setSelectedMovies(data.selectedMovies || []);
+        setFavorites(new Set(data.favorites || []));
+        setRecentSearches(data.recentSearches || []);
+        setSavedComparisons(data.savedComparisons || []);
+      }
+    } catch (err) {
+      console.warn('Failed to load saved data:', err);
+      setError('Failed to load saved data');
+    }
+  }, []);
+
+  // Auto-save data to localStorage
+  useEffect(() => {
+    if (autoSave) {
+      try {
+        const data = {
+          selectedMovies,
+          favorites: Array.from(favorites),
+          recentSearches,
+          savedComparisons,
+          timestamp: Date.now()
+        };
+        localStorage.setItem('movieComparisonData', JSON.stringify(data));
+      } catch (err) {
+        console.warn('Failed to save data:', err);
+      }
+    }
+  }, [selectedMovies, favorites, recentSearches, savedComparisons, autoSave]);
 
   // Mock movie data - replace with actual API call
   const mockMovies = [
@@ -97,16 +148,20 @@ const MovieComparison = ({ onClose }) => {
     }
   ];
 
-  const handleSearch = (query) => {
+  const handleSearch = useCallback(async (query) => {
     if (query.length < 2) {
       setSearchResults([]);
+      setError(null);
       return;
     }
     
     setIsLoading(true);
+    setError(null);
     
-    // Simulate API delay for better UX
-    setTimeout(() => {
+    try {
+      // Simulate API delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       const results = mockMovies.filter(movie =>
         movie.title.toLowerCase().includes(query.toLowerCase()) ||
         movie.director.toLowerCase().includes(query.toLowerCase()) ||
@@ -114,48 +169,70 @@ const MovieComparison = ({ onClose }) => {
       );
       
       setSearchResults(results);
-      setIsLoading(false);
       
       // Add to recent searches
       if (query && !recentSearches.includes(query)) {
         setRecentSearches(prev => [query, ...prev.slice(0, 4)]);
       }
-    }, 500);
-  };
+    } catch (err) {
+      setError('Failed to search movies. Please try again.');
+      console.error('Search error:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [recentSearches, mockMovies]);
 
-  const addMovie = (movie) => {
-    if (selectedMovies.length >= 4) {
-      // Show animated notification instead of alert
-      const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-bounce';
-      notification.textContent = 'Maximum 4 movies can be compared at once';
-      document.body.appendChild(notification);
-      setTimeout(() => notification.remove(), 3000);
-      return;
+  const retrySearch = useCallback(() => {
+    if (searchQuery) {
+      setIsRetrying(true);
+      setRetryCount(prev => prev + 1);
+      handleSearch(searchQuery).finally(() => setIsRetrying(false));
     }
+  }, [searchQuery, handleSearch]);
+
+  const showNotification = useCallback((message, type = 'info') => {
+    const colors = {
+      success: 'bg-green-500',
+      error: 'bg-red-500',
+      warning: 'bg-yellow-500',
+      info: 'bg-blue-500'
+    };
     
-    if (selectedMovies.some(m => m.id === movie.id)) {
-      const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-yellow-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-bounce';
-      notification.textContent = 'Movie already added to comparison';
-      document.body.appendChild(notification);
-      setTimeout(() => notification.remove(), 3000);
-      return;
-    }
-    
-    setSelectedMovies(prev => [...prev, movie]);
-    setSearchQuery('');
-    setSearchResults([]);
-    setShowSearch(false);
-    setAnimationKey(prev => prev + 1);
-    
-    // Success animation
     const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-bounce';
-    notification.textContent = `${movie.title} added to comparison!`;
+    notification.className = `fixed top-4 right-4 ${colors[type]} text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-bounce`;
+    notification.textContent = message;
     document.body.appendChild(notification);
     setTimeout(() => notification.remove(), 3000);
-  };
+  }, []);
+
+  const addMovie = useCallback((movie) => {
+    try {
+      if (selectedMovies.length >= 4) {
+        showNotification('Maximum 4 movies can be compared at once', 'warning');
+        return false;
+      }
+      
+      if (selectedMovies.some(m => m.id === movie.id)) {
+        showNotification('Movie already added to comparison', 'warning');
+        return false;
+      }
+      
+      setSelectedMovies(prev => [...prev, movie]);
+      setSearchQuery('');
+      setSearchResults([]);
+      setShowSearch(false);
+      setAnimationKey(prev => prev + 1);
+      setError(null);
+      
+      showNotification(`${movie.title} added to comparison!`, 'success');
+      return true;
+    } catch (err) {
+      console.error('Error adding movie:', err);
+      setError('Failed to add movie. Please try again.');
+      showNotification('Failed to add movie', 'error');
+      return false;
+    }
+  }, [selectedMovies, showNotification]);
 
   const removeMovie = (movieId) => {
     setSelectedMovies(prev => prev.filter(m => m.id !== movieId));
@@ -185,22 +262,65 @@ const MovieComparison = ({ onClose }) => {
     setAnimationKey(prev => prev + 1);
   };
 
-  const generateComparison = () => {
+  const generateComparison = useCallback(() => {
     if (selectedMovies.length < 2) return;
     
-    // Calculate comparison metrics
-    const comparison = {
-      averageRating: selectedMovies.reduce((sum, movie) => sum + movie.rating, 0) / selectedMovies.length,
-      totalDuration: selectedMovies.reduce((sum, movie) => sum + movie.duration, 0),
-      totalBudget: selectedMovies.reduce((sum, movie) => sum + movie.budget, 0),
-      totalBoxOffice: selectedMovies.reduce((sum, movie) => sum + movie.boxOffice, 0),
-      commonGenres: findCommonGenres(selectedMovies),
-      commonCast: findCommonCast(selectedMovies),
-      recommendations: generateRecommendations(selectedMovies)
-    };
-    
-    setComparisonData(comparison);
-  };
+    try {
+      // Calculate comparison metrics
+      const comparison = {
+        averageRating: selectedMovies.reduce((sum, movie) => sum + movie.rating, 0) / selectedMovies.length,
+        totalDuration: selectedMovies.reduce((sum, movie) => sum + movie.duration, 0),
+        totalBudget: selectedMovies.reduce((sum, movie) => sum + movie.budget, 0),
+        totalBoxOffice: selectedMovies.reduce((sum, movie) => sum + movie.boxOffice, 0),
+        commonGenres: findCommonGenres(selectedMovies),
+        commonCast: findCommonCast(selectedMovies),
+        recommendations: generateRecommendations(selectedMovies),
+        timestamp: Date.now(),
+        movieCount: selectedMovies.length
+      };
+      
+      setComparisonData(comparison);
+      setError(null);
+    } catch (err) {
+      console.error('Error generating comparison:', err);
+      setError('Failed to generate comparison. Please try again.');
+    }
+  }, [selectedMovies]);
+
+  const saveComparison = useCallback(() => {
+    if (selectedMovies.length < 2) {
+      showNotification('Add at least 2 movies to save comparison', 'warning');
+      return;
+    }
+
+    try {
+      const comparison = {
+        id: Date.now().toString(),
+        name: `Comparison ${savedComparisons.length + 1}`,
+        movies: selectedMovies,
+        data: comparisonData,
+        createdAt: new Date().toISOString()
+      };
+
+      setSavedComparisons(prev => [comparison, ...prev]);
+      showNotification('Comparison saved successfully!', 'success');
+    } catch (err) {
+      console.error('Error saving comparison:', err);
+      showNotification('Failed to save comparison', 'error');
+    }
+  }, [selectedMovies, comparisonData, savedComparisons.length, showNotification]);
+
+  const loadComparison = useCallback((comparison) => {
+    try {
+      setSelectedMovies(comparison.movies);
+      setComparisonData(comparison.data);
+      setShowSearch(false);
+      showNotification(`Loaded: ${comparison.name}`, 'success');
+    } catch (err) {
+      console.error('Error loading comparison:', err);
+      showNotification('Failed to load comparison', 'error');
+    }
+  }, [showNotification]);
 
   const findCommonGenres = (movies) => {
     const allGenres = movies.flatMap(movie => movie.genre);
@@ -307,6 +427,48 @@ const MovieComparison = ({ onClose }) => {
           </div>
         </div>
 
+        {/* Error Display */}
+        {error && (
+          <div className="p-4 bg-red-50 border-b border-red-200 animate-in slide-in-from-top-2 duration-300">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+              <div className="flex-1">
+                <p className="text-sm text-red-800">{error}</p>
+                {retryCount > 0 && (
+                  <p className="text-xs text-red-600 mt-1">Retry attempt: {retryCount}</p>
+                )}
+              </div>
+              <button
+                onClick={() => setError(null)}
+                className="text-red-400 hover:text-red-600 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Saved Comparisons */}
+        {savedComparisons.length > 0 && !showSearch && (
+          <div className="p-4 bg-green-50 border-b border-green-200">
+            <div className="flex items-center gap-2 mb-3">
+              <Bookmark className="w-4 h-4 text-green-600" />
+              <span className="text-sm font-medium text-green-800">Saved Comparisons</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {savedComparisons.slice(0, 5).map(comparison => (
+                <button
+                  key={comparison.id}
+                  onClick={() => loadComparison(comparison)}
+                  className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs hover:bg-green-200 transition-colors"
+                >
+                  {comparison.name} ({comparison.movies.length} movies)
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Search Bar */}
         {showSearch && (
           <div className="p-4 bg-gradient-to-r from-gray-50 to-blue-50 border-b border-gray-200 animate-in slide-in-from-top-2 duration-300">
@@ -344,7 +506,23 @@ const MovieComparison = ({ onClose }) => {
               />
               {isLoading && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                  <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                </div>
+              )}
+              {error && (
+                <div className="absolute right-12 top-1/2 -translate-y-1/2">
+                  <button
+                    onClick={retrySearch}
+                    disabled={isRetrying}
+                    className="p-1 text-red-500 hover:text-red-700 transition-colors"
+                    title="Retry search"
+                  >
+                    {isRetrying ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
               )}
               {searchResults.length > 0 && (
@@ -668,7 +846,14 @@ const MovieComparison = ({ onClose }) => {
               )}
 
               {/* Action Buttons */}
-              <div className="flex justify-center gap-4">
+              <div className="flex justify-center gap-4 flex-wrap">
+                <button 
+                  onClick={saveComparison}
+                  className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200 hover:scale-105 shadow-lg"
+                >
+                  <Save className="w-4 h-4" />
+                  Save Comparison
+                </button>
                 <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 hover:scale-105 shadow-lg">
                   <Share2 className="w-4 h-4" />
                   Share Comparison
@@ -677,9 +862,16 @@ const MovieComparison = ({ onClose }) => {
                   <Download className="w-4 h-4" />
                   Export PDF
                 </button>
-                <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200 hover:scale-105 shadow-lg">
+                <button 
+                  onClick={() => setAutoSave(!autoSave)}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-lg transition-all duration-200 hover:scale-105 shadow-lg ${
+                    autoSave 
+                      ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white hover:from-emerald-700 hover:to-emerald-800' 
+                      : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white hover:from-gray-500 hover:to-gray-600'
+                  }`}
+                >
                   <Bookmark className="w-4 h-4" />
-                  Save Comparison
+                  {autoSave ? 'Auto-Save ON' : 'Auto-Save OFF'}
                 </button>
               </div>
             </div>
