@@ -3,7 +3,7 @@ import fetch from 'node-fetch'
 import Movie from '../models/Movie.js'
 import Show from '../models/Show.js'
 
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-pro'
 
 function buildPrompt(messages = [], userProfile = {}) {
   const system = `You are DeepAI, a personalized Gemini-powered assistant for Zinema.
