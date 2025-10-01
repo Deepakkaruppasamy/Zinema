@@ -65,7 +65,7 @@ const App = () => {
         <Route path='/community' element={<CommunityChat/>} />
         <Route path='/events' element={<Events/>} />
         <Route path='/events/:id' element={<EventDetails/>} />
-        <Route path='/features' element={<EnhancedFeatures/>} />
+        <Route path='/comparison' element={<EnhancedFeatures/>} />
         <Route path='/admin/*' element={user ? <Layout/> : (
           <div className='min-h-screen flex justify-center items-center'>
             <SignIn fallbackRedirectUrl={'/admin'} />
