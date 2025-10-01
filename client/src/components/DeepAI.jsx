@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MessageCircle, Send, X, Film, Star, Calendar, Heart } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import api from '../lib/api'
+import { api } from '../lib/api'
 import { useAppContext } from '../context/AppContext'
 import { useUser } from '@clerk/clerk-react'
 

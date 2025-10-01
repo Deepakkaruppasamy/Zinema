@@ -138,26 +138,24 @@ const SeatView360 = ({ seatId, isOpen, onClose, theatreLayout = 'standard' }) =>
       }
     }
 
-    // Draw view cone from selected seat
-    if (isSelectedSeat) {
-      ctx.strokeStyle = '#f84565';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([5, 5]);
-      
-      const seatX = seat3D.x * scale;
-      const seatY = seat3D.z * scale;
-      const screenY = -height * config.screenHeight / 2;
-      
-      // Draw view lines
-      ctx.beginPath();
-      ctx.moveTo(seatX, seatY);
-      ctx.lineTo(-width * config.screenWidth / 4, screenY);
-      ctx.moveTo(seatX, seatY);
-      ctx.lineTo(width * config.screenWidth / 4, screenY);
-      ctx.stroke();
-      
-      ctx.setLineDash([]);
-    }
+    // Draw view cone from the selected seat (seat3D)
+    ctx.strokeStyle = '#f84565';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    
+    const seatX = seat3D.x * scale;
+    const seatY = seat3D.z * scale;
+    const screenY = -height * config.screenHeight / 2;
+    
+    // Draw view lines
+    ctx.beginPath();
+    ctx.moveTo(seatX, seatY);
+    ctx.lineTo(-width * config.screenWidth / 4, screenY);
+    ctx.moveTo(seatX, seatY);
+    ctx.lineTo(width * config.screenWidth / 4, screenY);
+    ctx.stroke();
+    
+    ctx.setLineDash([]);
 
     ctx.restore();
   };
