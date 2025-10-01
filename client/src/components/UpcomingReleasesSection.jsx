@@ -54,6 +54,10 @@ const settings = {
   autoplaySpeed: 4000,
   nextArrow: <ArrowBtn dir="right" />,
   prevArrow: <ArrowBtn dir="left" />,
+  accessibility: true,
+  focusOnSelect: false,
+  pauseOnFocus: true,
+  pauseOnHover: true,
   responsive: [
     { breakpoint: 1280, settings: { slidesToShow: 3 } },
     { breakpoint: 1024, settings: { slidesToShow: 2 } },

@@ -28,8 +28,9 @@ const FeaturedTrailerSection = () => {
             className="w-full h-full min-h-[320px]"
             src={TRAILER_URL}
             title="Featured Trailer"
+            sandbox="allow-scripts allow-same-origin allow-presentation"
+            allow="autoplay; encrypted-media; picture-in-picture"
             frameBorder="0"
-            allow="autoplay; encrypted-media"
             referrerPolicy="origin-when-cross-origin"
             allowFullScreen
             loading="lazy"

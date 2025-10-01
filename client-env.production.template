@@ -1,0 +1,36 @@
+# Production Environment Variables for Zinema Client
+# Copy this to client/.env.production and fill in your actual values
+
+NODE_ENV=production
+
+# Clerk Authentication (Production Keys)
+VITE_CLERK_PUBLISHABLE_KEY=pk_live_your_clerk_publishable_key_here
+
+# API Configuration
+VITE_BASE_URL=https://zinema-clvk.onrender.com
+VITE_API_URL=https://zinema-clvk.onrender.com/api
+
+# TMDB Configuration
+VITE_TMDB_API_KEY=your_tmdb_api_key_here
+VITE_TMDB_BEARER=your_tmdb_bearer_token_here
+VITE_TMDB_LANG=en-US
+VITE_TMDB_IMAGE_BASE_URL=/api/tmdb-image?path=
+
+# Stripe Configuration
+VITE_STRIPE_PUBLISHABLE_KEY=pk_live_your_stripe_publishable_key_here
+
+# Currency
+VITE_CURRENCY=USD
+
+# 3D Model
+VITE_3D_MODEL_URL=https://modelviewer.dev/shared-assets/models/Astronaut.glb
+
+# Cloudinary (for file uploads)
+VITE_CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+VITE_CLOUDINARY_UPLOAD_PRESET=your_cloudinary_upload_preset
+
+# PWA Configuration
+VITE_VAPID_PUBLIC_KEY=your_vapid_public_key_here
+
+# Frontend URL
+VITE_FRONTEND_URL=https://zinema-mu.vercel.app

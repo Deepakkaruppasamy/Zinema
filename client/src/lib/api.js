@@ -6,7 +6,7 @@ const baseURL = import.meta.env.VITE_BASE_URL || API_CONFIG.BASE_URL
 
 export const api = axios.create({ 
   baseURL,
-  timeout: 10000,
+  timeout: 30000, // Increased timeout to 30 seconds
   headers: {
     'Content-Type': 'application/json'
   }
@@ -38,6 +38,12 @@ api.interceptors.response.use(
       localStorage.removeItem('clerk-token')
       window.location.href = '/login'
     }
+    
+    // Log network errors for debugging
+    if (error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED') {
+      console.warn('Network error detected:', error.message)
+    }
+    
     return Promise.reject(error)
   }
 )

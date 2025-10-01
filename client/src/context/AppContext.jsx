@@ -1,6 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from "react";
 import { api } from "../lib/api.js";
+import { retryApi, safeApiCall } from "../lib/retryApi.js";
+import { getErrorMessage } from "../lib/errorHandler.js";
 import { useAuth, useUser } from "@clerk/clerk-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -27,28 +29,49 @@ export const AppProvider = ({ children })=>{
         try {
             const token = await getToken()
             if (!token) return
-            const {data} = await api.get('/api/admin/is-admin', { headers: { Authorization: `Bearer ${token}` } })
-            setIsAdmin(data.isAdmin)
+            
+            const result = await safeApiCall(
+                () => retryApi.get('/api/admin/is-admin', { headers: { Authorization: `Bearer ${token}` } }),
+                { isAdmin: false }
+            )
+            
+            if (result.error) {
+                console.warn('Failed to fetch admin status:', result.error)
+                return
+            }
+            
+            setIsAdmin(result.data.isAdmin)
 
-            if(!data.isAdmin && location.pathname.startsWith('/admin')){
+            if(!result.data.isAdmin && location.pathname.startsWith('/admin')){
                 navigate('/')
                 toast.error('You are not authorized to access admin dashboard')
             }
         } catch (error) {
-            console.error(error)
+            console.error('Admin check failed:', error)
         }
     }
 
     const fetchShows = async ()=>{
         try {
-            const { data } = await api.get('/api/show/all')
-            if(data.success){
-                setShows(data.shows)
+            const result = await safeApiCall(
+                () => retryApi.get('/api/show/all'),
+                { success: false, shows: [], message: 'Failed to load shows' }
+            )
+            
+            if (result.error) {
+                console.warn('Failed to fetch shows:', result.error)
+                toast.error('Failed to load movies. Please check your connection.')
+                return
+            }
+            
+            if(result.data.success){
+                setShows(result.data.shows)
             }else{
-                toast.error(data.message)
+                toast.error(result.data.message)
             }
         } catch (error) {
-            console.error(error)
+            console.error('Shows fetch failed:', error)
+            toast.error('Failed to load movies. Please try again later.')
         }
     }
 
@@ -56,15 +79,24 @@ export const AppProvider = ({ children })=>{
         try {
             const token = await getToken()
             if (!token) return
-            const { data } = await api.get('/api/user/favorites', { headers: { Authorization: `Bearer ${token}` } })
+            
+            const result = await safeApiCall(
+                () => retryApi.get('/api/user/favorites', { headers: { Authorization: `Bearer ${token}` } }),
+                { success: false, movies: [], message: 'Failed to load favorites' }
+            )
+            
+            if (result.error) {
+                console.warn('Failed to fetch favorites:', result.error)
+                return
+            }
 
-            if(data.success){
-                setFavoriteMovies(data.movies)
+            if(result.data.success){
+                setFavoriteMovies(result.data.movies)
             }else{
-                toast.error(data.message)
+                toast.error(result.data.message)
             }
         } catch (error) {
-            console.error(error)
+            console.error('Favorites fetch failed:', error)
         }
     }
 

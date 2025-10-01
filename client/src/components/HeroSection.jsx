@@ -79,6 +79,10 @@ const HeroSection = () => {
     arrows: true,
     autoplay: true,
     autoplaySpeed: 5000,
+    accessibility: true,
+    focusOnSelect: false,
+    pauseOnFocus: true,
+    pauseOnHover: true,
   };
 
   return (

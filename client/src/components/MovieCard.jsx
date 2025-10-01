@@ -71,7 +71,8 @@ const MovieCard = ({movie}) => {
               className='w-full h-full scale-[1.02]'
               src={`https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(`${movie.title} official trailer`)}&autoplay=1&mute=1&controls=0&modestbranding=1&playsinline=1&rel=0`}
               title={`${movie.title} trailer preview`}
-              allow='autoplay; encrypted-media; picture-in-picture'
+              sandbox="allow-scripts allow-same-origin allow-presentation"
+              allow="autoplay; encrypted-media; picture-in-picture"
               referrerPolicy='origin-when-cross-origin'
               loading='lazy'
             />

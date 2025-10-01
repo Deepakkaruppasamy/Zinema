@@ -411,6 +411,8 @@ const Theatre = () => {
             title="Theatre Location Map"
             className="w-full h-full"
             style={{ border: 0 }}
+            sandbox="allow-scripts allow-same-origin"
+            allow="geolocation"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
             src={`https://www.google.com/maps?q=${encodeURIComponent('https://maps.app.goo.gl/u5Fkgw9TP2QqTrwP9')}&output=embed`}

@@ -37,6 +37,10 @@ const settings = {
   arrows: false,
   autoplay: true,
   autoplaySpeed: 6000,
+  accessibility: true,
+  focusOnSelect: false,
+  pauseOnFocus: true,
+  pauseOnHover: true,
   responsive: [
     {
       breakpoint: 900,

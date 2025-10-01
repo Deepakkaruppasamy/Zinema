@@ -28,6 +28,10 @@ const SimilarMoviesCarousel = ({ baseMovie, allShows }) => {
     slidesToScroll: 2,
     nextArrow: <NextArrow />,
     prevArrow: <PrevArrow />,
+    accessibility: true,
+    focusOnSelect: false,
+    pauseOnFocus: true,
+    pauseOnHover: true,
     responsive: [
       { breakpoint: 1280, settings: { slidesToShow: 5 } },
       { breakpoint: 1024, settings: { slidesToShow: 4 } },
