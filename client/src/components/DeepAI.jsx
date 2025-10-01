@@ -36,11 +36,15 @@ export default function DeepAI() {
   })
   const [input, setInput] = useState('')
   const [typing, setTyping] = useState(false)
+  const [showBanner, setShowBanner] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('deepai_banner') || 'false') } catch { return false }
+  })
   const endRef = useRef(null)
   useScrollToEnd(endRef)
 
   useEffect(() => { try { localStorage.setItem('deepai_open', JSON.stringify(open)) } catch {} }, [open])
   useEffect(() => { try { localStorage.setItem('deepai_messages', JSON.stringify(messages)) } catch {} }, [messages])
+  useEffect(() => { try { localStorage.setItem('deepai_banner', JSON.stringify(showBanner)) } catch {} }, [showBanner])
 
   const quick = useMemo(() => ([
     { label: 'Available Movies', text: 'Show available movies' },
@@ -104,8 +108,9 @@ export default function DeepAI() {
         navigate(navMatch[1])
       }
       setMessages(m => [...m, { from: 'bot', text }])
-    } catch (_) {
-      setMessages(m => [...m, { from: 'bot', text: 'DeepAI is unavailable right now. Please try again.' }])
+    } catch (e) {
+      setShowBanner(true)
+      setMessages(m => [...m, { from: 'bot', text: 'Assistant is temporarily unavailable. I will use local suggestions for now.' }])
     } finally {
       setTyping(false)
     }
@@ -140,6 +145,12 @@ export default function DeepAI() {
       className="fixed right-4 left-4 sm:left-auto sm:right-6 top-auto bottom-4 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 w-auto sm:w-80 max-w-[92vw] backdrop-blur-xl bg-zinc-900/85 text-zinc-100 rounded-xl shadow-2xl border border-zinc-800 overflow-hidden"
       style={{ zIndex: 2147483647 }}
     >
+      {showBanner && (
+        <div className="flex items-center justify-between px-3 py-2 text-xs bg-amber-500/20 text-amber-200 border-b border-amber-500/30">
+          <span>Assistant service is unavailable. Using local suggestions.</span>
+          <button onClick={() => setShowBanner(false)} className="hover:opacity-80"><X size={14} /></button>
+        </div>
+      )}
       <div className="flex items-center justify-between px-3 py-2 bg-gradient-to-r from-fuchsia-600 via-pink-600 to-rose-600">
         <div className="flex items-center gap-2 font-semibold"><Film size={18}/> DeepAI</div>
         <button onClick={() => setOpen(false)} className="p-1 hover:opacity-80"><X size={18} /></button>
