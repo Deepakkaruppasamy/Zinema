@@ -259,8 +259,8 @@ const MovieComparison = ({ onClose }) => {
   }, [selectedMovies]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl max-w-7xl w-full max-h-[90vh] overflow-hidden shadow-2xl animate-in fade-in-0 zoom-in-95 duration-300">
+    <div className="w-full">
+      <div className="bg-white rounded-xl w-full overflow-hidden shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
           <div className="flex items-center gap-3">
