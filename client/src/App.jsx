@@ -39,7 +39,6 @@ import Feedbacks from './pages/admin/Feedbacks'
 import EventsAdmin from './pages/admin/EventsAdmin'
 import Events from './pages/Events'
 import EventDetails from './pages/EventDetails'
-import EnhancedFeatures from './components/EnhancedFeatures'
 
 const App = () => {
 
@@ -65,7 +64,6 @@ const App = () => {
         <Route path='/community' element={<CommunityChat/>} />
         <Route path='/events' element={<Events/>} />
         <Route path='/events/:id' element={<EventDetails/>} />
-        <Route path='/comparison' element={<EnhancedFeatures/>} />
         <Route path='/admin/*' element={user ? <Layout/> : (
           <div className='min-h-screen flex justify-center items-center'>
             <SignIn fallbackRedirectUrl={'/admin'} />
