@@ -10,6 +10,7 @@ import { useAppContext } from '../context/AppContext'
 import AISeatRecommendation from '../components/seatRecommendation/AISeatRecommendation'
 import SeatView360 from '../components/seatRecommendation/SeatView360'
 import VoiceChatBooking from '../components/booking/VoiceChatBooking'
+import SmartSeatSelector from '../components/seatSelection/SmartSeatSelector'
 
 const SeatLayout = () => {
 
@@ -28,6 +29,7 @@ const SeatLayout = () => {
   const [show360View, setShow360View] = useState(false)
   const [selectedSeatFor360, setSelectedSeatFor360] = useState(null)
   const [showVoiceBooking, setShowVoiceBooking] = useState(false)
+  const [showSmartSeatSelector, setShowSmartSeatSelector] = useState(false)
   const [aiPreferences, setAiPreferences] = useState({
     priceSensitivity: 'medium',
     viewPreference: 'center',
@@ -307,6 +309,13 @@ const SeatLayout = () => {
                 AI Recommendations
               </button>
               <button
+                onClick={() => setShowSmartSeatSelector(!showSmartSeatSelector)}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all duration-200"
+              >
+                <Settings className="w-4 h-4" />
+                Smart Seat Selector
+              </button>
+              <button
                 onClick={() => setShowVoiceBooking(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-teal-500 text-white rounded-lg hover:from-green-600 hover:to-teal-600 transition-all duration-200"
               >
@@ -366,6 +375,20 @@ const SeatLayout = () => {
                 occupiedSeats={occupiedSeats}
                 onSeatSelect={handleAISeatSelect}
                 userPreferences={aiPreferences}
+              />
+            </div>
+          )}
+
+          {/* Smart Seat Selector Panel */}
+          {showSmartSeatSelector && selectedTime && (
+            <div className="mt-8 w-full max-w-6xl">
+              <SmartSeatSelector
+                showId={selectedTime.showId}
+                onSeatSelect={(seat) => {
+                  setSelectedSeats(prev => [...prev, seat])
+                  setShowSmartSeatSelector(false)
+                }}
+                selectedSeats={selectedSeats}
               />
             </div>
           )}

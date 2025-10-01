@@ -38,6 +38,10 @@ const Navbar = () => {
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/events'>{t('nav.events')}</Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/'>{t('nav.releases')}</Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/3d-view'>{t('nav.view3d')}</Link>
+        <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/features' className='flex items-center gap-2'>
+          <TicketPlus className='w-4 h-4' />
+          Enhanced Features
+        </Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/community' className='flex items-center gap-2'>
           <MessageCircle className='w-4 h-4' />
           {t('nav.community')}

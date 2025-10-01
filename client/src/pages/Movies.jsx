@@ -3,6 +3,7 @@ import MovieCard from '../components/MovieCard'
 import BlurCircle from '../components/BlurCircle'
 import { useAppContext } from '../context/AppContext'
 import { Search, XCircle, Filter, Sparkles, SlidersHorizontal, Clock, Languages } from 'lucide-react'
+import AdvancedSearch from '../components/search/AdvancedSearch'
 
 const Movies = () => {
   const { shows } = useAppContext();
@@ -14,6 +15,7 @@ const Movies = () => {
   const [sortBy, setSortBy] = useState('popularity');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [minRating, setMinRating] = useState(0); // 0 - 10
   const [maxDuration, setMaxDuration] = useState(240); // minutes
   const [onlyUpcoming, setOnlyUpcoming] = useState(false);
@@ -203,6 +205,13 @@ const Movies = () => {
                 <XCircle className="w-4 h-4" />
               </button>
             )}
+            <button
+              onClick={() => setShowAdvancedSearch(!showAdvancedSearch)}
+              className="absolute right-12 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+              title="Advanced Search"
+            >
+              <Sparkles className="w-4 h-4" />
+            </button>
             {/* Suggestions Dropdown */}
             {showSuggestions && suggestions.length > 0 && (
               <ul className="absolute left-0 right-0 bg-gray-800/95 border border-white/10 rounded-xl mt-2 z-10 max-h-56 overflow-y-auto backdrop-blur">
@@ -356,6 +365,21 @@ const Movies = () => {
           </div>
         </div>
       </div>
+
+      {/* Advanced Search Component */}
+      {showAdvancedSearch && (
+        <div className="mb-8">
+          <AdvancedSearch
+            onSearch={(query) => {
+              setSearchTerm(query);
+              setShowAdvancedSearch(false);
+            }}
+            onResults={(results) => {
+              console.log('Advanced search results:', results);
+            }}
+          />
+        </div>
+      )}
 
       <div className='flex items-center justify-between my-4'>
         <h1 className='text-lg font-medium'>Now Showing</h1>
