@@ -1,7 +1,7 @@
 import React from 'react';
 
-const PLAY_STORE = 'https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg';
-const APP_STORE = 'https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg';
+const PLAY_STORE = '/google-play-badge.svg';
+const APP_STORE = '/download-on-the-app-store.svg';
 const PHONE_IMG = 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=400&q=80';
 
 const AppPromotionSection = () => (
