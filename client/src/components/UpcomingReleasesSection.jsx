@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Slider from 'react-slick';
 import { CalendarDays, ChevronLeft, ChevronRight, Bell } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAppContext } from '../context/AppContext';
 
 // Mock upcoming releases data
 const upcomingMovies = [
@@ -9,25 +10,25 @@ const upcomingMovies = [
     id: 1,
     title: 'Avatar: The Seed Bearer',
     releaseDate: '2025-12-18',
-    poster: 'https://image.tmdb.org/t/p/w500/8YFL5QQVPy3AgrEQxNYVSgiPEbe.jpg',
+    posterPath: '/w500/8YFL5QQVPy3AgrEQxNYVSgiPEbe.jpg',
   },
   {
     id: 2,
     title: 'Deadpool & Wolverine',
     releaseDate: '2025-07-25',
-    poster: 'https://image.tmdb.org/t/p/w500/4qPz6GhNATPlFz7z0t7m4f4U1Yu.jpg',
+    posterPath: '/w500/4qPz6GhNATPlFz7z0t7m4f4U1Yu.jpg',
   },
   {
     id: 3,
     title: 'Fantastic Four',
     releaseDate: '2025-11-07',
-    poster: 'https://image.tmdb.org/t/p/w500/6agKYU5IQFpuDyUYPu39w7UCRrJ.jpg',
+    posterPath: '/w500/6agKYU5IQFpuDyUYPu39w7UCRrJ.jpg',
   },
   {
     id: 4,
     title: 'The Batman: Part II',
     releaseDate: '2025-10-03',
-    poster: 'https://image.tmdb.org/t/p/w500/74xTEgt7R36Fpooo50r9T25onhq.jpg',
+    posterPath: '/w500/74xTEgt7R36Fpooo50r9T25onhq.jpg',
   },
 ];
 
@@ -76,6 +77,7 @@ const SkeletonCard = () => (
 const UpcomingReleasesSection = () => {
   const [loading, setLoading] = useState(true);
   const [movies, setMovies] = useState([]);
+  const { image_base_url } = useAppContext();
 
   useEffect(() => {
     // Simulate async fetch when using mock data so we can show skeletons
@@ -120,7 +122,7 @@ const UpcomingReleasesSection = () => {
               <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/5 to-white/0 backdrop-blur-sm shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)] hover:-translate-y-1 transition duration-300">
                 <div className="relative h-[360px]">
                   <img
-                    src={movie.poster}
+                    src={`${image_base_url}${movie.posterPath}`}
                     alt={movie.title}
                     className="h-full w-full object-cover"
                     onError={(e) => {
