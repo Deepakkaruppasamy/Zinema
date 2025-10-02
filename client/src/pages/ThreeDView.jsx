@@ -69,13 +69,23 @@ function Model({ url }) {
   );
 }
 
-function ModelWithFallback({ url }) {
+function ModelWithFallback({ url, fallbackUrls = [] }) {
+  const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
   const [showFallback, setShowFallback] = useState(false);
   
+  const allUrls = [url, ...fallbackUrls];
+  const currentUrl = allUrls[currentUrlIndex];
+  
   const handleError = useCallback(() => {
-    console.error('Failed to load 3D model, showing fallback');
-    setShowFallback(true);
-  }, []);
+    const nextIndex = currentUrlIndex + 1;
+    if (nextIndex < allUrls.length) {
+      console.warn(`Failed to load 3D model from ${currentUrl}. Reason: Connection reset or CORS issue. Trying fallback ${nextIndex}/${allUrls.length - 1}`);
+      setCurrentUrlIndex(nextIndex);
+    } else {
+      console.error('Failed to load all 3D model options, showing geometric fallback. This may be due to network issues or CORS restrictions.');
+      setShowFallback(true);
+    }
+  }, [currentUrlIndex, allUrls.length, currentUrl]);
   
   if (showFallback) {
     return <FallbackModel />;
@@ -84,7 +94,7 @@ function ModelWithFallback({ url }) {
   return (
     <React.Suspense fallback={<Loader />}>
       <ErrorBoundary onError={handleError}>
-        <Model url={url} />
+        <Model url={currentUrl} />
       </ErrorBoundary>
     </React.Suspense>
   );
@@ -116,9 +126,37 @@ class ErrorBoundary extends React.Component {
 
 const ThreeDView = () => {
   const q = useQuery();
-  // Use a working fallback model
-  const defaultSrc = import.meta.env.VITE_3D_MODEL_URL || 'https://modelviewer.dev/shared-assets/models/Astronaut.glb';
-  const src = q.get('src') || defaultSrc;
+  // Add cache-busting to Vercel blob URL to avoid stale cache issues
+  const addCacheBuster = (url) => {
+    if (url.includes('vercel-storage.com')) {
+      const separator = url.includes('?') ? '&' : '?';
+      return `${url}${separator}v=${Date.now()}`;
+    }
+    return url;
+  };
+
+  // Use a working fallback model with multiple options
+  const fallbackModels = [
+    addCacheBuster('https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatre.glb'), // Custom theater model with cache-busting
+    '/models/theature.glb', // Local theater model
+    'https://modelviewer.dev/shared-assets/models/Astronaut.glb', // Reliable external fallback
+    import.meta.env.VITE_3D_MODEL_URL // Environment configured model
+  ].filter(Boolean);
+  
+  const defaultSrc = fallbackModels[0];
+  const requestedSrc = q.get('src');
+  
+  // Validate and sanitize the requested source
+  const isValidUrl = (url) => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return url.startsWith('/') || url.startsWith('./');
+    }
+  };
+  
+  const src = (requestedSrc && isValidUrl(requestedSrc)) ? requestedSrc : defaultSrc;
   const controlsRef = useRef();
   const [autoRotate, setAutoRotate] = useState(true);
   const [bgTransparent, setBgTransparent] = useState(false);
@@ -159,7 +197,21 @@ const ThreeDView = () => {
       <div className='h-16 flex items-center px-6 text-white border-b border-white/10 justify-between'>
         <h1 className='text-lg font-semibold'>3D View</h1>
         <div className='flex items-center gap-2'>
-          <p className='text-xs opacity-70 hidden md:block'>Source: {new URL(src).hostname}</p>
+          <p className='text-xs opacity-70 hidden md:block'>
+            Source: {(() => {
+              try {
+                const hostname = new URL(src).hostname;
+                return hostname.includes('vercel-storage.com') ? 'Vercel Blob Storage' : hostname;
+              } catch {
+                return src.startsWith('/') ? 'Local file' : 'Invalid URL';
+              }
+            })()}
+          </p>
+          {src.includes('vercel-storage.com') && (
+            <span className='text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded'>
+              Custom Theater Model
+            </span>
+          )}
           <button
             onClick={() => controlsRef.current?.reset()}
             className='ml-3 px-3 py-1 text-xs rounded bg-white/10 hover:bg-white/20'
@@ -185,7 +237,7 @@ const ThreeDView = () => {
         >
           <ambientLight intensity={0.5} />
           <directionalLight position={[5, 5, 5]} intensity={1} />
-          <ModelWithFallback url={src} />
+          <ModelWithFallback url={src} fallbackUrls={fallbackModels.slice(1)} />
           <Environment preset='city' />
           <OrbitControls ref={controlsRef} enableDamping makeDefault autoRotate={autoRotate} autoRotateSpeed={0.5} />
           <Stats className='!left-auto !right-2 !top-20' />
