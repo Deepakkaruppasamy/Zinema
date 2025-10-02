@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Star } from 'lucide-react';
+import { Star, ThumbsUp, ThumbsDown, Flag, Brain, Sparkles, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ReviewIntelligence from './ReviewIntelligence';
 
 const StarInput = ({ value, setValue }) => (
   <div className="flex items-center gap-1">
@@ -22,6 +23,7 @@ const ReviewsSection = ({ movieId, user, axios, getToken, initialReviews = [] })
   const [editRating, setEditRating] = useState(0);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showAIInsights, setShowAIInsights] = useState(true);
   const avg = useMemo(() => {
     if (reviews.length === 0) return 0;
     return (reviews.reduce((s, r) => s + (r.rating || 0), 0) / reviews.length).toFixed(1);
@@ -98,6 +100,34 @@ const ReviewsSection = ({ movieId, user, axios, getToken, initialReviews = [] })
     }
   };
 
+  const markHelpful = async (reviewId, helpful) => {
+    try {
+      const { data } = await axios.post(`/api/review/${reviewId}/helpful`, { helpful });
+      if (data.success) {
+        // Update the review in local state
+        setReviews(reviews.map(r => r._id === reviewId ? data.review : r));
+        toast.success(helpful ? 'Marked as helpful' : 'Marked as unhelpful');
+      }
+    } catch (err) {
+      console.error('Failed to mark review:', err);
+      toast.error('Failed to update review');
+    }
+  };
+
+  const reportReview = async (reviewId, reason) => {
+    try {
+      const { data } = await axios.post(`/api/review/${reviewId}/report`, { reason });
+      if (data.success) {
+        toast.success('Review reported for moderation');
+        // Optionally hide the review from UI
+        setReviews(reviews.filter(r => r._id !== reviewId));
+      }
+    } catch (err) {
+      console.error('Failed to report review:', err);
+      toast.error('Failed to report review');
+    }
+  };
+
   const deleteReview = async (id) => {
     try {
       if (!user) return toast.error('Please login');
@@ -115,6 +145,130 @@ const ReviewsSection = ({ movieId, user, axios, getToken, initialReviews = [] })
     }
   };
 
+  // Enhanced review component with AI insights
+  const ReviewItem = ({ review }) => {
+    const isOwnReview = user && review.user === user.id;
+    const aiAnalysis = review.aiAnalysis || {};
+    const sentimentColor = aiAnalysis.sentimentScore > 0.3 ? 'text-green-400' : 
+                          aiAnalysis.sentimentScore < -0.3 ? 'text-red-400' : 'text-yellow-400';
+
+    return (
+      <div className="border-b border-gray-800 pb-6 last:border-0">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center">
+              {[1,2,3,4,5].map(i => (
+                <Star key={i} className={`w-4 h-4 ${i <= review.rating ? 'text-primary fill-primary' : 'text-gray-600'}`} />
+              ))}
+            </div>
+            <span className="text-gray-400 text-sm">
+              {new Date(review.createdAt).toLocaleDateString()}
+            </span>
+            {aiAnalysis.sentimentScore && (
+              <div className={`flex items-center gap-1 text-xs ${sentimentColor}`}>
+                <Brain className="w-3 h-3" />
+                <span>
+                  {aiAnalysis.sentimentScore > 0.3 ? 'Positive' : 
+                   aiAnalysis.sentimentScore < -0.3 ? 'Negative' : 'Neutral'}
+                </span>
+              </div>
+            )}
+          </div>
+          
+          {isOwnReview && (
+            <div className="flex items-center gap-2">
+              <button onClick={() => startEdit(review)} className="text-primary hover:text-primary/80 text-sm">
+                Edit
+              </button>
+              <button onClick={() => deleteReview(review._id)} className="text-red-400 hover:text-red-300 text-sm">
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Review Text */}
+        <p className="text-gray-300 mb-4 leading-relaxed">{review.text}</p>
+
+        {/* AI Insights */}
+        {aiAnalysis.emotions?.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {aiAnalysis.emotions.slice(0, 3).map((emotion, index) => (
+              <span 
+                key={index}
+                className="px-2 py-1 bg-purple-500/20 text-purple-300 text-xs rounded-full capitalize"
+              >
+                {emotion.emotion}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Themes */}
+        {aiAnalysis.themes?.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {aiAnalysis.themes.slice(0, 3).map((theme, index) => (
+              <span 
+                key={index}
+                className="px-2 py-1 bg-blue-500/20 text-blue-300 text-xs rounded-full capitalize"
+              >
+                {theme}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Quality Indicators */}
+        {aiAnalysis.qualityFlags && (
+          <div className="flex items-center gap-4 mb-4">
+            {aiAnalysis.helpfulnessScore > 0.7 && (
+              <div className="flex items-center gap-1 text-green-400 text-xs">
+                <Sparkles className="w-3 h-3" />
+                <span>Helpful Review</span>
+              </div>
+            )}
+            {aiAnalysis.qualityFlags.toxicityScore > 0.3 && (
+              <div className="flex items-center gap-1 text-yellow-400 text-xs">
+                <AlertTriangle className="w-3 h-3" />
+                <span>May contain strong language</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* User Interactions */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => markHelpful(review._id, true)}
+              className="flex items-center gap-2 text-gray-400 hover:text-green-400 transition-colors"
+            >
+              <ThumbsUp className="w-4 h-4" />
+              <span className="text-sm">{review.helpfulVotes || 0}</span>
+            </button>
+            <button 
+              onClick={() => markHelpful(review._id, false)}
+              className="flex items-center gap-2 text-gray-400 hover:text-red-400 transition-colors"
+            >
+              <ThumbsDown className="w-4 h-4" />
+              <span className="text-sm">{review.unhelpfulVotes || 0}</span>
+            </button>
+          </div>
+          
+          {!isOwnReview && (
+            <button 
+              onClick={() => reportReview(review._id, 'Inappropriate content')}
+              className="flex items-center gap-1 text-gray-400 hover:text-red-400 transition-colors text-sm"
+            >
+              <Flag className="w-3 h-3" />
+              Report
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   // Derive current user's review, if any
   const myReview = useMemo(() => {
     if (!user) return null;
@@ -129,11 +283,25 @@ const ReviewsSection = ({ movieId, user, axios, getToken, initialReviews = [] })
   }, [reviews]);
 
   return (
-    <div className="mt-16">
+    <div className="mt-16 space-y-8">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-medium">Reviews</h2>
-        <span className="text-sm text-gray-400">Avg {avg} • {reviews.length} reviews</span>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-400">Avg {avg} • {reviews.length} reviews</span>
+          <button
+            onClick={() => setShowAIInsights(!showAIInsights)}
+            className="flex items-center gap-2 px-3 py-1.5 bg-primary/20 text-primary rounded-lg hover:bg-primary/30 transition-colors text-sm"
+          >
+            <Brain className="w-4 h-4" />
+            {showAIInsights ? 'Hide' : 'Show'} AI Insights
+          </button>
+        </div>
       </div>
+
+      {/* AI Review Intelligence */}
+      {showAIInsights && (
+        <ReviewIntelligence movieId={movieId} />
+      )}
 
       {!myReview ? (
         <form onSubmit={handleSubmit} className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur">
