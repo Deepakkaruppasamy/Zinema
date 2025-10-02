@@ -118,6 +118,7 @@ const GroupBooking = ({ showId, selectedSeats, onComplete, onClose }) => {
         const { data } = await axios.post('/api/booking/create', {
           showId,
           selectedSeats,
+          greenTicketingDonation: localStorage.getItem('green_ticketing_enabled') === 'true',
           groupBooking: {
             type: 'host_payment',
             members: groupMembers,
@@ -139,6 +140,7 @@ const GroupBooking = ({ showId, selectedSeats, onComplete, onClose }) => {
             axios.post('/api/booking/create', {
               showId,
               selectedSeats: [member.seatId],
+              greenTicketingDonation: localStorage.getItem('green_ticketing_enabled') === 'true',
               groupBooking: {
                 type: 'split_payment',
                 groupId: `group_${Date.now()}`,

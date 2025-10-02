@@ -27,7 +27,11 @@ const QuickBookModal = ({ open, onClose, theatreName, showtime, onConfirm, showI
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ showId, selectedSeats }),
+        body: JSON.stringify({ 
+          showId, 
+          selectedSeats, 
+          greenTicketingDonation: localStorage.getItem('green_ticketing_enabled') === 'true'
+        }),
       });
       const data = await res.json();
       if (data?.success && data?.url) {

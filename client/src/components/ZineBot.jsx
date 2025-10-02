@@ -648,7 +648,15 @@ export default function ZineBot() {
       const seats = seatMatch[1].split(/[\s,]+/).filter(Boolean)
       try {
         const token = await getToken()
-        const res = await api.post('/api/booking/create', { showId: lastContext.showId, selectedSeats: seats, couponCode: pendingCoupon || undefined }, {
+        // Check if green ticketing is enabled
+        const greenTicketingEnabled = localStorage.getItem('green_ticketing_enabled') === 'true';
+        
+        const res = await api.post('/api/booking/create', { 
+          showId: lastContext.showId, 
+          selectedSeats: seats, 
+          couponCode: pendingCoupon || undefined,
+          greenTicketingDonation: greenTicketingEnabled
+        }, {
           headers: token ? { Authorization: `Bearer ${token}` } : {}
         })
         if (res.data?.success && res.data?.url) {

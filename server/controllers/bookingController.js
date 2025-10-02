@@ -29,7 +29,7 @@ const checkSeatsAvailability = async (showId, selectedSeats)=>{
 export const createBooking = async (req, res)=>{
     try {
         const {userId} = req.auth();
-        const {showId, selectedSeats, couponCode} = req.body;
+        const {showId, selectedSeats, couponCode, greenTicketingDonation = false} = req.body;
         const { origin } = req.headers;
 
         // Check if the seat is available for the selected show
@@ -64,7 +64,10 @@ export const createBooking = async (req, res)=>{
                 appliedCouponCode = code
             }
         }
-        const finalAmount = Math.max(0, provisionalAmount - couponDiscountAmount);
+        
+        // Add green ticketing donation
+        const greenDonationAmount = greenTicketingDonation ? selectedSeats.length : 0; // ₹1 per ticket
+        const finalAmount = Math.max(0, provisionalAmount - couponDiscountAmount + greenDonationAmount);
 
         // Create a new booking
         const booking = await Booking.create({
@@ -73,7 +76,8 @@ export const createBooking = async (req, res)=>{
             amount: finalAmount,
             couponCode: appliedCouponCode || undefined,
             discountAmount: Math.round(couponDiscountAmount),
-            bookedSeats: selectedSeats
+            bookedSeats: selectedSeats,
+            greenTicketingDonation: greenDonationAmount
         })
 
         selectedSeats.map((seat)=>{
@@ -117,17 +121,31 @@ export const createBooking = async (req, res)=>{
          // Stripe Gateway Initialize
          const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY)
 
-         // Creating line items to for Stripe
+         // Creating line items for Stripe
          const line_items = [{
             price_data: {
                 currency: 'usd',
                 product_data:{
                     name: showData.movie.title
                 },
-                unit_amount: Math.floor(booking.amount) * 100
+                unit_amount: Math.floor(booking.amount - greenDonationAmount) * 100
             },
             quantity: 1
          }]
+
+         // Add green donation as separate line item if enabled
+         if (greenDonationAmount > 0) {
+            line_items.push({
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: `🌱 Carbon Neutral Donation (${selectedSeats.length} ticket${selectedSeats.length > 1 ? 's' : ''})`
+                    },
+                    unit_amount: greenDonationAmount * 100
+                },
+                quantity: 1
+            });
+         }
 
          const session = await stripeInstance.checkout.sessions.create({
             success_url: `${origin}/loading/my-bookings`,

@@ -39,6 +39,7 @@ import Feedbacks from './pages/admin/Feedbacks'
 import EventsAdmin from './pages/admin/EventsAdmin'
 import Events from './pages/Events'
 import EventDetails from './pages/EventDetails'
+import GreenTicketing from './components/GreenTicketing'
 
 const App = () => {
 
@@ -91,6 +92,7 @@ const App = () => {
        {!isAdminRoute && <PWAUtils />}
        {!isAdminRoute && <MobileOptimizations />}
        {!isAdminRoute && <DeepAI />}
+       {!isAdminRoute && <GreenTicketing />}
     </>
   )
 }

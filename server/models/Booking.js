@@ -7,6 +7,7 @@ const bookingSchema = new mongoose.Schema({
     bookedSeats: {type: Array, required: true},
     couponCode: {type: String},
     discountAmount: {type: Number, default: 0},
+    greenTicketingDonation: {type: Number, default: 0},
     isPaid: {type: Boolean,  default:false},
     paymentLink: {type: String},
 },{timestamps: true })

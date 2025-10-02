@@ -341,9 +341,13 @@ const VoiceChatBooking = ({ isOpen, onClose, onBookingComplete }) => {
 
   const processPayment = async () => {
     try {
+      // Check if green ticketing is enabled
+      const greenTicketingEnabled = localStorage.getItem('green_ticketing_enabled') === 'true';
+      
       const { data } = await axios.post('/api/booking/create', {
         showId: bookingContext.showtime.showId,
-        selectedSeats: bookingContext.seats
+        selectedSeats: bookingContext.seats,
+        greenTicketingDonation: greenTicketingEnabled
       }, {
         headers: { Authorization: `Bearer ${await getToken()}` }
       });

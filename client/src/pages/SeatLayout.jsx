@@ -200,7 +200,14 @@ const SeatLayout = () => {
         // Small pre-success confetti for delightful feedback
         runConfetti()
 
-        const {data} = await axios.post('/api/booking/create', {showId: selectedTime.showId, selectedSeats}, {headers: { Authorization: `Bearer ${await getToken()}` }});
+        // Check if green ticketing is enabled
+        const greenTicketingEnabled = localStorage.getItem('green_ticketing_enabled') === 'true';
+        
+        const {data} = await axios.post('/api/booking/create', {
+          showId: selectedTime.showId, 
+          selectedSeats,
+          greenTicketingDonation: greenTicketingEnabled
+        }, {headers: { Authorization: `Bearer ${await getToken()}` }});
 
         if (data.success){
           window.location.href = data.url;
