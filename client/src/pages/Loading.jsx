@@ -15,6 +15,18 @@ const LoadingPage = () => {
         
         setMessage('Payment processed! Redirecting...');
         
+        // Check if green ticketing was enabled and dispatch event
+        const greenTicketingEnabled = localStorage.getItem('green_ticketing_enabled') === 'true';
+        if (greenTicketingEnabled) {
+          // We don't know the exact amount here, but we can estimate based on typical booking
+          // In a real implementation, you'd pass this data from the payment success callback
+          const urlParams = new URLSearchParams(location.search);
+          const estimatedTickets = 2; // Default estimate
+          window.dispatchEvent(new CustomEvent('greenTicketingDonation', {
+            detail: { greenDonation: estimatedTickets }
+          }));
+        }
+        
         // Wait a bit more then redirect
         await new Promise(resolve => setTimeout(resolve, 2000));
         
