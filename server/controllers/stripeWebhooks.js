@@ -59,6 +59,7 @@ export const stripeWebhooks = async (request, response)=>{
                 if (booking.greenTicketingDonation > 0) {
                     console.log(`Green donation processed: ₹${booking.greenTicketingDonation} for booking ${bookingId}`);
                     // Here you could add logic to track total environmental donations
+                    // The frontend will handle updating the green ticketing totals via localStorage
                 }
 
                 // Update gamification stats for payment completion
