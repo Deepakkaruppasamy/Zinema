@@ -20,10 +20,37 @@ function Loader() {
   );
 }
 
-function Model({ url }) {
-  const { scene } = useGLTF(url);
+function Model({ url, onError }) {
+  const [currentUrl, setCurrentUrl] = useState(url);
+  const [hasError, setHasError] = useState(false);
+  
+  // Fallback URLs in order of preference
+  const fallbackUrls = [
+    'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+    'https://modelviewer.dev/shared-assets/models/NeilArmstrong.glb',
+    'https://threejs.org/examples/models/gltf/DamagedHelmet/glTF/DamagedHelmet.gltf'
+  ];
+  
+  let scene;
+  
+  try {
+    const result = useGLTF(currentUrl);
+    scene = result.scene;
+  } catch (error) {
+    console.error('Failed to load 3D model:', error);
+    if (!hasError && fallbackUrls.length > 0) {
+      const nextUrl = fallbackUrls.shift();
+      setCurrentUrl(nextUrl);
+      setHasError(true);
+      onError?.(error);
+      return null;
+    }
+    throw error;
+  }
+  
   // Auto fit: compute bounding box and scale to target size
   const scaled = useMemo(() => {
+    if (!scene) return null;
     const clone = scene.clone(true);
     // compute size
     const box = new THREE.Box3().setFromObject(clone);
@@ -35,6 +62,9 @@ function Model({ url }) {
     clone.scale.setScalar(scale);
     return clone;
   }, [scene]);
+  
+  if (!scaled) return null;
+  
   return (
     <Center>
       <primitive object={scaled} />
