@@ -78,9 +78,15 @@ async function cacheFirst(request) {
   
   try {
     const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
+    if (response.ok && response.status < 400) {
+      try {
+        const cache = await caches.open(CACHE_NAME);
+        // Only cache successful responses
+        await cache.put(request, response.clone());
+      } catch (cacheError) {
+        console.warn('Failed to cache response:', cacheError);
+        // Continue without caching
+      }
     }
     return response;
   } catch (error) {
@@ -93,9 +99,14 @@ async function cacheFirst(request) {
 async function networkFirst(request) {
   try {
     const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
+    if (response.ok && response.status < 400) {
+      try {
+        const cache = await caches.open(CACHE_NAME);
+        await cache.put(request, response.clone());
+      } catch (cacheError) {
+        console.warn('Failed to cache response:', cacheError);
+        // Continue without caching
+      }
     }
     return response;
   } catch (error) {
@@ -110,13 +121,19 @@ async function staleWhileRevalidate(request) {
   const cached = await caches.match(request);
   
   const networkPromise = fetch(request).then(response => {
-    if (response.ok) {
+    if (response.ok && response.status < 400) {
       const responseClone = response.clone();
-      const cache = caches.open(CACHE_NAME);
-      cache.then(c => c.put(request, responseClone));
+      caches.open(CACHE_NAME).then(cache => {
+        cache.put(request, responseClone).catch(cacheError => {
+          console.warn('Failed to cache response:', cacheError);
+        });
+      });
     }
     return response;
-  }).catch(() => cached);
+  }).catch(error => {
+    console.warn('Network request failed:', error);
+    return cached;
+  });
   
   return cached || networkPromise;
 }
