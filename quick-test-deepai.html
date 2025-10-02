@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeepAI Test Tool</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        input { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 DeepAI Test Tool</h1>
+    <p>Use this tool to test your DeepAI configuration on both local and production environments.</p>
+
+    <div class="status info">
+        <strong>Instructions:</strong>
+        <ol>
+            <li>First test production to see current status</li>
+            <li>If it fails, add your GEMINI_API_KEY to Render environment variables</li>
+            <li>Redeploy and test again</li>
+        </ol>
+    </div>
+
+    <h2>🌐 Production Testing</h2>
+    <button onclick="testProduction()">Test Production DeepAI</button>
+    <div id="productionResult"></div>
+
+    <h2>🏠 Local Testing</h2>
+    <label for="apiKey">Your Gemini API Key (for local testing only):</label>
+    <input type="password" id="apiKey" placeholder="AIza... (optional, for local testing)">
+    <button onclick="testLocal()">Test Local DeepAI</button>
+    <div id="localResult"></div>
+
+    <h2>💬 Chat Test</h2>
+    <input type="text" id="chatMessage" placeholder="Type a message to test DeepAI..." value="Hello, can you help me find movies?">
+    <button onclick="testChat()">Send Test Message</button>
+    <div id="chatResult"></div>
+
+    <script>
+        const PRODUCTION_URL = 'https://zinema-clvk.onrender.com';
+        const LOCAL_URL = 'http://localhost:5000';
+
+        function showResult(elementId, type, title, content) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `
+                <div class="status ${type}">
+                    <strong>${title}</strong>
+                    <pre>${content}</pre>
+                </div>
+            `;
+        }
+
+        async function testProduction() {
+            showResult('productionResult', 'info', 'Testing...', 'Checking production DeepAI status...');
+            
+            try {
+                // Test health endpoint
+                const healthResponse = await fetch(`${PRODUCTION_URL}/api/deepai/health`);
+                const healthData = await healthResponse.json();
+                
+                if (healthResponse.ok) {
+                    const status = healthData.hasApiKey ? 'success' : 'error';
+                    const title = healthData.hasApiKey ? '✅ Production OK' : '❌ API Key Missing';
+                    showResult('productionResult', status, title, JSON.stringify(healthData, null, 2));
+                } else {
+                    showResult('productionResult', 'error', '❌ Health Check Failed', `Status: ${healthResponse.status}\n${JSON.stringify(healthData, null, 2)}`);
+                }
+            } catch (error) {
+                showResult('productionResult', 'error', '❌ Connection Failed', `Error: ${error.message}\n\nMake sure your production server is running.`);
+            }
+        }
+
+        async function testLocal() {
+            showResult('localResult', 'info', 'Testing...', 'Checking local DeepAI status...');
+            
+            try {
+                const healthResponse = await fetch(`${LOCAL_URL}/api/deepai/health`);
+                const healthData = await healthResponse.json();
+                
+                if (healthResponse.ok) {
+                    const status = healthData.hasApiKey ? 'success' : 'error';
+                    const title = healthData.hasApiKey ? '✅ Local OK' : '❌ API Key Missing';
+                    showResult('localResult', status, title, JSON.stringify(healthData, null, 2));
+                } else {
+                    showResult('localResult', 'error', '❌ Health Check Failed', `Status: ${healthResponse.status}\n${JSON.stringify(healthData, null, 2)}`);
+                }
+            } catch (error) {
+                showResult('localResult', 'error', '❌ Connection Failed', `Error: ${error.message}\n\nMake sure your local server is running:\n1. cd server\n2. npm start`);
+            }
+        }
+
+        async function testChat() {
+            const message = document.getElementById('chatMessage').value;
+            if (!message.trim()) {
+                showResult('chatResult', 'error', '❌ Invalid Input', 'Please enter a message to test');
+                return;
+            }
+
+            showResult('chatResult', 'info', 'Testing...', `Sending message: "${message}"`);
+
+            try {
+                const response = await fetch(`${PRODUCTION_URL}/api/deepai/assistant`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        messages: [{ role: 'user', text: message }],
+                        user: {}
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResult('chatResult', 'success', '✅ Chat Working', `Response: "${data.text}"\n\nFull response:\n${JSON.stringify(data, null, 2)}`);
+                } else {
+                    showResult('chatResult', 'error', '❌ Chat Failed', `Status: ${response.status}\n${JSON.stringify(data, null, 2)}`);
+                }
+            } catch (error) {
+                showResult('chatResult', 'error', '❌ Chat Error', `Error: ${error.message}`);
+            }
+        }
+
+        // Auto-test production on page load
+        window.addEventListener('load', () => {
+            testProduction();
+        });
+    </script>
+</body>
+</html>
