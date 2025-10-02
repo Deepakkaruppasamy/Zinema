@@ -38,7 +38,15 @@ const reclinerGallery = [
 ];
 
 const Theatre = () => {
-  const [foodCart, setFoodCart] = useState([]);
+  const [foodCart, setFoodCart] = useState(() => {
+    // Load cart from localStorage on initialization
+    const savedCart = localStorage.getItem('theatre_food_cart_basic');
+    try {
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch (e) {
+      return [];
+    }
+  });
   const [foodQuantities, setFoodQuantities] = useState(Array(mockMenu.length).fill(0));
 
   const [showWifiModal, setShowWifiModal] = useState(false);
@@ -127,13 +135,23 @@ const Theatre = () => {
       const qty = foodQuantities[idx];
       if (!qty) return cart;
       const exists = cart.find(c => c.name === item.name);
+      let newCart;
       if (exists) {
-        return cart.map(c => c.name === item.name ? { ...c, qty: c.qty + qty } : c);
+        newCart = cart.map(c => c.name === item.name ? { ...c, qty: c.qty + qty } : c);
+      } else {
+        newCart = [...cart, { ...item, qty }];
       }
-      return [...cart, { ...item, qty }];
+      // Save to localStorage
+      localStorage.setItem('theatre_food_cart_basic', JSON.stringify(newCart));
+      return newCart;
     });
     setFoodQuantities(qty => qty.map((q, i) => (i === idx ? 0 : q)));
   };
+
+  // Update localStorage whenever foodCart changes
+  useEffect(() => {
+    localStorage.setItem('theatre_food_cart_basic', JSON.stringify(foodCart));
+  }, [foodCart]);
 
   const foodTotal = foodCart.reduce((sum, item) => sum + item.qty * item.price, 0);
   const reclinerTotal = reclinerSelected ? RECLINER_PRICE : 0;
@@ -294,11 +312,23 @@ const Theatre = () => {
 
               {/* Food Facility */}
               <div
-                className="flex items-center gap-4 bg-gray-800 p-5 rounded-xl shadow cursor-pointer hover:bg-primary/20 transition"
+                className="flex items-center gap-4 bg-gray-800 p-5 rounded-xl shadow cursor-pointer hover:bg-primary/20 transition relative"
                 onClick={() => setShowFoodModal(true)}
               >
                 <FaUtensils size={28} className="text-primary" />
+                <div className="flex-1">
                 <span className="text-gray-200 text-lg font-semibold">Available Food</span>
+                  {foodCart.length > 0 && (
+                    <div className="text-sm text-primary mt-1">
+                      {foodCart.length} items in cart (₹{foodTotal})
+                    </div>
+                  )}
+                </div>
+                {foodCart.length > 0 && (
+                  <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
+                    {foodCart.reduce((sum, item) => sum + item.qty, 0)}
+                  </div>
+                )}
               </div>
 
               {/* Wi-Fi Facility */}
@@ -534,19 +564,22 @@ const Theatre = () => {
               )}
 
               {activeFeature === 'food' && (
-                <div className="text-center py-12">
-                  <div className="p-4 bg-primary/20 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                    <FaUtensils className="text-primary text-2xl" />
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-2">Advanced Food Ordering</h3>
-                  <p className="text-gray-400 mb-6">Pre-order food and beverages for pickup at the theatre</p>
-                  <button
-                    onClick={() => setShowFoodOrdering(true)}
-                    className="px-6 py-3 bg-primary hover:bg-primary/80 text-white rounded-xl font-semibold transition-colors"
-                  >
-                    Open Food Ordering
-                  </button>
-                </div>
+                <AdvancedFoodOrdering
+                  onOrderUpdate={(order) => {
+                    setFoodOrder(order);
+                    // Update the main food cart state
+                    const updatedCart = order.map(item => ({
+                      name: item.name,
+                      price: item.price,
+                      qty: item.quantity,
+                      img: item.image
+                    }));
+                    setFoodCart(updatedCart);
+                    console.log('Food order updated:', order);
+                  }}
+                  onClose={() => setActiveFeature('recommendations')}
+                  isEmbedded={true}
+                />
               )}
 
               {activeFeature === 'map' && (
@@ -595,13 +628,33 @@ const Theatre = () => {
         )}
       </div>
 
-      {/* Photo Gallery Trigger */}
-      <div className="max-w-5xl w-full flex items-center justify-between mt-6">
-        <button className="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-white flex items-center gap-2" onClick={() => { setGalleryIndex(0); setGalleryOpen(true); }}>
-          <FaImages className="text-primary" /> View Theatre Photos
+      {/* Quick Actions */}
+      <div className="max-w-5xl w-full grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+        <button 
+          className="px-4 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white flex items-center gap-3 transition-colors" 
+          onClick={() => { setGalleryIndex(0); setGalleryOpen(true); }}
+        >
+          <FaImages className="text-primary" /> 
+          <span>View Theatre Photos</span>
         </button>
-        <button className="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-white flex items-center gap-2" onClick={() => setContactOpen(true)}>
-          <FaEnvelope className="text-primary" /> Contact Theatre
+        <button 
+          className="px-4 py-3 rounded-xl bg-primary/20 hover:bg-primary/30 text-primary flex items-center gap-3 transition-colors border border-primary/30" 
+          onClick={() => setShowFoodModal(true)}
+        >
+          <FaUtensils className="text-primary" /> 
+          <div className="flex-1 text-left">
+            <span className="block font-medium">Order Food</span>
+            {foodCart.length > 0 && (
+              <span className="text-xs opacity-75">{foodCart.length} items in cart</span>
+            )}
+          </div>
+        </button>
+        <button 
+          className="px-4 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white flex items-center gap-3 transition-colors" 
+          onClick={() => setContactOpen(true)}
+        >
+          <FaEnvelope className="text-primary" /> 
+          <span>Contact Theatre</span>
         </button>
       </div>
 
@@ -647,46 +700,165 @@ const Theatre = () => {
 
       {/* Food Modal */}
       {showFoodModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
-          <div className="bg-gray-900 rounded-2xl shadow-lg p-8 max-w-lg w-full flex flex-col items-center animate-fade-in">
-            <h3 className="text-2xl font-bold text-primary mb-4">Available Food & Beverages</h3>
-            <div className="grid grid-cols-2 gap-6 mb-6 w-full">
-              {mockMenu.map((item, idx) => (
-                <div key={idx} className="bg-gray-800 rounded-xl p-3 flex flex-col items-center shadow transition-transform hover:scale-105 animate-pop-in">
-                  <img src={item.img} alt={item.name} className="w-24 h-24 object-cover rounded-lg mb-2 border-2 border-primary" />
-                  <span className="text-gray-100 font-semibold text-lg mb-1">{item.name}</span>
-                  <span className="text-primary font-mono mb-2">${item.price}</span>
-                  <div className="flex items-center gap-2 mb-2">
-                    <button onClick={() => handleFoodQty(idx, -1)} className="px-2 py-1 bg-gray-700 text-white rounded-full text-lg">-</button>
-                    <span className="font-bold text-lg text-gray-100">{foodQuantities[idx]}</span>
-                    <button onClick={() => handleFoodQty(idx, 1)} className="px-2 py-1 bg-primary text-white rounded-full text-lg">+</button>
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50 p-4">
+          <div className="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col">
+            {/* Header */}
+            <div className="p-6 border-b border-white/10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/20 rounded-lg">
+                    <FaUtensils className="text-primary text-xl" />
                   </div>
-                  <button onClick={() => handleAddToCart(idx)} disabled={foodQuantities[idx] === 0} className={`px-4 py-1 bg-primary ${foodQuantities[idx] === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-dull'} text-white rounded-full font-medium text-sm transition`}>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">Food & Beverages</h2>
+                    <p className="text-gray-400">Quick order for theatre pickup</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => {
+                      setShowFoodModal(false);
+                      setActiveFeature('food');
+                      setShowAIFeatures(true);
+                    }}
+                    className="px-4 py-2 bg-primary/20 text-primary rounded-lg hover:bg-primary/30 transition-colors font-medium"
+                  >
+                    Advanced Menu
+                  </button>
+                  <button
+                    onClick={() => setShowFoodModal(false)}
+                    className="p-3 hover:bg-gray-800 rounded-lg transition-colors"
+                  >
+                    <span className="text-gray-400 text-xl">×</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 p-6 overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+              {mockMenu.map((item, idx) => (
+                  <div key={idx} className="bg-gray-800/30 rounded-xl overflow-hidden border border-white/10 hover:border-primary/30 transition-all duration-300">
+                    <div className="relative">
+                      <img src={item.img} alt={item.name} className="w-full h-40 object-cover" />
+                      <div className="absolute top-3 right-3">
+                        <span className="px-2 py-1 bg-primary/20 text-primary text-xs rounded-full border border-primary/30">
+                          Popular
+                        </span>
+                  </div>
+                    </div>
+                    <div className="p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="text-lg font-semibold text-white">{item.name}</h3>
+                        <div className="text-xl font-bold text-primary">₹{item.price}</div>
+                      </div>
+                      <p className="text-gray-400 text-sm mb-4">Fresh and delicious</p>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <button 
+                            onClick={() => handleFoodQty(idx, -1)} 
+                            className="p-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                          >
+                            <FaMinus className="text-xs" />
+                          </button>
+                          <span className="font-bold text-lg text-white w-8 text-center">{foodQuantities[idx]}</span>
+                          <button 
+                            onClick={() => handleFoodQty(idx, 1)} 
+                            className="p-2 bg-primary hover:bg-primary/80 text-white rounded-lg transition-colors"
+                          >
+                            <FaPlus className="text-xs" />
+                          </button>
+                        </div>
+                        <button 
+                          onClick={() => handleAddToCart(idx)} 
+                          disabled={foodQuantities[idx] === 0} 
+                          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                            foodQuantities[idx] === 0 
+                              ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
+                              : 'bg-primary hover:bg-primary/80 text-white'
+                          }`}
+                        >
                     Add to Cart
                   </button>
+                      </div>
+                    </div>
                 </div>
               ))}
             </div>
-            <div className="w-full mb-4">
-              <h4 className="text-lg font-semibold text-primary mb-2">Order Summary</h4>
-              {foodCart.length === 0 ? (
-                <div className="text-gray-400">Your cart is empty.</div>
-              ) : (
-                <ul className="mb-2">
+
+              {/* Cart Summary */}
+              {foodCart.length > 0 && (
+                <div className="bg-gray-800/30 rounded-xl p-6 border border-white/10">
+                  <h4 className="text-lg font-semibold text-primary mb-4">Order Summary</h4>
+                  <div className="space-y-2 mb-4">
                   {foodCart.map((item, idx) => (
-                    <li key={idx} className="flex justify-between text-gray-200">
+                      <div key={idx} className="flex items-center justify-between text-gray-200">
+                        <div className="flex items-center gap-3">
+                          <img src={item.img} alt={item.name} className="w-10 h-10 object-cover rounded" />
                       <span>{item.name} x {item.qty}</span>
-                      <span>${item.qty * item.price}</span>
-                    </li>
-                  ))}
-                </ul>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span>₹{item.qty * item.price}</span>
+                          <button
+                            onClick={() => setFoodCart(cart => cart.filter((_, i) => i !== idx))}
+                            className="p-1 hover:bg-red-500/20 rounded text-red-400"
+                          >
+                            <FaTrash className="text-xs" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-between items-center text-xl font-bold text-primary border-t border-primary/30 pt-4">
+                    <span>Total</span>
+                    <span>₹{foodTotal}</span>
+                  </div>
+                </div>
               )}
-              <div className="flex justify-between font-bold text-primary text-lg border-t border-primary pt-2 mt-2">
-                <span>Food Total</span>
-                <span>${foodTotal}</span>
+              </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-white/10">
+              <div className="flex items-center justify-between">
+                <div className="text-gray-400">
+                  {foodCart.length === 0 ? 'No items in cart' : `${foodCart.reduce((sum, item) => sum + item.qty, 0)} items in cart`}
+            </div>
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => setShowFoodModal(false)} 
+                    className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-semibold transition-colors"
+                  >
+                    Continue Shopping
+                  </button>
+                  {foodCart.length > 0 && (
+                    <button 
+                      onClick={() => {
+                        // Save the order and show confirmation
+                        const orderDetails = {
+                          items: foodCart,
+                          total: foodTotal,
+                          timestamp: new Date().toISOString(),
+                          status: 'confirmed'
+                        };
+                        
+                        // In a real app, this would be sent to the server
+                        localStorage.setItem('theatre_food_order_confirmed', JSON.stringify(orderDetails));
+                        
+                        // Show success message
+                        alert(`🎉 Food order confirmed!\n\nItems: ${foodCart.map(item => `${item.name} x${item.qty}`).join(', ')}\nTotal: ₹${foodTotal}\n\nYour order will be ready for pickup 15 minutes before showtime.`);
+                        
+                        setShowFoodModal(false);
+                      }}
+                      className="px-6 py-2 bg-primary hover:bg-primary/80 text-white rounded-lg font-semibold transition-colors"
+                    >
+                      Confirm Order
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-            <button onClick={() => setShowFoodModal(false)} className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-full font-semibold shadow transition-all">Close</button>
           </div>
         </div>
       )}
@@ -890,9 +1062,26 @@ const Theatre = () => {
               </div>
               <button
                 className="px-6 py-3 rounded-xl bg-primary hover:bg-primary-dull text-white font-semibold shadow-lg"
-                onClick={() => window.alert('Proceeding payment')}
+                onClick={() => {
+                  const orderSummary = {
+                    food: foodCart.length > 0 ? { items: foodCart, total: foodTotal } : null,
+                    recliner: reclinerSelected ? { selected: true, total: reclinerTotal } : null,
+                    parking: parkingSelected ? { selected: true, level: selectedParkingLevel, total: parkingTotal } : null,
+                    discount: appliedDiscount > 0 ? { code: promoCode, amount: appliedDiscount } : null,
+                    grandTotal: payableTotal
+                  };
+                  
+                  // In a real implementation, this would redirect to booking page with these add-ons
+                  console.log('Theatre add-ons order:', orderSummary);
+                  
+                  if (foodCart.length > 0) {
+                    alert(`Order Summary:\n- Food: ₹${foodTotal}\n${reclinerSelected ? `- Recliner: ₹${reclinerTotal}\n` : ''}${parkingSelected ? `- Parking: ₹${parkingTotal}\n` : ''}${appliedDiscount > 0 ? `- Discount: -₹${appliedDiscount}\n` : ''}\nTotal: ₹${payableTotal}\n\nProceeding to booking...`);
+                  } else {
+                    alert(`Theatre Services:\n${reclinerSelected ? `- Recliner: ₹${reclinerTotal}\n` : ''}${parkingSelected ? `- Parking: ₹${parkingTotal}\n` : ''}${appliedDiscount > 0 ? `- Discount: -₹${appliedDiscount}\n` : ''}\nTotal: ₹${payableTotal}\n\nProceeding to booking...`);
+                  }
+                }}
               >
-                Proceed
+                Proceed to Booking
               </button>
             </div>
           </div>

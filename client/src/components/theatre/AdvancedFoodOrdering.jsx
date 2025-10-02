@@ -3,7 +3,7 @@ import { FaUtensils, FaShoppingCart, FaHeart, FaStar, FaFilter, FaSearch, FaCloc
 import { motion, AnimatePresence } from 'framer-motion';
 import ConcessionsCheckout from './ConcessionsCheckout'
 
-const AdvancedFoodOrdering = ({ onOrderUpdate, onClose }) => {
+const AdvancedFoodOrdering = ({ onOrderUpdate, onClose, isEmbedded = false }) => {
   const [foodItems, setFoodItems] = useState([]);
   const [cart, setCart] = useState([]);
   const [filters, setFilters] = useState({
@@ -28,7 +28,25 @@ const AdvancedFoodOrdering = ({ onOrderUpdate, onClose }) => {
 
   useEffect(() => {
     fetchFoodItems();
+    // Load cart from localStorage
+    const savedCart = localStorage.getItem('theatre_food_cart');
+    if (savedCart) {
+      try {
+        setCart(JSON.parse(savedCart));
+      } catch (e) {
+        console.error('Error loading saved cart:', e);
+      }
+    }
   }, []);
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('theatre_food_cart', JSON.stringify(cart));
+    // Notify parent component of cart changes
+    if (onOrderUpdate) {
+      onOrderUpdate(cart);
+    }
+  }, [cart, onOrderUpdate]);
 
   const fetchFoodItems = async () => {
     setLoading(true);
@@ -296,13 +314,21 @@ const AdvancedFoodOrdering = ({ onOrderUpdate, onClose }) => {
     { id: 'gluten-free', name: 'Gluten Free' }
   ];
 
+  const containerClass = isEmbedded 
+    ? "bg-gray-800/30 rounded-2xl w-full h-[600px] flex flex-col border border-white/10"
+    : "bg-gray-900 rounded-2xl w-full max-w-6xl h-[90vh] flex flex-col";
+
+  const wrapperClass = isEmbedded 
+    ? "w-full h-full"
+    : "fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4";
+
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+    <div className={wrapperClass}>
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
+        initial={isEmbedded ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-gray-900 rounded-2xl w-full max-w-6xl h-[90vh] flex flex-col"
+        exit={isEmbedded ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+        className={containerClass}
       >
         {/* Header */}
         <div className="p-6 border-b border-white/10">
