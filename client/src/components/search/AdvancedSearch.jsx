@@ -85,7 +85,7 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
         duration: 148,
         director: 'Christopher Nolan',
         cast: ['Leonardo DiCaprio', 'Marion Cotillard'],
-        poster: 'https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg',
+        posterPath: '/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg',
         matchScore: 95
       },
       {
@@ -97,7 +97,7 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
         duration: 169,
         director: 'Christopher Nolan',
         cast: ['Matthew McConaughey', 'Anne Hathaway'],
-        poster: 'https://image.tmdb.org/t/p/w500/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg',
+        posterPath: '/w500/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg',
         matchScore: 92
       }
     ];
@@ -157,7 +157,7 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
         genre: ['Action', 'Crime'],
         rating: 9.0,
         matchScore: 88,
-        poster: 'https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg'
+        posterPath: '/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg'
       }
     ];
     

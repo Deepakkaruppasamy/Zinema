@@ -92,7 +92,7 @@ const Trending = () => {
             />
             <div className='flex items-center gap-3'>
               {s.poster_path && (
-                <img alt={s.movieTitle} src={`https://image.tmdb.org/t/p/w92${s.poster_path}`} className='w-10 h-14 object-cover rounded' />
+                <img alt={s.movieTitle} src={`/api/tmdb-image?path=/w92${s.poster_path}`} className='w-10 h-14 object-cover rounded' />
               )}
               <div>
                 <div className='font-medium'>{s.movieTitle}</div>
