@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { assets } from '../assets/assets'
-import { MenuIcon, SearchIcon, TicketPlus, XIcon, Moon, Sun, MessageCircle } from 'lucide-react'
+import { MenuIcon, SearchIcon, TicketPlus, XIcon, Moon, Sun, MessageCircle, Leaf } from 'lucide-react'
 import { useClerk, UserButton, useUser } from '@clerk/clerk-react'
 import { useAppContext } from '../context/AppContext'
 import { useTheme } from '../context/ThemeContext'
@@ -54,6 +54,19 @@ const Navbar = () => {
           className='hidden md:inline px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 transition text-sm'
         >{t('nav.view3d')}</Link>
         <LanguageSwitcher />
+        <button
+          aria-label="Toggle Green Ticketing"
+          title="Toggle Green Ticketing"
+          onClick={() => {
+            // Remove all dismissals and dispatch event to show green ticketing
+            localStorage.removeItem('green_ticketing_dismissed_until');
+            localStorage.removeItem('green_ticketing_permanently_disabled');
+            window.dispatchEvent(new CustomEvent('showGreenTicketing'));
+          }}
+          className="w-10 h-10 rounded-full flex items-center justify-center border border-gray-300/20 bg-green-500/20 hover:bg-green-500/30 transition"
+        >
+          <Leaf className="w-5 h-5 text-green-400" />
+        </button>
         <button
           aria-label="Toggle theme"
           title="Toggle theme"

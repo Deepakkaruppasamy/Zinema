@@ -2,7 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { Leaf, X, Heart, TreePine } from 'lucide-react';
 
 const GreenTicketing = () => {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(() => {
+    // Check if user has permanently disabled it
+    const permanentlyDisabled = localStorage.getItem('green_ticketing_permanently_disabled');
+    if (permanentlyDisabled === 'true') {
+      return false;
+    }
+    
+    // Check if temporarily dismissed
+    const dismissedUntil = localStorage.getItem('green_ticketing_dismissed_until');
+    if (dismissedUntil) {
+      const dismissalTime = parseInt(dismissedUntil);
+      if (Date.now() < dismissalTime) {
+        return false;
+      } else {
+        // Dismissal expired, remove it
+        localStorage.removeItem('green_ticketing_dismissed_until');
+      }
+    }
+    
+    return true; // Default to visible
+  });
   const [isExpanded, setIsExpanded] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 20 });
   const [direction, setDirection] = useState({ x: 1, y: 1 });
@@ -26,8 +46,39 @@ const GreenTicketing = () => {
       }
     };
 
+    const handleShowGreenTicketing = () => {
+      setIsVisible(true);
+      setIsExpanded(true); // Auto-expand when manually shown
+    };
+
+    // Periodic reminder - show every 30 minutes if not permanently disabled
+    const checkPeriodicReminder = () => {
+      const permanentlyDisabled = localStorage.getItem('green_ticketing_permanently_disabled');
+      const lastReminder = localStorage.getItem('green_ticketing_last_reminder');
+      const now = Date.now();
+      
+      if (permanentlyDisabled !== 'true') {
+        if (!lastReminder || (now - parseInt(lastReminder)) > (30 * 60 * 1000)) { // 30 minutes
+          setIsVisible(true);
+          localStorage.setItem('green_ticketing_last_reminder', now.toString());
+        }
+      }
+    };
+
+    // Check reminder every 5 minutes
+    const reminderInterval = setInterval(checkPeriodicReminder, 5 * 60 * 1000);
+    
+    // Initial check
+    checkPeriodicReminder();
+
     window.addEventListener('greenTicketingDonation', handleBookingComplete);
-    return () => window.removeEventListener('greenTicketingDonation', handleBookingComplete);
+    window.addEventListener('showGreenTicketing', handleShowGreenTicketing);
+    
+    return () => {
+      window.removeEventListener('greenTicketingDonation', handleBookingComplete);
+      window.removeEventListener('showGreenTicketing', handleShowGreenTicketing);
+      clearInterval(reminderInterval);
+    };
   }, []);
 
   // Floating animation
@@ -36,7 +87,7 @@ const GreenTicketing = () => {
 
     const animate = () => {
       setPosition(prev => {
-        const speed = 0.5;
+        const speed = 0.8;
         const maxX = window.innerWidth - 80;
         const maxY = window.innerHeight - 80;
         
@@ -92,14 +143,29 @@ const GreenTicketing = () => {
 
   const handleClose = () => {
     setIsVisible(false);
-    localStorage.setItem('green_ticketing_dismissed', 'true');
+    // Set a temporary dismissal that expires after 1 hour
+    const dismissalTime = Date.now() + (60 * 60 * 1000); // 1 hour from now
+    localStorage.setItem('green_ticketing_dismissed_until', dismissalTime.toString());
   };
 
-  // Don't show if user dismissed it
+  // Check if user dismissed it temporarily
   useEffect(() => {
-    const dismissed = localStorage.getItem('green_ticketing_dismissed');
-    if (dismissed === 'true') {
-      setIsVisible(false);
+    const dismissedUntil = localStorage.getItem('green_ticketing_dismissed_until');
+    if (dismissedUntil) {
+      const dismissalTime = parseInt(dismissedUntil);
+      if (Date.now() < dismissalTime) {
+        setIsVisible(false);
+        // Set a timer to make it visible again when dismissal expires
+        const timeUntilVisible = dismissalTime - Date.now();
+        setTimeout(() => {
+          setIsVisible(true);
+          localStorage.removeItem('green_ticketing_dismissed_until');
+        }, timeUntilVisible);
+      } else {
+        // Dismissal has expired, remove it and show the component
+        localStorage.removeItem('green_ticketing_dismissed_until');
+        setIsVisible(true);
+      }
     }
   }, []);
 
@@ -226,11 +292,26 @@ const GreenTicketing = () => {
               <button
                 onClick={() => {
                   // This would typically open a modal with more details
-                  alert('Learn more about our carbon offset program and environmental partnerships!');
+                  alert('🌱 Green Ticketing Program\n\nOur carbon offset program partners with verified environmental organizations to:\n\n• Plant trees in deforested areas\n• Support renewable energy projects\n• Fund clean water initiatives\n• Reduce carbon emissions\n\nEvery ₹1 donation helps offset approximately 1kg of CO₂ emissions from your cinema visit.\n\nTogether, we can make entertainment more sustainable!');
                 }}
                 className="flex-1 px-4 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors cinema:bg-green-500 cinema:hover:bg-green-600"
               >
                 Learn More
+              </button>
+            </div>
+
+            {/* Settings */}
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 cinema:border-green-500/30">
+              <button
+                onClick={() => {
+                  if (confirm('Are you sure you want to permanently disable Green Ticketing? You can re-enable it from the navbar leaf icon.')) {
+                    localStorage.setItem('green_ticketing_permanently_disabled', 'true');
+                    setIsVisible(false);
+                  }
+                }}
+                className="w-full text-xs text-gray-500 dark:text-gray-400 cinema:text-green-400 hover:text-gray-700 dark:hover:text-gray-300 cinema:hover:text-green-300 transition-colors"
+              >
+                Disable permanently
               </button>
             </div>
           </div>
