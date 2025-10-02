@@ -4,7 +4,7 @@ import Movie from '../models/Movie.js'
 import Show from '../models/Show.js'
 
 // Use a model alias that Google serves consistently on v1beta
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-pro-latest'
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-pro'
 
 function buildPrompt(messages = [], userProfile = {}) {
   const system = `You are DeepAI, a personalized Gemini-powered assistant for Zinema.
@@ -55,7 +55,10 @@ function buildPrompt(messages = [], userProfile = {}) {
 export async function deepaiChat(req, res) {
   try {
     const apiKey = process.env.GEMINI_API_KEY
-    if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY is not configured' })
+    if (!apiKey) {
+      console.error('GEMINI_API_KEY environment variable is not set')
+      return res.status(500).json({ error: 'GEMINI_API_KEY is not configured' })
+    }
 
     const { messages = [], user = {} } = req.body || {}
 
@@ -69,8 +72,24 @@ export async function deepaiChat(req, res) {
 
     if (!resp.ok) {
       const text = await resp.text().catch(() => '')
-      // Do not leak upstream 404 to client as route 404; use 502 Bad Gateway
-      return res.status(502).json({ error: 'Gemini request failed', detail: text })
+      console.error(`Gemini API Error (${resp.status}):`, text)
+      
+      // Provide more specific error messages
+      if (resp.status === 404) {
+        return res.status(502).json({ 
+          error: 'Gemini model not found', 
+          detail: `Model "${GEMINI_MODEL}" is not available. Please check the model name.`,
+          suggestion: 'Try using "gemini-1.5-pro" or "gemini-1.0-pro"'
+        })
+      } else if (resp.status === 403) {
+        return res.status(502).json({ 
+          error: 'Gemini API access denied', 
+          detail: 'Invalid API key or quota exceeded'
+        })
+      } else {
+        // Do not leak upstream 404 to client as route 404; use 502 Bad Gateway
+        return res.status(502).json({ error: 'Gemini request failed', detail: text })
+      }
     }
     const data = await resp.json()
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I could not generate a response.'
@@ -230,7 +249,10 @@ function extractIntentFromText(text) {
 export async function deepaiAssistant(req, res) {
   try {
     const apiKey = process.env.GEMINI_API_KEY
-    if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY is not configured' })
+    if (!apiKey) {
+      console.error('GEMINI_API_KEY environment variable is not set')
+      return res.status(500).json({ error: 'GEMINI_API_KEY is not configured' })
+    }
 
     const { messages = [], user = {} } = req.body || {}
 
@@ -244,7 +266,23 @@ export async function deepaiAssistant(req, res) {
 
     if (!resp.ok) {
       const text = await resp.text().catch(() => '')
-      return res.status(502).json({ error: 'Gemini request failed', detail: text })
+      console.error(`Gemini API Error in assistant (${resp.status}):`, text)
+      
+      // Provide more specific error messages
+      if (resp.status === 404) {
+        return res.status(502).json({ 
+          error: 'Gemini model not found', 
+          detail: `Model "${GEMINI_MODEL}" is not available. Please check the model name.`,
+          suggestion: 'Try using "gemini-1.5-pro" or "gemini-1.0-pro"'
+        })
+      } else if (resp.status === 403) {
+        return res.status(502).json({ 
+          error: 'Gemini API access denied', 
+          detail: 'Invalid API key or quota exceeded'
+        })
+      } else {
+        return res.status(502).json({ error: 'Gemini request failed', detail: text })
+      }
     }
     const data = await resp.json()
     const modelText = data?.candidates?.[0]?.content?.parts?.[0]?.text || ''

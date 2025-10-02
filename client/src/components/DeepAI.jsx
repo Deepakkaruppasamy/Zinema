@@ -109,8 +109,20 @@ export default function DeepAI() {
       }
       setMessages(m => [...m, { from: 'bot', text }])
     } catch (e) {
+      console.error('DeepAI error:', e)
       setShowBanner(true)
-      setMessages(m => [...m, { from: 'bot', text: 'Assistant is temporarily unavailable. I will use local suggestions for now.' }])
+      let errorMessage = 'Assistant is temporarily unavailable. I will use local suggestions for now.'
+      
+      // More specific error handling
+      if (e?.response?.status === 500) {
+        errorMessage = 'DeepAI service is not configured properly. Please contact support.'
+      } else if (e?.response?.status === 502) {
+        errorMessage = 'DeepAI service is currently down. Please try again later.'
+      } else if (e?.response?.status === 404) {
+        errorMessage = 'DeepAI service endpoint not found. Please contact support.'
+      }
+      
+      setMessages(m => [...m, { from: 'bot', text: errorMessage }])
     } finally {
       setTyping(false)
     }
