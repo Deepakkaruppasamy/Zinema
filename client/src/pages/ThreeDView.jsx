@@ -56,8 +56,14 @@ function FallbackModel() {
 function PerformanceMonitor() {
   const [fps, setFps] = useState(60);
   const [frameTime, setFrameTime] = useState(16);
+  const [showStats, setShowStats] = useState(false);
   
   React.useEffect(() => {
+    // Only show performance stats in development
+    if (import.meta.env.PROD) {
+      return;
+    }
+    
     let frameCount = 0;
     let lastTime = performance.now();
     
@@ -87,6 +93,11 @@ function PerformanceMonitor() {
     
     requestAnimationFrame(monitor);
   }, []);
+  
+  // Don't render in production
+  if (import.meta.env.PROD) {
+    return null;
+  }
   
   return (
     <Html position={[0, 0, 0]}>
@@ -303,12 +314,31 @@ const ThreeDView = () => {
     event.preventDefault();
     setWebglError(true);
     
-    // Attempt to recover after a short delay
-    setTimeout(() => {
-      console.log('Attempting WebGL context recovery...');
-      setWebglError(false);
-    }, 1000);
-  }, []);
+    // Multiple recovery attempts for production environments
+    let attempts = 0;
+    const maxAttempts = 3;
+    
+    const attemptRecovery = () => {
+      attempts++;
+      console.log(`WebGL recovery attempt ${attempts}/${maxAttempts}`);
+      
+      if (attempts < maxAttempts) {
+        setTimeout(() => {
+          setWebglError(false);
+          // Check if context is actually restored
+          setTimeout(() => {
+            if (webglError) {
+              attemptRecovery();
+            }
+          }, 500);
+        }, 1000 * attempts);
+      } else {
+        console.error('WebGL context recovery failed after multiple attempts');
+      }
+    };
+    
+    attemptRecovery();
+  }, [webglError]);
 
   const handleWebGLContextRestored = useCallback(() => {
     console.log('WebGL context restored successfully');
@@ -321,6 +351,13 @@ const ThreeDView = () => {
     if (canvas) {
       canvas.addEventListener('webglcontextlost', handleWebGLContextLost);
       canvas.addEventListener('webglcontextrestored', handleWebGLContextRestored);
+      
+      // Production-specific optimizations
+      if (import.meta.env.PROD) {
+        // Reduce memory pressure in production
+        canvas.style.willChange = 'auto';
+        canvas.style.transform = 'translateZ(0)'; // Force hardware acceleration
+      }
       
       return () => {
         canvas.removeEventListener('webglcontextlost', handleWebGLContextLost);
@@ -345,12 +382,21 @@ const ThreeDView = () => {
             >
               Try Again
             </button>
+            {import.meta.env.PROD && (
+              <button 
+                onClick={() => window.location.href = '/movies'}
+                className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors ml-2"
+              >
+                Browse Movies
+              </button>
+            )}
             <div className="text-sm text-gray-400">
               <p>If the issue persists, try:</p>
               <ul className="list-disc list-inside mt-2 space-y-1">
                 <li>Refreshing the page</li>
                 <li>Closing other browser tabs</li>
                 <li>Updating your browser</li>
+                {import.meta.env.PROD && <li>Try a different browser</li>}
               </ul>
             </div>
           </div>
@@ -431,7 +477,11 @@ const ThreeDView = () => {
             alpha: true, 
             powerPreference: "high-performance",
             preserveDrawingBuffer: false,
-            failIfMajorPerformanceCaveat: false
+            failIfMajorPerformanceCaveat: false,
+            // Production optimizations
+            precision: "mediump",
+            logarithmicDepthBuffer: false,
+            physicallyCorrectLights: false
           }}
         >
           <ambientLight intensity={0.5} />
@@ -439,7 +489,8 @@ const ThreeDView = () => {
           <ModelWithFallback url={src} fallbackUrls={fallbackModels.slice(1)} />
           <Environment preset='city' />
           <OrbitControls ref={controlsRef} enableDamping makeDefault autoRotate={autoRotate} autoRotateSpeed={0.5} />
-          <Stats className='!left-auto !right-2 !top-20' />
+          {/* Only show Stats in development */}
+          {!import.meta.env.PROD && <Stats className='!left-auto !right-2 !top-20' />}
           {/* Performance monitoring */}
           <PerformanceMonitor />
         </Canvas>
