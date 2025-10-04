@@ -143,6 +143,7 @@ const sendShowReminders = inngest.createFunction(
     {id: "send-show-reminders"},
     { cron: "0 */8 * * *" }, // Every 8 hours
     async ({ step })=>{
+        console.log("⏰ Show reminder function triggered");
         const now = new Date();
         const in8Hours = new Date(now.getTime() + 8 * 60 * 60 * 1000);
         const windowStart = new Date(in8Hours.getTime() - 10 * 60 * 1000);
@@ -484,6 +485,7 @@ const sendNewShowNotifications = inngest.createFunction(
     {id: "send-new-show-notifications"},
     { event: "app/show.added" },
     async ({ event })=>{
+        console.log("🎬 New show notification triggered:", event.data);
         const { movieTitle, movie } = event.data;
         
         const results = await notificationEngine.sendDynamicNotifications('newShow', {

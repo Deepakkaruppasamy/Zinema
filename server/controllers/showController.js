@@ -122,11 +122,12 @@ export const addShow = async (req, res) =>{
                 throw new Error('Inngest not configured - using fallback');
             }
             
+            console.log('🎬 Sending new show notification for:', movie.title);
             await inngest.send({
                 name: "app/show.added",
                 data: {movieTitle: movie.title, movie: movie}
             });
-            console.log('✅ Inngest event sent successfully');
+            console.log('✅ New show notification sent successfully');
         } catch (error) {
             console.log('⚠️ Inngest event failed, using fallback notification system:', error.message);
             
