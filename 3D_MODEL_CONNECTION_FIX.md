@@ -26,12 +26,11 @@ Could not load /models/theature.glb: Unexpected token 'v', "version ht"... is no
 ### 1. **Prioritized Fallback Strategy**
 ```javascript
 const fallbackModels = [
-  // Start with most reliable external sources first
+  // Start with your custom theater model first
+  addCacheBuster('https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatre.glb'), // Your custom theater model with cache-busting
   'https://modelviewer.dev/shared-assets/models/Astronaut.glb', // Reliable external fallback
   import.meta.env.VITE_3D_MODEL_URL, // Environment configured model
   '/models/theature.glb', // Local theater model (may have serving issues)
-  // Only try Vercel blob storage as last resort due to connection issues
-  addCacheBuster('https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatre.glb'),
 ];
 ```
 
@@ -83,11 +82,12 @@ const testUrlAccessibility = async (testUrl) => {
 
 ## Benefits of the Fix
 
-1. **Reliability**: Local model as primary source eliminates external dependencies
-2. **Performance**: Faster loading with local assets
-3. **User Experience**: Clear feedback and graceful degradation
-4. **Network Resilience**: Multiple fallback options handle various network conditions
-5. **Debugging**: Better error messages and logging for troubleshooting
+1. **Custom Theater Model Priority**: Your Madame Walker Theatre model is now the primary choice
+2. **Robust Fallback System**: Multiple reliable fallback options if your model has issues
+3. **Performance**: Cache-busting ensures fresh model loads
+4. **User Experience**: Clear feedback and graceful degradation
+5. **Network Resilience**: Handles connection resets and network restrictions
+6. **Debugging**: Better error messages and logging for troubleshooting
 
 ## Testing the Fix
 

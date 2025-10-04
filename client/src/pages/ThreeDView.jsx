@@ -144,6 +144,11 @@ function ModelWithFallback({ url, fallbackUrls = [] }) {
       return;
     }
     
+    // Special handling for your custom theater model
+    if (currentUrl.includes('vercel-storage.com')) {
+      console.warn(`Custom theater model connection issue detected. This may be due to network restrictions or Vercel blob storage availability.`);
+    }
+    
     if (isConnectionError && retryCount < maxRetries) {
       // Retry the same URL with exponential backoff
       const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
@@ -219,14 +224,13 @@ const ThreeDView = () => {
     return url;
   };
 
-  // Use a working fallback model with multiple options - prioritize reliable sources
+  // Use a working fallback model with multiple options - prioritize your custom theater model
   const fallbackModels = [
-    // Start with most reliable external sources first
+    // Start with your custom theater model first
+    addCacheBuster('https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatre.glb'), // Your custom theater model with cache-busting
     'https://modelviewer.dev/shared-assets/models/Astronaut.glb', // Reliable external fallback
     import.meta.env.VITE_3D_MODEL_URL, // Environment configured model
     '/models/theature.glb', // Local theater model (may have serving issues)
-    // Only try Vercel blob storage as last resort due to connection issues
-    addCacheBuster('https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatre.glb'), // Custom theater model with cache-busting
   ].filter(Boolean);
   
   const defaultSrc = fallbackModels[0];
@@ -294,8 +298,8 @@ const ThreeDView = () => {
             })()}
           </p>
           {src.includes('vercel-storage.com') && (
-            <span className='text-xs bg-orange-500/20 text-orange-300 px-2 py-1 rounded'>
-              ⚠️ May have connection issues
+            <span className='text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded'>
+              🎭 Your Custom Theater Model
             </span>
           )}
           {src.startsWith('/models/') && (
@@ -304,13 +308,13 @@ const ThreeDView = () => {
             </span>
           )}
           {src.includes('modelviewer.dev') && (
-            <span className='text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded'>
-              ✅ Reliable external model
+            <span className='text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded'>
+              🌐 External fallback model
             </span>
           )}
           {src.includes('modelviewer.dev') === false && src.startsWith('/') === false && !src.includes('vercel-storage.com') && (
-            <span className='text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded'>
-              🌐 External model
+            <span className='text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded'>
+              ✅ Environment model
             </span>
           )}
           <button
