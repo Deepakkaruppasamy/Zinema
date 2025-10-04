@@ -32,6 +32,7 @@ import concessionRouter from './routes/concessionRoutes.js';
 import feedbackRouter from './routes/feedbackRoutes.js';
 import eventRouter from './routes/eventRoutes.js';
 import eventRegistrationRouter from './routes/eventRegistrationRoutes.js';
+import supportRouter from './routes/supportRoutes.js';
 import { startPricingAlertService } from './services/pricingAlertService.js';
 
 const app = express();
