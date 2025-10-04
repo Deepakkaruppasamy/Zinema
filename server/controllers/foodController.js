@@ -1,51 +1,99 @@
-import FoodItem from '../models/FoodItem.js';
-import FoodOrder from '../models/FoodOrder.js';
 import Show from '../models/Show.js';
-import Theater from '../models/Theater.js';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// GET /api/food/:theaterId - Get available food items for a theater
-export const getFoodItemsForTheater = async (req, res) => {
+// GET /api/food/:showId - Get available food items for a show
+export const getFoodItemsForShow = async (req, res) => {
   try {
-    const { theaterId } = req.params;
+    const { showId } = req.params;
     
-    // Verify theater exists
-    const theater = await Theater.findById(theaterId);
-    if (!theater) {
-      return res.status(404).json({ success: false, message: 'Theater not found' });
+    // Verify show exists
+    const show = await Show.findById(showId).populate('movie');
+    if (!show) {
+      return res.status(404).json({ success: false, message: 'Show not found' });
     }
 
-    // Get available food items for this theater
-    const foodItems = await FoodItem.find({
-      theater: theaterId,
-      available: true,
-      isActive: true,
-      $or: [
-        { stock: -1 }, // Unlimited stock
-        { stock: { $gt: 0 } } // Has stock
+    // Sample food items for demonstration
+    const sampleFoodItems = {
+      'appetizers': [
+        {
+          _id: 'sample1',
+          name: 'Popcorn (Large)',
+          description: 'Freshly popped popcorn with butter',
+          category: 'appetizers',
+          price: 150,
+          available: true,
+          stock: -1,
+          dietaryInfo: { vegetarian: true, vegan: false, glutenFree: false, spicy: false },
+          preparationTime: 5,
+          calories: 200
+        },
+        {
+          _id: 'sample2',
+          name: 'Nachos with Cheese',
+          description: 'Crispy nachos with melted cheese sauce',
+          category: 'appetizers',
+          price: 200,
+          available: true,
+          stock: -1,
+          dietaryInfo: { vegetarian: true, vegan: false, glutenFree: false, spicy: false },
+          preparationTime: 8,
+          calories: 350
+        }
+      ],
+      'beverages': [
+        {
+          _id: 'sample3',
+          name: 'Soft Drink (Large)',
+          description: 'Coca Cola, Pepsi, or Sprite',
+          category: 'beverages',
+          price: 120,
+          available: true,
+          stock: -1,
+          dietaryInfo: { vegetarian: true, vegan: true, glutenFree: true, spicy: false },
+          preparationTime: 2,
+          calories: 150
+        },
+        {
+          _id: 'sample4',
+          name: 'Fresh Juice',
+          description: 'Orange, Apple, or Mixed Fruit Juice',
+          category: 'beverages',
+          price: 180,
+          available: true,
+          stock: -1,
+          dietaryInfo: { vegetarian: true, vegan: true, glutenFree: true, spicy: false },
+          preparationTime: 5,
+          calories: 120
+        }
+      ],
+      'main_course': [
+        {
+          _id: 'sample5',
+          name: 'Burger Combo',
+          description: 'Chicken burger with fries and drink',
+          category: 'main_course',
+          price: 350,
+          available: true,
+          stock: -1,
+          dietaryInfo: { vegetarian: false, vegan: false, glutenFree: false, spicy: false },
+          preparationTime: 15,
+          calories: 600
+        }
       ]
-    }).sort({ category: 1, name: 1 });
-
-    // Group food items by category
-    const groupedItems = foodItems.reduce((acc, item) => {
-      if (!acc[item.category]) {
-        acc[item.category] = [];
-      }
-      acc[item.category].push(item);
-      return acc;
-    }, {});
+    };
 
     res.json({
       success: true,
-      theater: {
-        id: theater._id,
-        name: theater.name,
-        location: theater.location
+      show: {
+        id: show._id,
+        movie: show.movie?.title || 'Unknown Movie',
+        showDateTime: show.showDateTime,
+        showPrice: show.showPrice
       },
-      foodItems: groupedItems,
-      categories: Object.keys(groupedItems)
+      foodItems: sampleFoodItems,
+      categories: Object.keys(sampleFoodItems)
     });
   } catch (error) {
     console.error('Error fetching food items:', error);
@@ -73,10 +121,10 @@ export const createFoodOrder = async (req, res) => {
     }
 
     // Validate required fields
-    if (!theaterId || !showId || !items || !Array.isArray(items) || items.length === 0) {
+    if (!showId || !items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Missing required fields: theaterId, showId, items' 
+        message: 'Missing required fields: showId, items' 
       });
     }
 
@@ -88,23 +136,8 @@ export const createFoodOrder = async (req, res) => {
       });
     }
 
-    if (deliveryMethod === 'interval_delivery' && !preferredDeliveryTime) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Preferred delivery time required for interval delivery' 
-      });
-    }
-
-    // Verify theater and show exist
-    const [theater, show] = await Promise.all([
-      Theater.findById(theaterId),
-      Show.findById(showId)
-    ]);
-
-    if (!theater) {
-      return res.status(404).json({ success: false, message: 'Theater not found' });
-    }
-
+    // Verify show exists
+    const show = await Show.findById(showId);
     if (!show) {
       return res.status(404).json({ success: false, message: 'Show not found' });
     }
@@ -113,40 +146,28 @@ export const createFoodOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Cannot order food for past shows' });
     }
 
-    // Validate and process food items
-    const processedItems = [];
+    // Calculate totals (simplified for demo)
     let subtotal = 0;
+    const processedItems = [];
 
     for (const item of items) {
-      const foodItem = await FoodItem.findById(item.foodItemId);
-      if (!foodItem) {
-        return res.status(404).json({ 
-          success: false, 
-          message: `Food item not found: ${item.foodItemId}` 
-        });
-      }
-
-      if (!foodItem.available || !foodItem.isActive) {
-        return res.status(400).json({ 
-          success: false, 
-          message: `Food item not available: ${foodItem.name}` 
-        });
-      }
-
-      if (foodItem.stock !== -1 && foodItem.stock < item.quantity) {
-        return res.status(400).json({ 
-          success: false, 
-          message: `Only ${foodItem.stock} ${foodItem.name} available` 
-        });
-      }
-
-      const itemTotal = foodItem.price * item.quantity;
+      // Sample pricing for demo items
+      const samplePrices = {
+        'sample1': 150, // Popcorn
+        'sample2': 200, // Nachos
+        'sample3': 120, // Soft Drink
+        'sample4': 180, // Fresh Juice
+        'sample5': 350  // Burger Combo
+      };
+      
+      const price = samplePrices[item.foodItemId] || 100;
+      const itemTotal = price * item.quantity;
       subtotal += itemTotal;
 
       processedItems.push({
-        foodItem: foodItem._id,
+        foodItemId: item.foodItemId,
         quantity: item.quantity,
-        unitPrice: foodItem.price,
+        unitPrice: price,
         specialInstructions: item.specialInstructions || ''
       });
     }
@@ -156,56 +177,24 @@ export const createFoodOrder = async (req, res) => {
     const serviceCharge = Math.round(subtotal * 0.05); // 5% service charge
     const totalAmount = subtotal + tax + serviceCharge;
 
-    // Create food order
-    const foodOrder = new FoodOrder({
-      user: userId,
-      theater: theaterId,
-      show: showId,
-      items: processedItems,
-      subtotal,
-      tax,
-      serviceCharge,
-      totalAmount,
-      deliveryMethod,
-      seatNumber,
-      rowNumber,
-      preferredDeliveryTime: preferredDeliveryTime ? new Date(preferredDeliveryTime) : undefined,
-      orderNotes
-    });
-
-    await foodOrder.save();
-
-    // Update food item stock
-    for (const item of processedItems) {
-      const foodItem = await FoodItem.findById(item.foodItem);
-      if (foodItem && foodItem.stock !== -1) {
-        foodItem.stock -= item.quantity;
-        await foodItem.save();
-      }
-    }
-
     // Create Stripe payment intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(totalAmount * 100), // Convert to cents
       currency: 'inr',
       metadata: {
         type: 'food_order',
-        foodOrderId: foodOrder._id.toString(),
+        showId: showId,
         userId: userId,
-        theaterId: theaterId
+        items: JSON.stringify(processedItems)
       },
-      description: `Food order for ${theater.name}`
+      description: `Food order for ${show.movie?.title || 'movie'}`
     });
-
-    // Update order with payment intent
-    foodOrder.paymentIntentId = paymentIntent.id;
-    await foodOrder.save();
 
     res.json({
       success: true,
       message: 'Food order created successfully',
       order: {
-        id: foodOrder._id,
+        id: `food_${Date.now()}`,
         items: processedItems.length,
         subtotal,
         tax,
@@ -222,7 +211,7 @@ export const createFoodOrder = async (req, res) => {
   }
 };
 
-// GET /api/food/orders/my - Get user's food orders
+// GET /api/food/orders/my - Get user's food orders (simplified)
 export const getMyFoodOrders = async (req, res) => {
   try {
     const userId = req.auth?.userId;
@@ -230,37 +219,10 @@ export const getMyFoodOrders = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Authentication required' });
     }
 
-    const orders = await FoodOrder.find({ user: userId })
-      .populate('theater', 'name location')
-      .populate('show', 'showDateTime')
-      .populate({
-        path: 'show',
-        populate: { path: 'movie', model: 'Movie', select: 'title' }
-      })
-      .populate('items.foodItem', 'name category price image')
-      .sort({ createdAt: -1 });
-
+    // Return empty array for now since we're not storing orders in DB
     res.json({
       success: true,
-      orders: orders.map(order => ({
-        id: order._id,
-        theater: order.theater,
-        show: order.show,
-        items: order.items,
-        subtotal: order.subtotal,
-        tax: order.tax,
-        serviceCharge: order.serviceCharge,
-        totalAmount: order.totalAmount,
-        deliveryMethod: order.deliveryMethod,
-        seatNumber: order.seatNumber,
-        rowNumber: order.rowNumber,
-        status: order.status,
-        paymentStatus: order.paymentStatus,
-        createdAt: order.createdAt,
-        preferredDeliveryTime: order.preferredDeliveryTime,
-        orderNotes: order.orderNotes,
-        estimatedReadyTime: order.estimatedReadyTime
-      }))
+      orders: []
     });
   } catch (error) {
     console.error('Error fetching food orders:', error);
@@ -268,7 +230,7 @@ export const getMyFoodOrders = async (req, res) => {
   }
 };
 
-// POST /api/food/orders/:id/cancel - Cancel food order
+// POST /api/food/orders/:id/cancel - Cancel food order (simplified)
 export const cancelFoodOrder = async (req, res) => {
   try {
     const { id } = req.params;
@@ -278,62 +240,11 @@ export const cancelFoodOrder = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Authentication required' });
     }
 
-    const order = await FoodOrder.findById(id);
-    if (!order) {
-      return res.status(404).json({ success: false, message: 'Order not found' });
-    }
-
-    if (order.user.toString() !== userId) {
-      return res.status(403).json({ success: false, message: 'Not authorized' });
-    }
-
-    if (order.status === 'cancelled') {
-      return res.status(400).json({ success: false, message: 'Order already cancelled' });
-    }
-
-    if (order.status === 'delivered') {
-      return res.status(400).json({ success: false, message: 'Cannot cancel delivered order' });
-    }
-
-    if (order.status === 'preparing') {
-      return res.status(400).json({ success: false, message: 'Cannot cancel order that is being prepared' });
-    }
-
-    // Cancel the order
-    order.status = 'cancelled';
-    order.cancelledAt = new Date();
-    order.cancellationReason = req.body.reason || 'User cancelled';
-
-    // Refund if payment was made
-    if (order.paymentStatus === 'paid' && order.paymentIntentId) {
-      try {
-        const refund = await stripe.refunds.create({
-          payment_intent: order.paymentIntentId,
-          amount: Math.round(order.totalAmount * 100)
-        });
-        order.refundAmount = order.totalAmount;
-        order.paymentStatus = 'refunded';
-      } catch (refundError) {
-        console.error('Refund failed:', refundError);
-        // Continue with cancellation even if refund fails
-      }
-    }
-
-    await order.save();
-
-    // Restore food item stock
-    for (const item of order.items) {
-      const foodItem = await FoodItem.findById(item.foodItem);
-      if (foodItem && foodItem.stock !== -1) {
-        foodItem.stock += item.quantity;
-        await foodItem.save();
-      }
-    }
-
+    // For demo purposes, just return success
     res.json({
       success: true,
       message: 'Order cancelled successfully',
-      refundAmount: order.refundAmount
+      refundAmount: 0
     });
 
   } catch (error) {
@@ -360,20 +271,7 @@ export const foodOrderPaymentWebhook = async (req, res) => {
       const paymentIntent = event.data.object;
       
       if (paymentIntent.metadata.type === 'food_order') {
-        const foodOrderId = paymentIntent.metadata.foodOrderId;
-        
-        const order = await FoodOrder.findById(foodOrderId);
-        if (order) {
-          order.paymentStatus = 'paid';
-          order.status = 'confirmed';
-          
-          // Set estimated ready time (15 minutes from now)
-          order.estimatedReadyTime = new Date(Date.now() + 15 * 60 * 1000);
-          
-          await order.save();
-          
-          console.log(`✅ Food order ${foodOrderId} payment confirmed`);
-        }
+        console.log(`✅ Food order payment confirmed for show ${paymentIntent.metadata.showId}`);
       }
     }
 

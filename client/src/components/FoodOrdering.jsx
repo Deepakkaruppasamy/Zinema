@@ -18,12 +18,12 @@ import {
 import api from '../lib/api';
 import { useAuth } from '@clerk/clerk-react';
 
-const FoodOrdering = ({ theaterId, showId, onClose }) => {
+const FoodOrdering = ({ showId, onClose }) => {
   const navigate = useNavigate();
   const { isSignedIn } = useAuth();
   
   const [foodItems, setFoodItems] = useState({});
-  const [theater, setTheater] = useState(null);
+  const [show, setShow] = useState(null);
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
   const [ordering, setOrdering] = useState(false);
@@ -33,17 +33,17 @@ const FoodOrdering = ({ theaterId, showId, onClose }) => {
   const [rowNumber, setRowNumber] = useState('');
 
   useEffect(() => {
-    if (theaterId) {
+    if (showId) {
       fetchFoodItems();
     }
-  }, [theaterId]);
+  }, [showId]);
 
   const fetchFoodItems = async () => {
     try {
-      const response = await api.get(`/api/food/${theaterId}`);
+      const response = await api.get(`/api/food/${showId}`);
       if (response.data.success) {
         setFoodItems(response.data.foodItems);
-        setTheater(response.data.theater);
+        setShow(response.data.show);
       }
     } catch (error) {
       console.error('Error fetching food items:', error);
@@ -135,7 +135,7 @@ const FoodOrdering = ({ theaterId, showId, onClose }) => {
 
     try {
       const response = await api.post('/api/food/order', {
-        theaterId: theaterId,
+        theaterId: showId, // Using showId as theaterId
         showId: showId,
         items: cart,
         deliveryMethod: deliveryMethod,
@@ -213,8 +213,8 @@ const FoodOrdering = ({ theaterId, showId, onClose }) => {
                 <Utensils className="h-6 w-6 mr-2" />
                 Food & Beverages
               </h2>
-              {theater && (
-                <p className="text-red-100 mt-1">{theater.name}</p>
+              {show && (
+                <p className="text-red-100 mt-1">{show.movie}</p>
               )}
             </div>
             <button

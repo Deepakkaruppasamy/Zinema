@@ -1,6 +1,6 @@
 import express from 'express';
 import { 
-  getFoodItemsForTheater, 
+  getFoodItemsForShow, 
   createFoodOrder, 
   getMyFoodOrders, 
   cancelFoodOrder,
@@ -10,7 +10,7 @@ import {
 const router = express.Router();
 
 // Public routes
-router.get('/:theaterId', getFoodItemsForTheater);
+router.get('/:showId', getFoodItemsForShow);
 
 // Authenticated routes
 router.post('/order', createFoodOrder);
