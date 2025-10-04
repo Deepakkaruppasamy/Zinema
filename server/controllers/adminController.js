@@ -453,9 +453,10 @@ export const getAnalytics = async (req, res) => {
             paymentRate: totalBookings > 0 ? ((paidBookings / totalBookings) * 100).toFixed(2) : 0
         };
 
-        res.json({
-            success: true,
-            analytics: {
+        // Generate sample data if no real data exists
+        const hasRealData = revenueData.length > 0 || userAnalytics.length > 0 || movieAnalytics.length > 0;
+        
+        let finalAnalytics = {
                 period,
                 dateRange: { start: startDate, end: endDate },
                 revenue: {
@@ -472,7 +473,80 @@ export const getAnalytics = async (req, res) => {
                 showtimes: showtimeAnalytics,
                 peakHours,
                 conversionFunnel
+        };
+
+        // If no real data, generate sample data for development
+        if (!hasRealData && process.env.NODE_ENV !== 'production') {
+            console.log('No real analytics data found, generating sample data for development');
+            
+            // Generate sample revenue data for the last 30 days
+            const sampleRevenueData = [];
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                sampleRevenueData.push({
+                    _id: date.toISOString().split('T')[0],
+                    dailyRevenue: Math.floor(Math.random() * 1000) + 200,
+                    bookingCount: Math.floor(Math.random() * 20) + 5,
+                    avgBookingValue: Math.floor(Math.random() * 50) + 25
+                });
             }
+
+            // Generate sample user data
+            const sampleUserData = [];
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                sampleUserData.push({
+                    _id: date.toISOString().split('T')[0],
+                    newUsers: Math.floor(Math.random() * 10) + 1
+                });
+            }
+
+            // Generate sample movie analytics
+            const sampleMovies = [
+                { title: 'Ne Zha 2', totalBookings: 45, totalRevenue: 2250, avgRating: 8.1 },
+                { title: 'Mantis', totalBookings: 32, totalRevenue: 1600, avgRating: 6.3 },
+                { title: 'Aztec Batman Clash of Empires', totalBookings: 28, totalRevenue: 1400, avgRating: 7.5 },
+                { title: 'Primitive War', totalBookings: 25, totalRevenue: 1250, avgRating: 7.8 },
+                { title: 'Prisoner of War', totalBookings: 22, totalRevenue: 1100, avgRating: 6.9 }
+            ];
+
+            // Generate sample peak hours
+            const samplePeakHours = [
+                { hour: 19, bookings: 15, revenue: 750 },
+                { hour: 20, bookings: 18, revenue: 900 },
+                { hour: 21, bookings: 12, revenue: 600 }
+            ];
+
+            finalAnalytics = {
+                period,
+                dateRange: { start: startDate, end: endDate },
+                revenue: {
+                    daily: sampleRevenueData,
+                    total: sampleRevenueData.reduce((sum, day) => sum + day.dailyRevenue, 0),
+                    avgDaily: (sampleRevenueData.reduce((sum, day) => sum + day.dailyRevenue, 0) / sampleRevenueData.length).toFixed(2)
+                },
+                users: {
+                    daily: sampleUserData,
+                    total: sampleUserData.reduce((sum, day) => sum + day.newUsers, 0)
+                },
+                movies: sampleMovies,
+                showtimes: samplePeakHours,
+                peakHours: samplePeakHours,
+                conversionFunnel: {
+                    visitors: 150,
+                    bookings: 120,
+                    paidBookings: 95,
+                    conversionRate: '80.00',
+                    paymentRate: '79.17'
+                }
+            };
+        }
+
+        res.json({
+            success: true,
+            analytics: finalAnalytics
         });
     } catch (error) {
         console.error(error);
@@ -516,9 +590,10 @@ export const getRealtimeMetrics = async (req, res) => {
             };
         });
 
-        res.json({
-            success: true,
-            realtime: {
+        // Generate sample data if no real data exists
+        const hasRealData = recentBookings > 0 || recentUsers > 0 || activeShows > 0;
+        
+        let realtimeData = {
                 last24h: {
                     bookings: recentBookings,
                     newUsers: recentUsers,
@@ -529,7 +604,44 @@ export const getRealtimeMetrics = async (req, res) => {
                 },
                 liveOccupancy,
                 serverTime: now.toISOString()
-            }
+        };
+
+        // If no real data, generate sample data for development
+        if (!hasRealData && process.env.NODE_ENV !== 'production') {
+            console.log('No real realtime data found, generating sample data for development');
+            
+            realtimeData = {
+                last24h: {
+                    bookings: Math.floor(Math.random() * 25) + 5,
+                    newUsers: Math.floor(Math.random() * 8) + 2,
+                    activeShows: Math.floor(Math.random() * 5) + 3
+                },
+                lastHour: {
+                    bookings: Math.floor(Math.random() * 5) + 1
+                },
+                liveOccupancy: [
+                    {
+                        showId: 'sample-show-1',
+                        movie: 'Ne Zha 2',
+                        occupancy: Math.floor(Math.random() * 40) + 30,
+                        occupiedSeats: Math.floor(Math.random() * 36) + 27,
+                        capacity: 90
+                    },
+                    {
+                        showId: 'sample-show-2',
+                        movie: 'Mantis',
+                        occupancy: Math.floor(Math.random() * 30) + 20,
+                        occupiedSeats: Math.floor(Math.random() * 27) + 18,
+                        capacity: 90
+                    }
+                ],
+                serverTime: now.toISOString()
+            };
+        }
+
+        res.json({
+            success: true,
+            realtime: realtimeData
         });
     } catch (error) {
         console.error(error);

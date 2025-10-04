@@ -95,7 +95,22 @@ const AnalyticsDashboard = () => {
   if (!analytics) {
     return (
       <div className="text-center text-gray-400 py-8">
-        Failed to load analytics data
+        <div className="mb-4">
+          <BarChart3 className="w-12 h-12 mx-auto text-gray-500 mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No Analytics Data Available</h3>
+          <p className="text-sm text-gray-400 mb-4">
+            Analytics data will appear here once you have bookings and users in your system.
+          </p>
+          <button
+            onClick={() => {
+              setLoading(true);
+              fetchAnalytics();
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Refresh Data
+          </button>
+        </div>
       </div>
     );
   }
@@ -228,22 +243,31 @@ const AnalyticsDashboard = () => {
           Daily Revenue Trend
         </h3>
         <div className="h-64 flex items-end gap-1">
-          {analytics.revenue.daily.map((day, index) => {
-            const maxRevenue = Math.max(...analytics.revenue.daily.map(d => d.dailyRevenue));
-            const height = (day.dailyRevenue / maxRevenue) * 100;
-            return (
-              <div key={index} className="flex-1 flex flex-col items-center">
-                <div
-                  className="w-full bg-gradient-to-t from-primary to-primary/60 rounded-t transition-all duration-300 hover:from-primary/80 hover:to-primary/40"
-                  style={{ height: `${height}%` }}
-                  title={`${formatDate(day._id)}: ${formatCurrency(day.dailyRevenue)}`}
-                ></div>
-                <div className="text-xs text-gray-400 mt-2 transform -rotate-45 origin-left">
-                  {formatDate(day._id)}
+          {analytics.revenue.daily && analytics.revenue.daily.length > 0 ? (
+            analytics.revenue.daily.map((day, index) => {
+              const maxRevenue = Math.max(...analytics.revenue.daily.map(d => d.dailyRevenue));
+              const height = maxRevenue > 0 ? (day.dailyRevenue / maxRevenue) * 100 : 0;
+              return (
+                <div key={index} className="flex-1 flex flex-col items-center">
+                  <div
+                    className="w-full bg-gradient-to-t from-primary to-primary/60 rounded-t transition-all duration-300 hover:from-primary/80 hover:to-primary/40"
+                    style={{ height: `${height}%` }}
+                    title={`${formatDate(day._id)}: ${formatCurrency(day.dailyRevenue)}`}
+                  ></div>
+                  <div className="text-xs text-gray-400 mt-2 transform -rotate-45 origin-left">
+                    {formatDate(day._id)}
+                  </div>
                 </div>
+              );
+            })
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-gray-400">
+              <div className="text-center">
+                <DollarSign className="w-8 h-8 mx-auto mb-2 text-gray-500" />
+                <p className="text-sm">No revenue data available</p>
               </div>
-            );
-          })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -254,26 +278,33 @@ const AnalyticsDashboard = () => {
           Top Performing Movies
         </h3>
         <div className="space-y-3">
-          {analytics.movies.slice(0, 5).map((movie, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-sm font-bold">
-                  {index + 1}
+          {analytics.movies && analytics.movies.length > 0 ? (
+            analytics.movies.slice(0, 5).map((movie, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-sm font-bold">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <div className="font-semibold">{movie.title}</div>
+                    <div className="text-sm text-gray-400">
+                      {movie.totalBookings} bookings • Rating: {movie.avgRating?.toFixed(1) || 'N/A'}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div className="font-semibold">{movie.title}</div>
-                  <div className="text-sm text-gray-400">
-                    {movie.totalBookings} bookings • Rating: {movie.avgRating?.toFixed(1) || 'N/A'}
+                <div className="text-right">
+                  <div className="font-semibold text-green-500">
+                    {formatCurrency(movie.totalRevenue)}
                   </div>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="font-semibold text-green-500">
-                  {formatCurrency(movie.totalRevenue)}
-                </div>
-              </div>
+            ))
+          ) : (
+            <div className="text-center text-gray-400 py-8">
+              <Film className="w-8 h-8 mx-auto mb-2 text-gray-500" />
+              <p className="text-sm">No movie performance data available</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
@@ -284,19 +315,26 @@ const AnalyticsDashboard = () => {
           Peak Booking Hours
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {analytics.peakHours.map((peak, index) => (
-            <div key={index} className="p-4 bg-gray-700/50 rounded-lg">
-              <div className="text-2xl font-bold text-primary">
-                {peak.hour}:00
+          {analytics.peakHours && analytics.peakHours.length > 0 ? (
+            analytics.peakHours.map((peak, index) => (
+              <div key={index} className="p-4 bg-gray-700/50 rounded-lg">
+                <div className="text-2xl font-bold text-primary">
+                  {peak.hour}:00
+                </div>
+                <div className="text-sm text-gray-400">
+                  {peak.bookings} bookings
+                </div>
+                <div className="text-sm text-green-500">
+                  {formatCurrency(peak.revenue)}
+                </div>
               </div>
-              <div className="text-sm text-gray-400">
-                {peak.bookings} bookings
-              </div>
-              <div className="text-sm text-green-500">
-                {formatCurrency(peak.revenue)}
-              </div>
+            ))
+          ) : (
+            <div className="col-span-full text-center text-gray-400 py-8">
+              <Clock className="w-8 h-8 mx-auto mb-2 text-gray-500" />
+              <p className="text-sm">No peak hours data available</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
