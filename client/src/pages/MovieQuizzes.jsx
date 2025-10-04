@@ -20,8 +20,8 @@ import {
   RotateCcw,
   Brain
 } from 'lucide-react';
-import QuizEngine from '../components/quiz/QuizEngine';
-import UserChallenges from '../components/quiz/UserChallenges';
+// import QuizEngine from '../components/quiz/QuizEngine';
+// import UserChallenges from '../components/quiz/UserChallenges';
 
 const MovieQuizzes = () => {
   const [activeTab, setActiveTab] = useState('trivia');
@@ -207,10 +207,16 @@ const MovieQuizzes = () => {
   ];
 
   useEffect(() => {
-    setLeaderboard(initializeLeaderboard());
-    setUserChallenges(initializeChallenges());
-    setPolls(initializePolls());
-    setChallenges(initializeChallenges());
+    console.log('Initializing Movie Quizzes data...');
+    try {
+      setLeaderboard(initializeLeaderboard());
+      setUserChallenges(initializeChallenges());
+      setPolls(initializePolls());
+      setChallenges(initializeChallenges());
+      console.log('Movie Quizzes data initialized successfully');
+    } catch (error) {
+      console.error('Error initializing Movie Quizzes data:', error);
+    }
   }, []);
 
   useEffect(() => {
@@ -244,6 +250,7 @@ const MovieQuizzes = () => {
 
   // Dynamic poll voting functionality
   const handleVote = (pollId, optionIndex) => {
+    console.log('Voting on poll:', pollId, 'option:', optionIndex);
     if (userVotes[pollId]) {
       alert('You have already voted on this poll!');
       return;
@@ -281,6 +288,7 @@ const MovieQuizzes = () => {
 
   // Dynamic challenge progress update
   const updateChallengeProgress = (challengeId, increment = 1) => {
+    console.log('Updating challenge progress:', challengeId, 'increment:', increment);
     setUserChallenges(prevChallenges => {
       return prevChallenges.map(challenge => {
         if (challenge.id === challengeId) {
@@ -330,6 +338,21 @@ const MovieQuizzes = () => {
   useEffect(() => {
     updateLeaderboard();
   }, [userPoints]);
+
+  // Test function to verify features are working
+  const testFeatures = () => {
+    console.log('Testing Movie Quizzes features...');
+    console.log('Polls:', polls.length);
+    console.log('Challenges:', userChallenges.length);
+    console.log('Leaderboard:', leaderboard.length);
+    console.log('User Points:', userPoints);
+    console.log('User Votes:', userVotes);
+  };
+
+  // Test on component mount
+  useEffect(() => {
+    setTimeout(testFeatures, 1000);
+  }, [polls, userChallenges, leaderboard]);
 
   // Simulate real-time leaderboard updates
   useEffect(() => {
@@ -416,6 +439,12 @@ const MovieQuizzes = () => {
                 <div className={`text-2xl font-bold ${getLevelColor(userLevel)}`}>Level {userLevel}</div>
                 <div className="text-sm text-gray-300">Movie Expert</div>
               </div>
+              <button
+                onClick={testFeatures}
+                className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 font-semibold py-2 px-3 rounded-lg transition-all text-sm"
+              >
+                Test Features
+              </button>
             </div>
           </div>
         </div>
@@ -451,17 +480,36 @@ const MovieQuizzes = () => {
               className="space-y-6"
             >
               {currentQuiz ? (
-                <QuizEngine
-                  questions={[currentQuiz]}
-                  onComplete={(result) => {
-                    setCurrentQuiz(null);
-                    setUserPoints(prev => prev + result.score);
-                  }}
-                  timeLimit={30}
-                  showTimer={true}
-                  allowSkip={false}
-                  showHints={false}
-                />
+                <div className="text-center">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-8 border border-white/20">
+                    <h3 className="text-2xl font-bold mb-4">🧠 {currentQuiz.question}</h3>
+                    <div className="space-y-3 mb-6">
+                      {currentQuiz.options.map((option, index) => (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            const isCorrect = index === currentQuiz.correct;
+                            if (isCorrect) {
+                              setQuizScore(prev => prev + currentQuiz.points);
+                              setUserPoints(prev => prev + currentQuiz.points);
+                            }
+                            setCurrentQuiz(null);
+                            setQuizScore(0);
+                          }}
+                          className="w-full text-left p-4 bg-white/10 hover:bg-white/20 rounded-lg border border-white/20 transition-all"
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => setCurrentQuiz(null)}
+                      className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition-all"
+                    >
+                      Back to Quizzes
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <div>
                   <h3 className="text-2xl font-bold mb-6">🧠 Choose Your Trivia Challenge</h3>
@@ -504,8 +552,14 @@ const MovieQuizzes = () => {
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-2xl font-bold">📊 Movie Polls</h3>
-                <div className="text-sm text-gray-300">
-                  Vote and earn 10 points per poll!
+                <div className="flex items-center gap-4">
+                  <div className="text-sm text-gray-300">
+                    Vote and earn 10 points per poll!
+                  </div>
+                  <div className="flex items-center gap-1 text-green-400">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <span className="text-xs">Live</span>
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -589,8 +643,14 @@ const MovieQuizzes = () => {
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-2xl font-bold">🎯 Your Challenges</h3>
-                <div className="text-sm text-gray-300">
-                  Complete challenges to earn rewards!
+                <div className="flex items-center gap-4">
+                  <div className="text-sm text-gray-300">
+                    Complete challenges to earn rewards!
+                  </div>
+                  <div className="flex items-center gap-1 text-blue-400">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                    <span className="text-xs">Active</span>
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -694,8 +754,14 @@ const MovieQuizzes = () => {
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-2xl font-bold">🏆 Top Movie Experts</h3>
-                  <div className="text-sm text-gray-300">
-                    Updated in real-time
+                  <div className="flex items-center gap-4">
+                    <div className="text-sm text-gray-300">
+                      Updated in real-time
+                    </div>
+                    <div className="flex items-center gap-1 text-yellow-400">
+                      <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                      <span className="text-xs">Live</span>
+                    </div>
                   </div>
                 </div>
                 <div className="space-y-4">
