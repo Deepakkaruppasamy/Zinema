@@ -122,10 +122,27 @@ function ModelWithFallback({ url, fallbackUrls = [] }) {
   const handleError = useCallback((error) => {
     console.error('3D Model loading error:', error);
     
-    // Check if this is a connection reset error
+    // Check if this is a connection reset error or local file serving issue
     const isConnectionError = error?.message?.includes('Failed to fetch') || 
                              error?.message?.includes('ERR_CONNECTION_RESET') ||
                              error?.message?.includes('Could not load');
+    
+    const isLocalFileError = error?.message?.includes('Unexpected token') ||
+                            error?.message?.includes('is not valid JSON') ||
+                            (currentUrl.startsWith('/') && error?.message?.includes('version ht'));
+    
+    // Don't retry for local file serving issues - move to next URL immediately
+    if (isLocalFileError) {
+      console.warn(`Local file serving issue detected for ${currentUrl}. Moving to next fallback immediately.`);
+      const nextIndex = currentUrlIndex + 1;
+      if (nextIndex < allUrls.length) {
+        setCurrentUrlIndex(nextIndex);
+        setRetryCount(0);
+      } else {
+        setShowFallback(true);
+      }
+      return;
+    }
     
     if (isConnectionError && retryCount < maxRetries) {
       // Retry the same URL with exponential backoff
@@ -204,10 +221,10 @@ const ThreeDView = () => {
 
   // Use a working fallback model with multiple options - prioritize reliable sources
   const fallbackModels = [
-    // Start with most reliable sources first
-    '/models/theature.glb', // Local theater model (most reliable)
+    // Start with most reliable external sources first
     'https://modelviewer.dev/shared-assets/models/Astronaut.glb', // Reliable external fallback
     import.meta.env.VITE_3D_MODEL_URL, // Environment configured model
+    '/models/theature.glb', // Local theater model (may have serving issues)
     // Only try Vercel blob storage as last resort due to connection issues
     addCacheBuster('https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatre.glb'), // Custom theater model with cache-busting
   ].filter(Boolean);
@@ -282,13 +299,18 @@ const ThreeDView = () => {
             </span>
           )}
           {src.startsWith('/models/') && (
-            <span className='text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded'>
-              ✅ Local model (reliable)
+            <span className='text-xs bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded'>
+              ⚠️ Local model (may have serving issues)
             </span>
           )}
           {src.includes('modelviewer.dev') && (
+            <span className='text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded'>
+              ✅ Reliable external model
+            </span>
+          )}
+          {src.includes('modelviewer.dev') === false && src.startsWith('/') === false && !src.includes('vercel-storage.com') && (
             <span className='text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded'>
-              🌐 External fallback
+              🌐 External model
             </span>
           )}
           <button

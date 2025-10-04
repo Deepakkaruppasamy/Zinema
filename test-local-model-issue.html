@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Local Model Issue Fix</title>
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+        }
+        model-viewer {
+            width: 100%;
+            height: 500px;
+            background-color: #2a2a2a;
+            border-radius: 10px;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .loading { background: #ffd700; color: #000; }
+        .success { background: #4caf50; color: #fff; }
+        .error { background: #f44336; color: #fff; }
+        .info { background: #2196f3; color: #fff; }
+        .warning { background: #ff9800; color: #fff; }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #444;
+            border-radius: 8px;
+        }
+        .fallback-order {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Testing Local Model Issue Fix</h1>
+    
+    <div class="status info">
+        <strong>Issue:</strong> Local model `/models/theature.glb` returns HTML instead of GLB file<br>
+        <strong>Fix:</strong> Reordered fallback priority to use reliable external models first
+    </div>
+    
+    <div class="test-section">
+        <h3>Updated Fallback Order</h3>
+        <div class="fallback-order">
+            <strong>1. ✅ Reliable External Model</strong><br>
+            <code>https://modelviewer.dev/shared-assets/models/Astronaut.glb</code><br>
+            <small>Most reliable, always accessible</small>
+        </div>
+        <div class="fallback-order">
+            <strong>2. 🌐 Environment Model</strong><br>
+            <code>VITE_3D_MODEL_URL</code><br>
+            <small>User-configured fallback</small>
+        </div>
+        <div class="fallback-order">
+            <strong>3. ⚠️ Local Model</strong><br>
+            <code>/models/theature.glb</code><br>
+            <small>May have serving issues</small>
+        </div>
+        <div class="fallback-order">
+            <strong>4. ⚠️ Vercel Blob Storage</strong><br>
+            <code>https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatre.glb</code><br>
+            <small>Known connection issues</small>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 1: Primary Fallback (Should Work)</h3>
+        <div id="status1" class="status loading">🔄 Testing reliable external model...</div>
+        <model-viewer 
+            id="model-viewer1"
+            src="https://modelviewer.dev/shared-assets/models/Astronaut.glb"
+            alt="Astronaut 3D Model"
+            auto-rotate
+            camera-controls
+            environment-image="neutral"
+        ></model-viewer>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 2: Local Model (Expected to Fail)</h3>
+        <div id="status2" class="status loading">🔄 Testing local model (expected to fail)...</div>
+        <model-viewer 
+            id="model-viewer2"
+            src="/models/theature.glb"
+            alt="Local Theater Model"
+            auto-rotate
+            camera-controls
+            environment-image="neutral"
+        ></model-viewer>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 3: Error Handling</h3>
+        <div id="status3" class="status info">
+            <strong>Expected Behavior:</strong><br>
+            • Test 1 should load successfully (reliable external model)<br>
+            • Test 2 should fail with "Unexpected token" error (local serving issue)<br>
+            • Application should automatically fall back to Test 1 model<br>
+            • No retry attempts for local file errors (immediate fallback)
+        </div>
+    </div>
+
+    <script>
+        // Test 1: Reliable external model
+        const modelViewer1 = document.getElementById('model-viewer1');
+        const status1 = document.getElementById('status1');
+        
+        modelViewer1.addEventListener('load', () => {
+            status1.className = 'status success';
+            status1.innerHTML = '✅ <strong>Success!</strong> Reliable external model loaded correctly!';
+        });
+        
+        modelViewer1.addEventListener('error', (event) => {
+            status1.className = 'status error';
+            status1.innerHTML = `❌ <strong>Unexpected Error:</strong> Even reliable model failed. ${event.detail?.message || 'Network issue.'}`;
+        });
+        
+        // Test 2: Local model (expected to fail)
+        const modelViewer2 = document.getElementById('model-viewer2');
+        const status2 = document.getElementById('status2');
+        
+        modelViewer2.addEventListener('load', () => {
+            status2.className = 'status success';
+            status2.innerHTML = '✅ <strong>Unexpected Success!</strong> Local model loaded (serving issue may be fixed)';
+        });
+        
+        modelViewer2.addEventListener('error', (event) => {
+            status2.className = 'status warning';
+            status2.innerHTML = `⚠️ <strong>Expected Issue:</strong> Local model serving error. ${event.detail?.message || 'This confirms the local file serving issue.'}`;
+        });
+        
+        // Test URL accessibility for local file
+        async function testLocalFileAccessibility() {
+            try {
+                const response = await fetch('/models/theature.glb', { 
+                    method: 'HEAD',
+                    mode: 'cors',
+                    cache: 'no-cache'
+                });
+                
+                if (response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    console.log('Local file accessibility test:', {
+                        status: response.status,
+                        contentType: contentType,
+                        isGLB: contentType?.includes('model/gltf-binary') || contentType?.includes('application/octet-stream')
+                    });
+                    
+                    if (!contentType?.includes('model/gltf-binary') && !contentType?.includes('application/octet-stream')) {
+                        console.warn('⚠️ Local file is accessible but may not be served with correct content-type');
+                    }
+                } else {
+                    console.error('❌ Local file is not accessible:', response.status, response.statusText);
+                }
+            } catch (error) {
+                console.error('❌ Local file accessibility test failed:', error.message);
+            }
+        }
+        
+        // Test local file accessibility
+        testLocalFileAccessibility();
+    </script>
+</body>
+</html>

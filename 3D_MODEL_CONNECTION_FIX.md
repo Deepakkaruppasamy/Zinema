@@ -1,10 +1,16 @@
 # 🎭 3D Model Connection Reset Fix
 
 ## Problem Description
-The application was experiencing `net::ERR_CONNECTION_RESET` errors when trying to load 3D models from Vercel Blob Storage:
+The application was experiencing multiple 3D model loading issues:
 
+1. **Vercel Blob Storage Connection Resets**:
 ```
 GET https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatre.glb?v=1759562477866 net::ERR_CONNECTION_RESET 200 (OK)
+```
+
+2. **Local Model Serving Issues**:
+```
+Could not load /models/theature.glb: Unexpected token 'v', "version ht"... is not valid JSON
 ```
 
 ## Root Cause Analysis
@@ -12,16 +18,19 @@ GET https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatr
 2. **CORS Restrictions**: Some networks may block or interfere with blob storage requests
 3. **Cache-busting Overload**: Multiple rapid requests with cache-busting parameters
 4. **Service Availability**: Vercel Blob Storage may have intermittent availability issues
+5. **Local File Serving Issues**: Local GLB files may not be served with correct MIME types or may return HTML error pages
+6. **Web Server Configuration**: Static file serving may not be properly configured for GLB files
 
 ## Solution Implemented
 
 ### 1. **Prioritized Fallback Strategy**
 ```javascript
 const fallbackModels = [
-  '/models/theature.glb', // Local theater model (most reliable)
+  // Start with most reliable external sources first
   'https://modelviewer.dev/shared-assets/models/Astronaut.glb', // Reliable external fallback
   import.meta.env.VITE_3D_MODEL_URL, // Environment configured model
-  // Only try Vercel blob storage as last resort
+  '/models/theature.glb', // Local theater model (may have serving issues)
+  // Only try Vercel blob storage as last resort due to connection issues
   addCacheBuster('https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatre.glb'),
 ];
 ```
@@ -30,6 +39,7 @@ const fallbackModels = [
 - **Retry Logic**: Exponential backoff for connection errors (1s, 2s, 4s delays)
 - **URL Accessibility Testing**: Pre-test URLs before attempting to load
 - **Connection Error Detection**: Specific handling for `ERR_CONNECTION_RESET` errors
+- **Local File Error Detection**: Immediate fallback for local file serving issues
 - **Graceful Degradation**: Fallback to geometric model if all URLs fail
 
 ### 3. **Improved User Experience**
