@@ -33,6 +33,16 @@ const MovieQuizzes = () => {
   const [userLevel, setUserLevel] = useState(5);
   const [leaderboard, setLeaderboard] = useState([]);
   const [userChallenges, setUserChallenges] = useState([]);
+  const [polls, setPolls] = useState([]);
+  const [userVotes, setUserVotes] = useState({});
+  const [challenges, setChallenges] = useState([]);
+  const [userStats, setUserStats] = useState({
+    totalQuizzes: 0,
+    correctAnswers: 0,
+    totalPoints: 1250,
+    level: 5,
+    rank: 6
+  });
 
   // Sample trivia questions
   const triviaQuestions = [
@@ -83,8 +93,8 @@ const MovieQuizzes = () => {
     }
   ];
 
-  // Sample polls
-  const moviePolls = [
+  // Dynamic polls with voting functionality
+  const initializePolls = () => [
     {
       id: 1,
       question: "What's your favorite movie genre?",
@@ -95,7 +105,8 @@ const MovieQuizzes = () => {
         { text: "Horror", votes: 23, percentage: 18 }
       ],
       totalVotes: 128,
-      category: "Preferences"
+      category: "Preferences",
+      isActive: true
     },
     {
       id: 2,
@@ -107,12 +118,26 @@ const MovieQuizzes = () => {
         { text: "Barbie", votes: 16, percentage: 10 }
       ],
       totalVotes: 160,
-      category: "Upcoming"
+      category: "Upcoming",
+      isActive: true
+    },
+    {
+      id: 3,
+      question: "What's your preferred movie watching experience?",
+      options: [
+        { text: "Theater", votes: 89, percentage: 45 },
+        { text: "Streaming at Home", votes: 78, percentage: 39 },
+        { text: "Drive-in", votes: 20, percentage: 10 },
+        { text: "Outdoor Screening", votes: 12, percentage: 6 }
+      ],
+      totalVotes: 199,
+      category: "Experience",
+      isActive: true
     }
   ];
 
-  // Sample challenges
-  const challenges = [
+  // Dynamic challenges with progress tracking
+  const initializeChallenges = () => [
     {
       id: 1,
       title: "Movie Marathon Master",
@@ -122,7 +147,10 @@ const MovieQuizzes = () => {
       maxProgress: 5,
       type: "Watching",
       difficulty: "Hard",
-      icon: "🎬"
+      icon: "🎬",
+      isActive: true,
+      timeLeft: "2 days",
+      participants: 23
     },
     {
       id: 2,
@@ -133,7 +161,10 @@ const MovieQuizzes = () => {
       maxProgress: 20,
       type: "Trivia",
       difficulty: "Medium",
-      icon: "🧠"
+      icon: "🧠",
+      isActive: true,
+      timeLeft: "5 days",
+      participants: 45
     },
     {
       id: 3,
@@ -144,22 +175,42 @@ const MovieQuizzes = () => {
       maxProgress: 10,
       type: "Social",
       difficulty: "Easy",
-      icon: "🦋"
+      icon: "🦋",
+      isActive: true,
+      timeLeft: "3 days",
+      participants: 67
+    },
+    {
+      id: 4,
+      title: "Genre Explorer",
+      description: "Watch one movie from each of the 8 main genres",
+      reward: 250,
+      progress: 5,
+      maxProgress: 8,
+      type: "Watching",
+      difficulty: "Medium",
+      icon: "🎭",
+      isActive: true,
+      timeLeft: "7 days",
+      participants: 34
     }
   ];
 
-  // Sample leaderboard
-  const sampleLeaderboard = [
-    { rank: 1, name: "MovieBuff2024", points: 3450, level: 12, avatar: "🎭" },
-    { rank: 2, name: "CinemaLover", points: 3200, level: 11, avatar: "🎬" },
-    { rank: 3, name: "FilmFanatic", points: 2980, level: 10, avatar: "🎪" },
-    { rank: 4, name: "ScreenTime", points: 2750, level: 9, avatar: "🎨" },
-    { rank: 5, name: "MovieMaven", points: 2600, level: 9, avatar: "🎯" }
+  // Dynamic leaderboard with user integration
+  const initializeLeaderboard = () => [
+    { rank: 1, name: "MovieBuff2024", points: 3450, level: 12, avatar: "🎭", isOnline: true },
+    { rank: 2, name: "CinemaLover", points: 3200, level: 11, avatar: "🎬", isOnline: false },
+    { rank: 3, name: "FilmFanatic", points: 2980, level: 10, avatar: "🎪", isOnline: true },
+    { rank: 4, name: "ScreenTime", points: 2750, level: 9, avatar: "🎨", isOnline: false },
+    { rank: 5, name: "MovieMaven", points: 2600, level: 9, avatar: "🎯", isOnline: true },
+    { rank: 6, name: "You", points: 1250, level: 5, avatar: "🎮", isOnline: true, isCurrentUser: true }
   ];
 
   useEffect(() => {
-    setLeaderboard(sampleLeaderboard);
-    setUserChallenges(challenges);
+    setLeaderboard(initializeLeaderboard());
+    setUserChallenges(initializeChallenges());
+    setPolls(initializePolls());
+    setChallenges(initializeChallenges());
   }, []);
 
   useEffect(() => {
@@ -183,8 +234,127 @@ const MovieQuizzes = () => {
   const handleQuizEnd = () => {
     setIsQuizActive(false);
     setUserPoints(prev => prev + quizScore);
+    setUserStats(prev => ({
+      ...prev,
+      totalQuizzes: prev.totalQuizzes + 1,
+      totalPoints: prev.totalPoints + quizScore
+    }));
     // Add completion logic here
   };
+
+  // Dynamic poll voting functionality
+  const handleVote = (pollId, optionIndex) => {
+    if (userVotes[pollId]) {
+      alert('You have already voted on this poll!');
+      return;
+    }
+
+    setPolls(prevPolls => {
+      return prevPolls.map(poll => {
+        if (poll.id === pollId) {
+          const updatedOptions = poll.options.map((option, index) => {
+            if (index === optionIndex) {
+              return { ...option, votes: option.votes + 1 };
+            }
+            return option;
+          });
+
+          const newTotalVotes = poll.totalVotes + 1;
+          const updatedOptionsWithPercentage = updatedOptions.map(option => ({
+            ...option,
+            percentage: Math.round((option.votes / newTotalVotes) * 100)
+          }));
+
+          return {
+            ...poll,
+            options: updatedOptionsWithPercentage,
+            totalVotes: newTotalVotes
+          };
+        }
+        return poll;
+      });
+    });
+
+    setUserVotes(prev => ({ ...prev, [pollId]: optionIndex }));
+    setUserPoints(prev => prev + 10); // Award points for voting
+  };
+
+  // Dynamic challenge progress update
+  const updateChallengeProgress = (challengeId, increment = 1) => {
+    setUserChallenges(prevChallenges => {
+      return prevChallenges.map(challenge => {
+        if (challenge.id === challengeId) {
+          const newProgress = Math.min(challenge.progress + increment, challenge.maxProgress);
+          const isCompleted = newProgress >= challenge.maxProgress;
+          
+          if (isCompleted && challenge.progress < challenge.maxProgress) {
+            // Award points for completion
+            setUserPoints(prev => prev + challenge.reward);
+            setUserStats(prev => ({
+              ...prev,
+              totalPoints: prev.totalPoints + challenge.reward
+            }));
+          }
+
+          return {
+            ...challenge,
+            progress: newProgress,
+            isCompleted
+          };
+        }
+        return challenge;
+      });
+    });
+  };
+
+  // Dynamic leaderboard update
+  const updateLeaderboard = () => {
+    setLeaderboard(prevLeaderboard => {
+      return prevLeaderboard.map(user => {
+        if (user.isCurrentUser) {
+          return {
+            ...user,
+            points: userPoints,
+            level: Math.floor(userPoints / 250) + 1
+          };
+        }
+        return user;
+      }).sort((a, b) => b.points - a.points).map((user, index) => ({
+        ...user,
+        rank: index + 1
+      }));
+    });
+  };
+
+  // Update leaderboard when points change
+  useEffect(() => {
+    updateLeaderboard();
+  }, [userPoints]);
+
+  // Simulate real-time leaderboard updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLeaderboard(prevLeaderboard => {
+        return prevLeaderboard.map(user => {
+          if (!user.isCurrentUser && Math.random() > 0.7) {
+            // Randomly update other users' points
+            const pointChange = Math.floor(Math.random() * 50) - 25; // -25 to +25
+            return {
+              ...user,
+              points: Math.max(0, user.points + pointChange),
+              level: Math.floor((user.points + pointChange) / 250) + 1
+            };
+          }
+          return user;
+        }).sort((a, b) => b.points - a.points).map((user, index) => ({
+          ...user,
+          rank: index + 1
+        }));
+      });
+    }, 10000); // Update every 10 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const submitAnswer = (selectedOption) => {
     if (selectedOption === currentQuiz.correct) {
@@ -207,6 +377,15 @@ const MovieQuizzes = () => {
     if (level >= 10) return 'text-purple-600';
     if (level >= 5) return 'text-blue-600';
     return 'text-green-600';
+  };
+
+  const getTypeColor = (type) => {
+    switch (type) {
+      case 'Watching': return 'text-blue-500 bg-blue-100';
+      case 'Trivia': return 'text-purple-500 bg-purple-100';
+      case 'Social': return 'text-pink-500 bg-pink-100';
+      default: return 'text-gray-500 bg-gray-100';
+    }
   };
 
   const tabs = [
@@ -323,33 +502,78 @@ const MovieQuizzes = () => {
               exit={{ opacity: 0, y: -20 }}
               className="space-y-6"
             >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold">📊 Movie Polls</h3>
+                <div className="text-sm text-gray-300">
+                  Vote and earn 10 points per poll!
+                </div>
+              </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {moviePolls.map((poll) => (
-                  <div key={poll.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                {polls.map((poll) => (
+                  <motion.div 
+                    key={poll.id} 
+                    whileHover={{ scale: 1.02 }}
+                    className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20"
+                  >
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xl font-semibold">{poll.question}</h3>
-                      <span className="text-sm text-gray-300">{poll.totalVotes} votes</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-300">{poll.totalVotes} votes</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          poll.category === 'Preferences' ? 'bg-blue-100 text-blue-600' :
+                          poll.category === 'Upcoming' ? 'bg-green-100 text-green-600' :
+                          'bg-purple-100 text-purple-600'
+                        }`}>
+                          {poll.category}
+                        </span>
+                      </div>
                     </div>
                     <div className="space-y-3">
                       {poll.options.map((option, index) => (
-                        <div key={index} className="space-y-2">
+                        <motion.div 
+                          key={index} 
+                          className="space-y-2"
+                          whileHover={{ scale: 1.01 }}
+                        >
                           <div className="flex justify-between text-sm">
                             <span>{option.text}</span>
-                            <span>{option.percentage}%</span>
+                            <span className="font-semibold">{option.percentage}%</span>
                           </div>
-                          <div className="w-full bg-gray-700 rounded-full h-2">
-                            <div
-                              className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-500"
-                              style={{ width: `${option.percentage}%` }}
-                            ></div>
+                          <div className="w-full bg-gray-700 rounded-full h-3">
+                            <motion.div
+                              className="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full transition-all duration-1000"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${option.percentage}%` }}
+                              transition={{ duration: 1, delay: index * 0.1 }}
+                            ></motion.div>
                           </div>
-                        </div>
+                          <div className="flex justify-between text-xs text-gray-400">
+                            <span>{option.votes} votes</span>
+                            {userVotes[poll.id] === index && (
+                              <span className="text-green-400 font-semibold">✓ Your vote</span>
+                            )}
+                          </div>
+                        </motion.div>
                       ))}
                     </div>
-                    <button className="w-full mt-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-2 px-4 rounded-lg transition-all">
-                      Vote Now
-                    </button>
-                  </div>
+                    {userVotes[poll.id] !== undefined ? (
+                      <div className="w-full mt-4 bg-green-500/20 text-green-400 font-semibold py-2 px-4 rounded-lg text-center">
+                        ✓ You voted! (+10 points)
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2 mt-4">
+                        {poll.options.map((option, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handleVote(poll.id, index)}
+                            className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-2 px-3 rounded-lg transition-all text-sm"
+                          >
+                            Vote: {option.text}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
                 ))}
               </div>
             </motion.div>
@@ -361,8 +585,101 @@ const MovieQuizzes = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
             >
-              <UserChallenges />
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold">🎯 Your Challenges</h3>
+                <div className="text-sm text-gray-300">
+                  Complete challenges to earn rewards!
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {userChallenges.map((challenge) => (
+                  <motion.div
+                    key={challenge.id}
+                    whileHover={{ scale: 1.05 }}
+                    className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20"
+                  >
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="text-2xl">{challenge.icon}</span>
+                      <div className="flex-1">
+                        <h4 className="text-lg font-semibold">{challenge.title}</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(challenge.type)}`}>
+                            {challenge.type}
+                          </span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(challenge.difficulty)}`}>
+                            {challenge.difficulty}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <p className="text-gray-300 text-sm mb-4">{challenge.description}</p>
+                    
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span>Progress</span>
+                        <span>{challenge.progress}/{challenge.maxProgress}</span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-2">
+                        <motion.div
+                          className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-500"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(challenge.progress / challenge.maxProgress) * 100}%` }}
+                          transition={{ duration: 1 }}
+                        ></motion.div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 text-sm text-gray-300">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            {challenge.timeLeft}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Users className="w-4 h-4" />
+                            {challenge.participants}
+                          </span>
+                        </div>
+                        <span className="text-yellow-400 font-bold">+{challenge.reward} pts</span>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => updateChallengeProgress(challenge.id, 1)}
+                          disabled={challenge.progress >= challenge.maxProgress}
+                          className={`flex-1 font-semibold py-2 px-3 rounded-lg transition-all text-sm ${
+                            challenge.progress >= challenge.maxProgress
+                              ? 'bg-green-500/20 text-green-400 cursor-not-allowed'
+                              : 'bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white'
+                          }`}
+                        >
+                          {challenge.progress >= challenge.maxProgress ? (
+                            <>
+                              <CheckCircle className="w-4 h-4 inline mr-1" />
+                              Completed
+                            </>
+                          ) : (
+                            'Update Progress'
+                          )}
+                        </button>
+                        {challenge.progress >= challenge.maxProgress && (
+                          <button
+                            onClick={() => {
+                              setUserPoints(prev => prev + challenge.reward);
+                              alert(`Challenge completed! You earned ${challenge.reward} points!`);
+                            }}
+                            className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-3 rounded-lg transition-all text-sm"
+                          >
+                            Claim Reward
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </motion.div>
           )}
 
@@ -375,31 +692,82 @@ const MovieQuizzes = () => {
               className="space-y-6"
             >
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                <h3 className="text-2xl font-bold mb-6 text-center">🏆 Top Movie Experts</h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bold">🏆 Top Movie Experts</h3>
+                  <div className="text-sm text-gray-300">
+                    Updated in real-time
+                  </div>
+                </div>
                 <div className="space-y-4">
                   {leaderboard.map((user, index) => (
-                    <div key={user.rank} className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+                    <motion.div 
+                      key={user.rank} 
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className={`flex items-center justify-between p-4 rounded-lg transition-all ${
+                        user.isCurrentUser 
+                          ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30' 
+                          : 'bg-white/5 hover:bg-white/10'
+                      }`}
+                    >
                       <div className="flex items-center gap-4">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
                           index === 0 ? 'bg-yellow-500 text-black' :
                           index === 1 ? 'bg-gray-400 text-black' :
                           index === 2 ? 'bg-orange-500 text-black' :
+                          user.isCurrentUser ? 'bg-purple-500 text-white' :
                           'bg-gray-600 text-white'
                         }`}>
                           {user.rank}
                         </div>
-                        <span className="text-2xl">{user.avatar}</span>
-                        <div>
-                          <div className="font-semibold">{user.name}</div>
-                          <div className="text-sm text-gray-300">Level {user.level}</div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{user.avatar}</span>
+                          <div>
+                            <div className={`font-semibold ${user.isCurrentUser ? 'text-purple-300' : ''}`}>
+                              {user.name}
+                              {user.isCurrentUser && <span className="text-xs text-purple-400 ml-2">(You)</span>}
+                            </div>
+                            <div className="text-sm text-gray-300">
+                              Level {user.level} • {user.isOnline ? '🟢 Online' : '🔴 Offline'}
+                            </div>
+                          </div>
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="font-bold text-yellow-400">{user.points.toLocaleString()}</div>
                         <div className="text-sm text-gray-300">points</div>
+                        {index < 3 && (
+                          <div className="text-xs text-gray-400 mt-1">
+                            {index === 0 ? '🥇 Champion' : index === 1 ? '🥈 Runner-up' : '🥉 Third Place'}
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    </motion.div>
                   ))}
+                </div>
+                
+                {/* User Stats Summary */}
+                <div className="mt-6 p-4 bg-white/5 rounded-lg">
+                  <h4 className="text-lg font-semibold mb-3">Your Stats</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-yellow-400">{userStats.totalQuizzes}</div>
+                      <div className="text-sm text-gray-300">Quizzes Taken</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-400">{userStats.correctAnswers}</div>
+                      <div className="text-sm text-gray-300">Correct Answers</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-400">{userStats.totalPoints}</div>
+                      <div className="text-sm text-gray-300">Total Points</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-purple-400">#{userStats.rank}</div>
+                      <div className="text-sm text-gray-300">Current Rank</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>
