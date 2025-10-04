@@ -375,6 +375,26 @@ const ThreeDView = () => {
       }
     };
 
+    // Intercept Three.js renderer creation to prevent context conflicts
+    const interceptThreeJSRenderer = () => {
+      try {
+        // Check if canvas has existing context before Three.js tries to create one
+        const existingContext = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (existingContext) {
+          console.log('Existing WebGL context detected, recreating canvas before Three.js initialization');
+          const newCanvas = forceRecreateCanvas();
+          if (newCanvas) {
+            // Wait for DOM update
+            setTimeout(() => {
+              console.log('Canvas recreated, Three.js can now create renderer safely');
+            }, 100);
+          }
+        }
+      } catch (error) {
+        console.warn('Error intercepting Three.js renderer:', error);
+      }
+    };
+
     // Reset canvas to prevent context conflicts
     const resetCanvas = () => {
       try {
@@ -405,11 +425,18 @@ const ThreeDView = () => {
       }
     };
 
+    // Intercept Three.js renderer creation before any operations
+    interceptThreeJSRenderer();
+
     // Reset canvas before adding event listeners
     resetCanvas();
 
-    canvas.addEventListener('webglcontextlost', handleWebGLContextLost);
-    canvas.addEventListener('webglcontextrestored', handleWebGLContextRestored);
+    // Get the current canvas (might have been recreated)
+    const currentCanvas = canvasRef.current;
+    if (!currentCanvas) return;
+
+    currentCanvas.addEventListener('webglcontextlost', handleWebGLContextLost);
+    currentCanvas.addEventListener('webglcontextrestored', handleWebGLContextRestored);
     
     // Clean up existing WebGL context before creating new one
     const cleanupExistingContext = () => {
@@ -526,9 +553,48 @@ const ThreeDView = () => {
 
     const cleanupWebGL = optimizeWebGLContext();
     
+    // Override Three.js renderer creation to prevent context conflicts
+    const overrideThreeJSRenderer = () => {
+      try {
+        // Store original Three.js WebGLRenderer
+        const originalWebGLRenderer = window.THREE?.WebGLRenderer;
+        
+        if (originalWebGLRenderer) {
+          // Override WebGLRenderer constructor
+          window.THREE.WebGLRenderer = function(canvas, options) {
+            console.log('Three.js WebGLRenderer called, checking for context conflicts...');
+            
+            // Check if canvas has existing context
+            const existingContext = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            if (existingContext) {
+              console.log('Context conflict detected in Three.js renderer, recreating canvas...');
+              
+              // Force recreate canvas
+              const newCanvas = forceRecreateCanvas();
+              if (newCanvas) {
+                // Use the new canvas for Three.js
+                canvas = newCanvas;
+                console.log('Using recreated canvas for Three.js renderer');
+              }
+            }
+            
+            // Call original constructor with potentially new canvas
+            return new originalWebGLRenderer(canvas, options);
+          };
+          
+          console.log('Three.js WebGLRenderer override applied');
+        }
+      } catch (error) {
+        console.warn('Error overriding Three.js renderer:', error);
+      }
+    };
+
+    // Apply Three.js renderer override
+    overrideThreeJSRenderer();
+    
     if (import.meta.env.PROD) {
-      canvas.style.willChange = 'auto';
-      canvas.style.transform = 'translateZ(0)';
+      currentCanvas.style.willChange = 'auto';
+      currentCanvas.style.transform = 'translateZ(0)';
       
       const checkMemoryPressure = () => {
         if (performance.memory) {
