@@ -30,7 +30,6 @@ import Theatre from './pages/Theatre'
 import PWAInstallPrompt from './components/PWAInstallPrompt'
 import PWAUtils from './components/PWAUtils'
 import MobileOptimizations from './components/MobileOptimizations'
-import ThreeDView from './pages/ThreeDView'
 import Ticket from './pages/Ticket'
 import CommunityChat from './pages/CommunityChat'
 import AdminNotifications from './pages/AdminNotifications'
@@ -60,7 +59,6 @@ const App = () => {
         <Route path='/loading/:nextUrl' element={<LoadingPage/>} />
         <Route path='/favorite' element={<Favorite/>} />
         <Route path='/theatre' element={<Theatre/>} />
-        <Route path='/3d-view' element={<ThreeDView/>} />
         <Route path='/ticket/:id' element={<Ticket/>} />
         <Route path='/community' element={<CommunityChat/>} />
         <Route path='/events' element={<Events/>} />

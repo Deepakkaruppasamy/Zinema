@@ -37,7 +37,6 @@ const Navbar = () => {
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/theatre'>{t('nav.theatres')}</Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/events'>{t('nav.events')}</Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/'>{t('nav.releases')}</Link>
-        <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/3d-view'>{t('nav.view3d')}</Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/community' className='flex items-center gap-2'>
           <MessageCircle className='w-4 h-4' />
           {t('nav.community')}
@@ -49,10 +48,10 @@ const Navbar = () => {
         <SearchIcon className='max-md:hidden w-6 h-6 cursor-pointer'/>
         <NotificationBell />
         <Link
-          to='/3d-view'
+          to='/theatre'
           onClick={()=> {scrollTo(0,0); setIsOpen(false)}}
           className='hidden md:inline px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 transition text-sm'
-        >{t('nav.view3d')}</Link>
+        >{t('nav.theatres')}</Link>
         <LanguageSwitcher />
         <button
           aria-label="Toggle Green Ticketing"

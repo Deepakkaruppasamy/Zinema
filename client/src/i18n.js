@@ -10,7 +10,6 @@ const resources = {
         theatres: 'Theatres',
         events: 'Events',
         releases: 'Releases',
-        view3d: '3D View',
         community: 'Community',
         favorites: 'Favorites',
         login: 'Login'
