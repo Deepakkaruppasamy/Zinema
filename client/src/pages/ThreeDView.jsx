@@ -253,9 +253,26 @@ const ThreeDView = () => {
       console.log(`WebGL recovery attempt ${recoveryState.attempts}/${recoveryState.maxAttempts}`);
       
       if (recoveryState.attempts <= recoveryState.maxAttempts) {
-        // Strategy 1: Force context recreation
+        // Strategy 1: Force context recreation with cleanup
         if (recoveryState.attempts === 1) {
-          console.log('Strategy 1: Force context recreation');
+          console.log('Strategy 1: Force context recreation with cleanup');
+          
+          // Clean up existing context
+          const canvas = canvasRef.current;
+          if (canvas) {
+            try {
+              const existingContext = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+              if (existingContext) {
+                const loseContextExt = existingContext.getExtension('WEBGL_lose_context');
+                if (loseContextExt) {
+                  loseContextExt.loseContext();
+                }
+              }
+            } catch (error) {
+              console.warn('Error during context cleanup:', error);
+            }
+          }
+          
           setWebglError(false);
           setTimeout(() => {
             if (recoveryState.isRecovering) {
@@ -315,40 +332,110 @@ const ThreeDView = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    // Reset canvas to prevent context conflicts
+    const resetCanvas = () => {
+      try {
+        // Remove any existing WebGL context
+        const existingContext = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (existingContext) {
+          const loseContextExt = existingContext.getExtension('WEBGL_lose_context');
+          if (loseContextExt) {
+            loseContextExt.loseContext();
+          }
+        }
+        
+        // Clear canvas content
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        // Reset canvas attributes
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        
+        console.log('Canvas reset completed');
+      } catch (error) {
+        console.warn('Error resetting canvas:', error);
+      }
+    };
+
+    // Reset canvas before adding event listeners
+    resetCanvas();
+
     canvas.addEventListener('webglcontextlost', handleWebGLContextLost);
     canvas.addEventListener('webglcontextrestored', handleWebGLContextRestored);
     
+    // Clean up existing WebGL context before creating new one
+    const cleanupExistingContext = () => {
+      try {
+        // Get existing context
+        const existingContext = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (existingContext) {
+          console.log('Cleaning up existing WebGL context');
+          
+          // Try to lose the context gracefully
+          const loseContextExt = existingContext.getExtension('WEBGL_lose_context');
+          if (loseContextExt) {
+            loseContextExt.loseContext();
+            console.log('WebGL context lost gracefully');
+          }
+          
+          // Clear the canvas
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+          }
+        }
+      } catch (error) {
+        console.warn('Error cleaning up existing context:', error);
+      }
+    };
+
     // Optimize WebGL context to prevent loss
     const optimizeWebGLContext = () => {
-      const gl = canvas.getContext('webgl', {
-        preserveDrawingBuffer: false,
-        antialias: false,
-        alpha: false,
-        depth: true,
-        stencil: false,
-        failIfMajorPerformanceCaveat: false
-      });
+      // Clean up any existing context first
+      cleanupExistingContext();
       
-      if (gl) {
-        // Set conservative limits to prevent context loss
-        const loseContextExt = gl.getExtension('WEBGL_lose_context');
-        if (loseContextExt) {
-          console.log('WebGL context loss extension available');
-        }
-        
-        // Monitor WebGL context health
-        const checkWebGLHealth = () => {
-          if (gl.isContextLost()) {
-            console.warn('WebGL context is lost - triggering recovery');
-            handleWebGLContextLost(new Event('webglcontextlost'));
+      // Wait a bit for cleanup to complete
+      setTimeout(() => {
+        try {
+          const gl = canvas.getContext('webgl', {
+            preserveDrawingBuffer: false,
+            antialias: false,
+            alpha: false,
+            depth: true,
+            stencil: false,
+            failIfMajorPerformanceCaveat: false
+          });
+          
+          if (gl) {
+            console.log('WebGL context created successfully');
+            
+            // Set conservative limits to prevent context loss
+            const loseContextExt = gl.getExtension('WEBGL_lose_context');
+            if (loseContextExt) {
+              console.log('WebGL context loss extension available');
+            }
+            
+            // Monitor WebGL context health
+            const checkWebGLHealth = () => {
+              if (gl.isContextLost()) {
+                console.warn('WebGL context is lost - triggering recovery');
+                handleWebGLContextLost(new Event('webglcontextlost'));
+              }
+            };
+            
+            // Check WebGL health every 5 seconds
+            const healthCheckInterval = setInterval(checkWebGLHealth, 5000);
+            
+            return () => clearInterval(healthCheckInterval);
           }
-        };
-        
-        // Check WebGL health every 5 seconds
-        const healthCheckInterval = setInterval(checkWebGLHealth, 5000);
-        
-        return () => clearInterval(healthCheckInterval);
-      }
+        } catch (error) {
+          console.error('Failed to create WebGL context:', error);
+          setWebglError(true);
+        }
+      }, 100);
     };
 
     const cleanupWebGL = optimizeWebGLContext();
