@@ -21,13 +21,15 @@ function Loader() {
 }
 
 function FallbackModel() {
-  // Create a simple geometric shape as fallback
+  // Create a more sophisticated fallback model
   const geometry = useMemo(() => {
     const geo = new THREE.BoxGeometry(2, 2, 2);
     const material = new THREE.MeshStandardMaterial({ 
       color: '#F84565',
       roughness: 0.3,
-      metalness: 0.1
+      metalness: 0.1,
+      emissive: '#F84565',
+      emissiveIntensity: 0.1
     });
     return { geometry: geo, material };
   }, []);
@@ -36,8 +38,14 @@ function FallbackModel() {
     <Center>
       <mesh geometry={geometry.geometry} material={geometry.material}>
         <Html center>
-          <div className="px-3 py-2 bg-black/60 text-white text-sm rounded">
-            3D Model Preview
+          <div className="px-4 py-3 bg-black/80 text-white text-sm rounded-lg border border-white/20">
+            <div className="text-center">
+              <div className="text-lg mb-1">🎭</div>
+              <div className="font-semibold">3D Model Preview</div>
+              <div className="text-xs opacity-75 mt-1">
+                Original model unavailable
+              </div>
+            </div>
           </div>
         </Html>
       </mesh>
@@ -72,23 +80,82 @@ function Model({ url }) {
 function ModelWithFallback({ url, fallbackUrls = [] }) {
   const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
   const [showFallback, setShowFallback] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const maxRetries = 2;
   
   const allUrls = [url, ...fallbackUrls];
   const currentUrl = allUrls[currentUrlIndex];
   
-  const handleError = useCallback(() => {
+  // Preload test function to check URL accessibility
+  const testUrlAccessibility = useCallback(async (testUrl) => {
+    try {
+      const response = await fetch(testUrl, { 
+        method: 'HEAD',
+        mode: 'cors',
+        cache: 'no-cache'
+      });
+      return response.ok;
+    } catch (error) {
+      console.warn(`URL accessibility test failed for ${testUrl}:`, error.message);
+      return false;
+    }
+  }, []);
+  
+  // Test current URL accessibility on mount and URL change
+  React.useEffect(() => {
+    const testCurrentUrl = async () => {
+      setIsLoading(true);
+      const isAccessible = await testUrlAccessibility(currentUrl);
+      
+      if (!isAccessible) {
+        console.warn(`URL ${currentUrl} is not accessible, moving to next option`);
+        handleError(new Error('URL not accessible'));
+      } else {
+        setIsLoading(false);
+      }
+    };
+    
+    testCurrentUrl();
+  }, [currentUrl, testUrlAccessibility]);
+  
+  const handleError = useCallback((error) => {
+    console.error('3D Model loading error:', error);
+    
+    // Check if this is a connection reset error
+    const isConnectionError = error?.message?.includes('Failed to fetch') || 
+                             error?.message?.includes('ERR_CONNECTION_RESET') ||
+                             error?.message?.includes('Could not load');
+    
+    if (isConnectionError && retryCount < maxRetries) {
+      // Retry the same URL with exponential backoff
+      const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+      console.warn(`Connection error detected. Retrying ${currentUrl} in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+      
+      setTimeout(() => {
+        setRetryCount(prev => prev + 1);
+      }, delay);
+      return;
+    }
+    
+    // Move to next URL or show fallback
     const nextIndex = currentUrlIndex + 1;
     if (nextIndex < allUrls.length) {
-      console.warn(`Failed to load 3D model from ${currentUrl}. Reason: Connection reset or CORS issue. Trying fallback ${nextIndex}/${allUrls.length - 1}`);
+      console.warn(`Failed to load 3D model from ${currentUrl}. Trying fallback ${nextIndex}/${allUrls.length - 1}`);
       setCurrentUrlIndex(nextIndex);
+      setRetryCount(0); // Reset retry count for new URL
     } else {
       console.error('Failed to load all 3D model options, showing geometric fallback. This may be due to network issues or CORS restrictions.');
       setShowFallback(true);
     }
-  }, [currentUrlIndex, allUrls.length, currentUrl]);
+  }, [currentUrlIndex, allUrls.length, currentUrl, retryCount, maxRetries]);
   
   if (showFallback) {
     return <FallbackModel />;
+  }
+  
+  if (isLoading) {
+    return <Loader />;
   }
   
   return (
@@ -135,12 +202,14 @@ const ThreeDView = () => {
     return url;
   };
 
-  // Use a working fallback model with multiple options
+  // Use a working fallback model with multiple options - prioritize reliable sources
   const fallbackModels = [
-    addCacheBuster('https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatre.glb'), // Custom theater model with cache-busting
-    '/models/theature.glb', // Local theater model
+    // Start with most reliable sources first
+    '/models/theature.glb', // Local theater model (most reliable)
     'https://modelviewer.dev/shared-assets/models/Astronaut.glb', // Reliable external fallback
-    import.meta.env.VITE_3D_MODEL_URL // Environment configured model
+    import.meta.env.VITE_3D_MODEL_URL, // Environment configured model
+    // Only try Vercel blob storage as last resort due to connection issues
+    addCacheBuster('https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatre.glb'), // Custom theater model with cache-busting
   ].filter(Boolean);
   
   const defaultSrc = fallbackModels[0];
@@ -208,8 +277,18 @@ const ThreeDView = () => {
             })()}
           </p>
           {src.includes('vercel-storage.com') && (
+            <span className='text-xs bg-orange-500/20 text-orange-300 px-2 py-1 rounded'>
+              ⚠️ May have connection issues
+            </span>
+          )}
+          {src.startsWith('/models/') && (
+            <span className='text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded'>
+              ✅ Local model (reliable)
+            </span>
+          )}
+          {src.includes('modelviewer.dev') && (
             <span className='text-xs bg-blue-500/20 text-blue-300 px-2 py-1 rounded'>
-              Custom Theater Model
+              🌐 External fallback
             </span>
           )}
           <button
