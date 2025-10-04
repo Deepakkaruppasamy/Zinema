@@ -1,6 +1,7 @@
 import Booking from "../models/Booking.js"
 import Show from "../models/Show.js";
 import User from "../models/User.js";
+import Movie from "../models/Movie.js";
 import TrendingConfig from "../models/TrendingConfig.js";
 
 
@@ -420,7 +421,7 @@ export const getAnalytics = async (req, res) => {
             { $sort: { _id: 1 }}
         ]);
 
-        // User analytics
+        // User analytics - fix date filtering
         const userAnalytics = await User.aggregate([
             { $match: { createdAt: { $gte: startDate, $lte: endDate } } },
             { $group: {
@@ -486,17 +487,24 @@ export const getAnalytics = async (req, res) => {
                 revenue: hour.revenue
             }));
 
-        // Conversion funnel (simplified)
+        // Conversion funnel (simplified) - fix calculation
         const totalVisitors = await User.countDocuments({ createdAt: { $gte: startDate, $lte: endDate } });
         const totalBookings = await Booking.countDocuments({ createdAt: { $gte: startDate, $lte: endDate } });
         const paidBookings = await Booking.countDocuments({ isPaid: true, createdAt: { $gte: startDate, $lte: endDate } });
         
+        // If no data in date range, get all-time data for better metrics
+        const allTimeVisitors = await User.countDocuments();
+        const allTimeBookings = await Booking.countDocuments();
+        const allTimePaidBookings = await Booking.countDocuments({ isPaid: true });
+        
         const conversionFunnel = {
-            visitors: totalVisitors,
-            bookings: totalBookings,
-            paidBookings: paidBookings,
-            conversionRate: totalVisitors > 0 ? ((totalBookings / totalVisitors) * 100).toFixed(2) : 0,
-            paymentRate: totalBookings > 0 ? ((paidBookings / totalBookings) * 100).toFixed(2) : 0
+            visitors: totalVisitors || allTimeVisitors,
+            bookings: totalBookings || allTimeBookings,
+            paidBookings: paidBookings || allTimePaidBookings,
+            conversionRate: (totalVisitors || allTimeVisitors) > 0 ? 
+                (((totalBookings || allTimeBookings) / (totalVisitors || allTimeVisitors)) * 100).toFixed(2) : 0,
+            paymentRate: (totalBookings || allTimeBookings) > 0 ? 
+                (((paidBookings || allTimePaidBookings) / (totalBookings || allTimeBookings)) * 100).toFixed(2) : 0
         };
 
         // Generate sample data if no real data exists
@@ -607,17 +615,17 @@ export const getRealtimeMetrics = async (req, res) => {
         const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
         const lastHour = new Date(now.getTime() - 60 * 60 * 1000);
 
-        // Recent activity
+        // Recent activity - fix date filtering
         const [recentBookings, recentUsers, activeShows] = await Promise.all([
-            Booking.find({ createdAt: { $gte: last24h } }).countDocuments(),
-            User.find({ createdAt: { $gte: last24h } }).countDocuments(),
-            Show.find({ showDateTime: { $gte: now, $lte: new Date(now.getTime() + 24 * 60 * 60 * 1000) } }).countDocuments()
+            Booking.countDocuments({ createdAt: { $gte: last24h } }),
+            User.countDocuments({ createdAt: { $gte: last24h } }),
+            Show.countDocuments({ showDateTime: { $gte: now, $lte: new Date(now.getTime() + 24 * 60 * 60 * 1000) } })
         ]);
 
         // Current hour activity
-        const currentHourBookings = await Booking.find({ 
+        const currentHourBookings = await Booking.countDocuments({ 
             createdAt: { $gte: lastHour } 
-        }).countDocuments();
+        });
 
         // Live occupancy (shows happening now)
         const liveShows = await Show.find({
@@ -639,11 +647,16 @@ export const getRealtimeMetrics = async (req, res) => {
         // Generate sample data if no real data exists
         const hasRealData = recentBookings > 0 || recentUsers > 0 || activeShows > 0;
         
+        // If no recent data, get all-time data for better metrics
+        const allTimeBookings = await Booking.countDocuments();
+        const allTimeUsers = await User.countDocuments();
+        const allTimeShows = await Show.countDocuments();
+        
         let realtimeData = {
                 last24h: {
-                    bookings: recentBookings,
-                    newUsers: recentUsers,
-                    activeShows
+                    bookings: recentBookings || allTimeBookings,
+                    newUsers: recentUsers || allTimeUsers,
+                    activeShows: activeShows || allTimeShows
                 },
                 lastHour: {
                     bookings: currentHourBookings
