@@ -53,6 +53,50 @@ function FallbackModel() {
   );
 }
 
+function PerformanceMonitor() {
+  const [fps, setFps] = useState(60);
+  const [frameTime, setFrameTime] = useState(16);
+  
+  React.useEffect(() => {
+    let frameCount = 0;
+    let lastTime = performance.now();
+    
+    const monitor = () => {
+      frameCount++;
+      const currentTime = performance.now();
+      const deltaTime = currentTime - lastTime;
+      
+      if (deltaTime >= 1000) {
+        const currentFps = Math.round((frameCount * 1000) / deltaTime);
+        const currentFrameTime = Math.round(deltaTime / frameCount);
+        
+        setFps(currentFps);
+        setFrameTime(currentFrameTime);
+        
+        // Warn if performance is poor
+        if (currentFps < 30) {
+          console.warn('Low FPS detected:', currentFps, 'fps');
+        }
+        
+        frameCount = 0;
+        lastTime = currentTime;
+      }
+      
+      requestAnimationFrame(monitor);
+    };
+    
+    requestAnimationFrame(monitor);
+  }, []);
+  
+  return (
+    <Html position={[0, 0, 0]}>
+      <div className="absolute top-4 left-4 bg-black/60 text-white text-xs px-2 py-1 rounded">
+        FPS: {fps} | Frame: {frameTime}ms
+      </div>
+    </Html>
+  );
+}
+
 function Model({ url }) {
   const { scene } = useGLTF(url);
   
@@ -253,30 +297,63 @@ const ThreeDView = () => {
   const [webglError, setWebglError] = useState(false);
   const canvasRef = useRef();
 
-  // Handle WebGL context lost/restored
+  // Handle WebGL context lost/restored with enhanced recovery
   const handleWebGLContextLost = useCallback((event) => {
-    console.warn('WebGL context lost');
+    console.warn('WebGL context lost - attempting recovery');
     event.preventDefault();
     setWebglError(true);
+    
+    // Attempt to recover after a short delay
+    setTimeout(() => {
+      console.log('Attempting WebGL context recovery...');
+      setWebglError(false);
+    }, 1000);
   }, []);
 
   const handleWebGLContextRestored = useCallback(() => {
-    console.log('WebGL context restored');
+    console.log('WebGL context restored successfully');
     setWebglError(false);
   }, []);
+
+  // Cleanup WebGL event listeners on unmount
+  React.useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.addEventListener('webglcontextlost', handleWebGLContextLost);
+      canvas.addEventListener('webglcontextrestored', handleWebGLContextRestored);
+      
+      return () => {
+        canvas.removeEventListener('webglcontextlost', handleWebGLContextLost);
+        canvas.removeEventListener('webglcontextrestored', handleWebGLContextRestored);
+      };
+    }
+  }, [handleWebGLContextLost, handleWebGLContextRestored]);
 
   if (webglError) {
     return (
       <div className="min-h-screen w-full bg-black flex items-center justify-center">
-        <div className="text-center text-white">
-          <h2 className="text-xl font-semibold mb-4">WebGL Context Lost</h2>
-          <p className="text-gray-400 mb-4">The 3D renderer encountered an issue.</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-primary hover:bg-primary/80 rounded-lg transition-colors"
-          >
-            Reload Page
-          </button>
+        <div className="text-center text-white p-8 max-w-md">
+          <div className="text-6xl mb-4">🎭</div>
+          <h2 className="text-2xl font-bold mb-4">3D View Temporarily Unavailable</h2>
+          <p className="text-gray-300 mb-6">
+            WebGL context was lost. This can happen due to browser limitations or system resources.
+          </p>
+          <div className="space-y-3">
+            <button 
+              onClick={() => setWebglError(false)}
+              className="bg-[#F84565] hover:bg-[#e63950] text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+            >
+              Try Again
+            </button>
+            <div className="text-sm text-gray-400">
+              <p>If the issue persists, try:</p>
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Refreshing the page</li>
+                <li>Closing other browser tabs</li>
+                <li>Updating your browser</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -336,8 +413,25 @@ const ThreeDView = () => {
           ref={canvasRef}
           camera={{ position: [2, 2, 4], fov: 50 }}
           onCreated={({ gl }) => {
+            // Add WebGL context event listeners
             gl.domElement.addEventListener('webglcontextlost', handleWebGLContextLost);
             gl.domElement.addEventListener('webglcontextrestored', handleWebGLContextRestored);
+            
+            // Optimize WebGL settings to prevent context loss
+            gl.setClearColor(0x000000, 0);
+            gl.antialias = true;
+            gl.powerPreference = "high-performance";
+            
+            // Set up context loss prevention
+            gl.domElement.style.outline = 'none';
+            gl.domElement.tabIndex = -1;
+          }}
+          gl={{ 
+            antialias: true, 
+            alpha: true, 
+            powerPreference: "high-performance",
+            preserveDrawingBuffer: false,
+            failIfMajorPerformanceCaveat: false
           }}
         >
           <ambientLight intensity={0.5} />
@@ -346,6 +440,8 @@ const ThreeDView = () => {
           <Environment preset='city' />
           <OrbitControls ref={controlsRef} enableDamping makeDefault autoRotate={autoRotate} autoRotateSpeed={0.5} />
           <Stats className='!left-auto !right-2 !top-20' />
+          {/* Performance monitoring */}
+          <PerformanceMonitor />
         </Canvas>
       </div>
     </div>
