@@ -9,7 +9,8 @@ import {
     setCuratedTrending, 
     getRiskFlags,
     getAnalytics,
-    getRealtimeMetrics
+    getRealtimeMetrics,
+    createTestUser
 } from "../controllers/adminController.js";
 
 const adminRouter = express.Router();
@@ -23,5 +24,6 @@ adminRouter.post('/trending', protectAdmin, setCuratedTrending)
 adminRouter.get('/risk-flags', protectAdmin, getRiskFlags)
 adminRouter.get('/analytics', protectAdmin, getAnalytics)
 adminRouter.get('/realtime', protectAdmin, getRealtimeMetrics)
+adminRouter.post('/create-test-user', protectAdmin, createTestUser)
 
 export default adminRouter;

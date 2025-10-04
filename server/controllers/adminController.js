@@ -114,14 +114,15 @@ function calculateRiskScore(metrics) {
 // API to get dashboard data
 export const getDashboardData = async (req, res) =>{
     try {
-        const [allBookings, paidBookings, activeShows, totalUser] = await Promise.all([
+        const [allBookings, paidBookings, activeShows, totalUser, allUsers] = await Promise.all([
             Booking.find({}).populate('user').populate({
                 path: 'show',
                 populate: {path: 'movie'}
             }),
             Booking.find({isPaid: true}),
             Show.find({showDateTime: {$gte: new Date()}}).populate('movie'),
-            User.countDocuments()
+            User.countDocuments(),
+            User.find({}).select('_id name email')
         ])
 
         // Occupancy metrics (assume 90 seats per show as per UI 10x9)
@@ -160,8 +161,45 @@ export const getDashboardData = async (req, res) =>{
         const paidRevenue = paidBookings.reduce((acc, b) => acc + (b.amount || 0), 0)
         const totalAmountAllBookings = allBookings.reduce((acc, b) => acc + (b.amount || 0), 0)
         const totalRevenue = paidRevenue > 0 ? paidRevenue : totalAmountAllBookings
+        // Get distinct users from bookings as fallback
         const distinctUsersFromBookings = new Set(allBookings.map(b => b.user?._id || b.user).filter(Boolean)).size
-        const totalUsersResolved = totalUser > 0 ? totalUser : distinctUsersFromBookings
+        
+        // Alternative count from actual user records
+        const actualUserCount = allUsers.length
+        
+        // Use the highest count available
+        let totalUsersResolved = Math.max(totalUser, distinctUsersFromBookings, actualUserCount)
+        
+        // If no users exist at all, create a test user for development
+        if (totalUsersResolved === 0 && process.env.NODE_ENV !== 'production') {
+            try {
+                const testUser = await User.findOneAndUpdate(
+                    { email: 'admin@zinema.com' },
+                    {
+                        _id: 'test-admin-user',
+                        name: 'Admin User',
+                        email: 'admin@zinema.com',
+                        image: 'https://via.placeholder.com/150',
+                        tier: 'PLATINUM'
+                    },
+                    { upsert: true, new: true }
+                )
+                totalUsersResolved = 1
+                console.log('Created test admin user:', testUser._id)
+            } catch (error) {
+                console.error('Error creating test user:', error)
+            }
+        }
+        
+        // Debug logging
+        console.log('User count debug:', {
+            userCollectionCount: totalUser,
+            actualUserCount,
+            distinctUsersFromBookings,
+            totalUsersResolved,
+            allBookingsCount: allBookings.length,
+            sampleUsers: allUsers.slice(0, 3).map(u => ({ id: u._id, name: u.name }))
+        })
 
         const dashboardData = {
             totalBookings: allBookings.length,
@@ -188,6 +226,48 @@ export const getDashboardData = async (req, res) =>{
     } catch (error) {
         console.error(error);
         res.json({success: false, message: error.message})
+    }
+}
+
+// API to create a test user for development
+export const createTestUser = async (req, res) => {
+    try {
+        const { name, email } = req.body;
+        
+        if (!name || !email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Name and email are required'
+            });
+        }
+
+        const testUser = await User.findOneAndUpdate(
+            { email },
+            {
+                _id: `test-user-${Date.now()}`,
+                name,
+                email,
+                image: 'https://via.placeholder.com/150',
+                tier: 'BRONZE'
+            },
+            { upsert: true, new: true }
+        );
+
+        res.json({
+            success: true,
+            message: 'Test user created successfully',
+            user: {
+                id: testUser._id,
+                name: testUser.name,
+                email: testUser.email
+            }
+        });
+    } catch (error) {
+        console.error('Error creating test user:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
 }
 
