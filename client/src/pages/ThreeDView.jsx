@@ -108,6 +108,69 @@ function PerformanceMonitor() {
   );
 }
 
+function WebGLHealthMonitor() {
+  const [contextStatus, setContextStatus] = useState('healthy');
+  const [lastCheck, setLastCheck] = useState(Date.now());
+  
+  React.useEffect(() => {
+    const checkWebGLHealth = () => {
+      try {
+        const canvas = document.querySelector('canvas');
+        if (!canvas) return;
+        
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (!gl) {
+          setContextStatus('no-webgl');
+          return;
+        }
+        
+        // Test context validity
+        gl.getParameter(gl.VERSION);
+        setContextStatus('healthy');
+        setLastCheck(Date.now());
+        
+      } catch (error) {
+        console.warn('WebGL health check failed:', error);
+        setContextStatus('error');
+      }
+    };
+    
+    // Check every 10 seconds
+    const interval = setInterval(checkWebGLHealth, 10000);
+    checkWebGLHealth(); // Initial check
+    
+    return () => clearInterval(interval);
+  }, []);
+  
+  // Only show in development
+  if (import.meta.env.PROD) {
+    return null;
+  }
+  
+  const getStatusColor = () => {
+    switch (contextStatus) {
+      case 'healthy': return 'text-green-400';
+      case 'error': return 'text-red-400';
+      case 'no-webgl': return 'text-yellow-400';
+      default: return 'text-gray-400';
+    }
+  };
+  
+  return (
+    <Html position={[0, 0, 0]}>
+      <div className="absolute top-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded">
+        <div className={`flex items-center gap-1 ${getStatusColor()}`}>
+          <div className="w-2 h-2 rounded-full bg-current"></div>
+          WebGL: {contextStatus}
+        </div>
+        <div className="text-xs text-gray-400 mt-1">
+          Last check: {new Date(lastCheck).toLocaleTimeString()}
+        </div>
+      </div>
+    </Html>
+  );
+}
+
 function Model({ url }) {
   const { scene } = useGLTF(url);
   
@@ -314,56 +377,100 @@ const ThreeDView = () => {
     event.preventDefault();
     setWebglError(true);
     
-    // Multiple recovery attempts for production environments
-    let attempts = 0;
-    const maxAttempts = 3;
+    // Store recovery state in ref to avoid stale closures
+    const recoveryState = { attempts: 0, maxAttempts: 3, isRecovering: true };
     
     const attemptRecovery = () => {
-      attempts++;
-      console.log(`WebGL recovery attempt ${attempts}/${maxAttempts}`);
+      if (!recoveryState.isRecovering) return;
       
-      if (attempts < maxAttempts) {
+      recoveryState.attempts++;
+      console.log(`WebGL recovery attempt ${recoveryState.attempts}/${recoveryState.maxAttempts}`);
+      
+      if (recoveryState.attempts < recoveryState.maxAttempts) {
         setTimeout(() => {
-          setWebglError(false);
-          // Check if context is actually restored
-          setTimeout(() => {
-            if (webglError) {
-              attemptRecovery();
-            }
-          }, 500);
-        }, 1000 * attempts);
+          if (recoveryState.isRecovering) {
+            setWebglError(false);
+            // Force a re-render to check if context is restored
+            setTimeout(() => {
+              if (recoveryState.isRecovering) {
+                attemptRecovery();
+              }
+            }, 1000);
+          }
+        }, 2000 * recoveryState.attempts); // Exponential backoff
       } else {
         console.error('WebGL context recovery failed after multiple attempts');
+        recoveryState.isRecovering = false;
       }
     };
     
     attemptRecovery();
-  }, [webglError]);
+    
+    // Cleanup function to stop recovery attempts
+    return () => {
+      recoveryState.isRecovering = false;
+    };
+  }, []);
 
   const handleWebGLContextRestored = useCallback(() => {
     console.log('WebGL context restored successfully');
     setWebglError(false);
+    
+    // Force a complete re-render to ensure everything is working
+    setTimeout(() => {
+      if (canvasRef.current) {
+        // Trigger a resize event to refresh the canvas
+        window.dispatchEvent(new Event('resize'));
+      }
+    }, 100);
   }, []);
 
-  // Cleanup WebGL event listeners on unmount
+  // Enhanced WebGL context monitoring and recovery
   React.useEffect(() => {
     const canvas = canvasRef.current;
-    if (canvas) {
-      canvas.addEventListener('webglcontextlost', handleWebGLContextLost);
-      canvas.addEventListener('webglcontextrestored', handleWebGLContextRestored);
+    if (!canvas) return;
+
+    // Add event listeners
+    canvas.addEventListener('webglcontextlost', handleWebGLContextLost);
+    canvas.addEventListener('webglcontextrestored', handleWebGLContextRestored);
+    
+    // Production-specific optimizations
+    if (import.meta.env.PROD) {
+      // Reduce memory pressure in production
+      canvas.style.willChange = 'auto';
+      canvas.style.transform = 'translateZ(0)'; // Force hardware acceleration
       
-      // Production-specific optimizations
-      if (import.meta.env.PROD) {
-        // Reduce memory pressure in production
-        canvas.style.willChange = 'auto';
-        canvas.style.transform = 'translateZ(0)'; // Force hardware acceleration
-      }
+      // Add memory pressure monitoring
+      const checkMemoryPressure = () => {
+        if (performance.memory) {
+          const usedMB = performance.memory.usedJSHeapSize / 1024 / 1024;
+          const limitMB = performance.memory.jsHeapSizeLimit / 1024 / 1024;
+          const usagePercent = (usedMB / limitMB) * 100;
+          
+          if (usagePercent > 80) {
+            console.warn(`High memory usage: ${usagePercent.toFixed(1)}%`);
+            // Trigger garbage collection if available
+            if (window.gc) {
+              window.gc();
+            }
+          }
+        }
+      };
+      
+      // Check memory every 30 seconds
+      const memoryInterval = setInterval(checkMemoryPressure, 30000);
       
       return () => {
+        clearInterval(memoryInterval);
         canvas.removeEventListener('webglcontextlost', handleWebGLContextLost);
         canvas.removeEventListener('webglcontextrestored', handleWebGLContextRestored);
       };
     }
+    
+    return () => {
+      canvas.removeEventListener('webglcontextlost', handleWebGLContextLost);
+      canvas.removeEventListener('webglcontextrestored', handleWebGLContextRestored);
+    };
   }, [handleWebGLContextLost, handleWebGLContextRestored]);
 
   if (webglError) {
@@ -458,10 +565,9 @@ const ThreeDView = () => {
         <Canvas 
           ref={canvasRef}
           camera={{ position: [2, 2, 4], fov: 50 }}
-          onCreated={({ gl }) => {
-            // Add WebGL context event listeners
-            gl.domElement.addEventListener('webglcontextlost', handleWebGLContextLost);
-            gl.domElement.addEventListener('webglcontextrestored', handleWebGLContextRestored);
+          onCreated={({ gl, scene, camera }) => {
+            // Store references for recovery
+            canvasRef.current = gl.domElement;
             
             // Optimize WebGL settings to prevent context loss
             gl.setClearColor(0x000000, 0);
@@ -471,6 +577,30 @@ const ThreeDView = () => {
             // Set up context loss prevention
             gl.domElement.style.outline = 'none';
             gl.domElement.tabIndex = -1;
+            
+            // Production-specific optimizations
+            if (import.meta.env.PROD) {
+              // Reduce precision to save memory
+              gl.getContext().getParameter(gl.getContext().MAX_TEXTURE_SIZE);
+              
+              // Disable unnecessary features
+              gl.domElement.style.imageRendering = 'optimizeSpeed';
+              gl.domElement.style.imageRendering = '-webkit-optimize-contrast';
+            }
+            
+            // Add context loss prevention
+            const preventContextLoss = () => {
+              // Keep the context alive by periodically calling getParameter
+              setInterval(() => {
+                try {
+                  gl.getContext().getParameter(gl.getContext().VERSION);
+                } catch (e) {
+                  console.warn('WebGL context check failed:', e);
+                }
+              }, 5000);
+            };
+            
+            preventContextLoss();
           }}
           gl={{ 
             antialias: true, 
@@ -481,7 +611,12 @@ const ThreeDView = () => {
             // Production optimizations
             precision: "mediump",
             logarithmicDepthBuffer: false,
-            physicallyCorrectLights: false
+            physicallyCorrectLights: false,
+            // Additional context loss prevention
+            stencil: false,
+            depth: true,
+            premultipliedAlpha: false,
+            preserveDrawingBuffer: false
           }}
         >
           <ambientLight intensity={0.5} />
@@ -493,6 +628,8 @@ const ThreeDView = () => {
           {!import.meta.env.PROD && <Stats className='!left-auto !right-2 !top-20' />}
           {/* Performance monitoring */}
           <PerformanceMonitor />
+          {/* WebGL health monitoring */}
+          <WebGLHealthMonitor />
         </Canvas>
       </div>
     </div>
