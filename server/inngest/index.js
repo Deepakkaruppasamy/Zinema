@@ -84,12 +84,20 @@ const sendBookingConfirmationEmail = inngest.createFunction(
     {id: "send-booking-confirmation-email"},
     {event: "app/show.booked"},
     async ({ event, step })=>{
+        console.log("📧 Email function triggered for booking:", event.data);
         const { bookingId } = event.data;
 
         const booking = await Booking.findById(bookingId).populate({
             path: 'show',
             populate: {path: "movie", model: "Movie"}
         }).populate('user');
+        
+        if (!booking) {
+            console.error("❌ Booking not found:", bookingId);
+            return;
+        }
+        
+        console.log("✅ Booking found:", booking._id, "User:", booking.user?.email);
 
         const start = new Date(booking.show.showDateTime);
         const ics = buildICS({
@@ -102,23 +110,30 @@ const sendBookingConfirmationEmail = inngest.createFunction(
             organizer: process.env.SENDER_EMAIL,
         });
 
-        await sendEmail({
-            to: booking.user.email,
-            subject: `Payment Confirmation: "${booking.show.movie.title}" booked!`,
-            body: ` <div style="font-family: Arial, sans-serif; line-height: 1.5;">
-                        <h2>Hi ${booking.user.name},</h2>
-                        <p>Your booking for <strong style="color: #F84565;">"${booking.show.movie.title}"</strong> is confirmed.</p>
-                        <p>
-                            <strong>Date:</strong> ${new Date(booking.show.showDateTime).toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' })}<br/>
-                            <strong>Time:</strong> ${new Date(booking.show.showDateTime).toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' })}
-                        </p>
-                        <p>Enjoy the show! 🍿</p>
-                        <p>Thanks for booking with us!<br/>— Zinema by Dstudio</p>
-                    </div>`,
-            attachments: [
-                { filename: "ticket.ics", content: ics, contentType: "text/calendar; charset=utf-8; method=PUBLISH" }
-            ]
-        })
+        try {
+            console.log("📤 Sending email to:", booking.user.email);
+            const emailResult = await sendEmail({
+                to: booking.user.email,
+                subject: `Payment Confirmation: "${booking.show.movie.title}" booked!`,
+                body: ` <div style="font-family: Arial, sans-serif; line-height: 1.5;">
+                            <h2>Hi ${booking.user.name},</h2>
+                            <p>Your booking for <strong style="color: #F84565;">"${booking.show.movie.title}"</strong> is confirmed.</p>
+                            <p>
+                                <strong>Date:</strong> ${new Date(booking.show.showDateTime).toLocaleDateString('en-US', { timeZone: 'Asia/Kolkata' })}<br/>
+                                <strong>Time:</strong> ${new Date(booking.show.showDateTime).toLocaleTimeString('en-US', { timeZone: 'Asia/Kolkata' })}
+                            </p>
+                            <p>Enjoy the show! 🍿</p>
+                            <p>Thanks for booking with us!<br/>— Zinema by Dstudio</p>
+                        </div>`,
+                attachments: [
+                    { filename: "ticket.ics", content: ics, contentType: "text/calendar; charset=utf-8; method=PUBLISH" }
+                ]
+            });
+            console.log("✅ Email sent successfully:", emailResult);
+        } catch (error) {
+            console.error("❌ Email sending failed:", error.message);
+            throw error;
+        }
     }
 )
 

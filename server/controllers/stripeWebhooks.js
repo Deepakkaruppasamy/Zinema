@@ -73,13 +73,14 @@ export const stripeWebhooks = async (request, response)=>{
 
                 // Send Confirmation Email
                 try {
-                    await inngest.send({
+                    console.log("📧 Sending Inngest event for booking:", bookingId);
+                    const inngestResult = await inngest.send({
                         name: "app/show.booked",
                         data: {bookingId}
                     });
-                    console.log("Confirmation email queued");
+                    console.log("✅ Confirmation email queued successfully:", inngestResult);
                 } catch (error) {
-                    console.error("Error sending confirmation email:", error);
+                    console.error("❌ Error sending confirmation email:", error);
                     // Don't fail the webhook for email errors
                 }
                 
