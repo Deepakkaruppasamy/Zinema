@@ -71,7 +71,7 @@ export const createTicket = async (req, res) => {
     // Try to send email to support team (non-blocking)
     if (supportTo) {
       try {
-        await sendEmail({ to: supportTo, subject: `[Zinema Support] ${subject}`, body: html });
+    await sendEmail({ to: supportTo, subject: `[Zinema Support] ${subject}`, body: html });
         console.log('✅ Support email sent successfully');
       } catch (emailError) {
         console.error('❌ Failed to send support email:', emailError.message);
