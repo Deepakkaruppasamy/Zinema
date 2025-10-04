@@ -280,22 +280,24 @@ const ThreeDView = () => {
             }
           }, 1000);
         }
-        // Strategy 2: Clear canvas and retry
+        // Strategy 2: Force canvas recreation
         else if (recoveryState.attempts === 2) {
-          console.log('Strategy 2: Clear canvas and retry');
-          const canvas = canvasRef.current;
-          if (canvas) {
-            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-            if (gl) {
-              gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            }
+          console.log('Strategy 2: Force canvas recreation');
+          
+          // Force recreate the canvas element
+          const newCanvas = forceRecreateCanvas();
+          if (newCanvas) {
+            console.log('Canvas recreated, attempting context creation...');
+            setWebglError(false);
+            setTimeout(() => {
+              if (recoveryState.isRecovering) {
+                attemptRecovery();
+              }
+            }, 2000);
+          } else {
+            console.error('Failed to recreate canvas');
+            setWebglError(true);
           }
-          setWebglError(false);
-          setTimeout(() => {
-            if (recoveryState.isRecovering) {
-              attemptRecovery();
-            }
-          }, 2000);
         }
         // Strategy 3: Force page refresh as last resort
         else {
@@ -332,10 +334,51 @@ const ThreeDView = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    // Force recreate canvas element to prevent context conflicts
+    const forceRecreateCanvas = () => {
+      try {
+        console.log('Force recreating canvas to prevent context conflicts');
+        
+        // Get canvas parent and position
+        const parent = canvas.parentNode;
+        const nextSibling = canvas.nextSibling;
+        const style = canvas.style.cssText;
+        const className = canvas.className;
+        const id = canvas.id;
+        
+        // Remove the old canvas
+        parent.removeChild(canvas);
+        
+        // Create a new canvas element
+        const newCanvas = document.createElement('canvas');
+        newCanvas.className = className;
+        newCanvas.id = id;
+        newCanvas.style.cssText = style;
+        newCanvas.width = canvas.offsetWidth;
+        newCanvas.height = canvas.offsetHeight;
+        
+        // Insert the new canvas in the same position
+        if (nextSibling) {
+          parent.insertBefore(newCanvas, nextSibling);
+        } else {
+          parent.appendChild(newCanvas);
+        }
+        
+        // Update the ref
+        canvasRef.current = newCanvas;
+        
+        console.log('Canvas recreated successfully');
+        return newCanvas;
+      } catch (error) {
+        console.error('Error recreating canvas:', error);
+        return canvas;
+      }
+    };
+
     // Reset canvas to prevent context conflicts
     const resetCanvas = () => {
       try {
-        // Remove any existing WebGL context
+        // First try gentle cleanup
         const existingContext = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
         if (existingContext) {
           const loseContextExt = existingContext.getExtension('WEBGL_lose_context');
@@ -356,7 +399,9 @@ const ThreeDView = () => {
         
         console.log('Canvas reset completed');
       } catch (error) {
-        console.warn('Error resetting canvas:', error);
+        console.warn('Error resetting canvas, will recreate:', error);
+        // If gentle cleanup fails, force recreate
+        forceRecreateCanvas();
       }
     };
 
@@ -400,7 +445,15 @@ const ThreeDView = () => {
       // Wait a bit for cleanup to complete
       setTimeout(() => {
         try {
-          const gl = canvas.getContext('webgl', {
+          // Check if canvas still exists and is valid
+          const currentCanvas = canvasRef.current;
+          if (!currentCanvas) {
+            console.error('Canvas no longer exists');
+            setWebglError(true);
+            return;
+          }
+          
+          const gl = currentCanvas.getContext('webgl', {
             preserveDrawingBuffer: false,
             antialias: false,
             alpha: false,
@@ -430,10 +483,43 @@ const ThreeDView = () => {
             const healthCheckInterval = setInterval(checkWebGLHealth, 5000);
             
             return () => clearInterval(healthCheckInterval);
+          } else {
+            console.error('Failed to get WebGL context');
+            setWebglError(true);
           }
         } catch (error) {
           console.error('Failed to create WebGL context:', error);
-          setWebglError(true);
+          
+          // If context creation fails due to existing context, force recreate canvas
+          if (error.message && error.message.includes('existing context')) {
+            console.log('Context conflict detected, recreating canvas...');
+            const newCanvas = forceRecreateCanvas();
+            if (newCanvas) {
+              // Try again with the new canvas
+              setTimeout(() => {
+                try {
+                  const gl = newCanvas.getContext('webgl', {
+                    preserveDrawingBuffer: false,
+                    antialias: false,
+                    alpha: false,
+                    depth: true,
+                    stencil: false,
+                    failIfMajorPerformanceCaveat: false
+                  });
+                  
+                  if (gl) {
+                    console.log('WebGL context created successfully after canvas recreation');
+                    setWebglError(false);
+                  }
+                } catch (retryError) {
+                  console.error('Failed to create WebGL context even after canvas recreation:', retryError);
+                  setWebglError(true);
+                }
+              }, 200);
+            }
+          } else {
+            setWebglError(true);
+          }
         }
       }, 100);
     };
