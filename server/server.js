@@ -15,7 +15,7 @@ import userRouter from './routes/userRoutes.js';
 import reviewRouter from './routes/reviewRoutes.js';
 import discoveryRouter from './routes/discoveryRoutes.js';
 import paymentLinkRouter from './routes/paymentLinkRoutes.js';
-import supportRouter from './routes/supportRoutes.js';
+import foodRouter from './routes/foodRoutes.js';
 import waitlistRouter from './routes/waitlistRoutes.js';
 import { stripeWebhooks } from './controllers/stripeWebhooks.js';
 import notificationsRouter from './routes/notificationsRoutes.js';
@@ -110,6 +110,7 @@ app.use('/api/user', userRouter)
 app.use('/api/review', reviewRouter)
 app.use('/api/discovery', discoveryRouter)
 app.use('/api/support', supportRouter)
+app.use('/api/food', foodRouter)
 app.use('/api/waitlist', waitlistRouter)
 app.use('/api/notify', notificationsRouter);
 app.use('/api/poll', pollRouter);
