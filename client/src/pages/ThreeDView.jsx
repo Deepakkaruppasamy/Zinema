@@ -239,7 +239,8 @@ const ThreeDView = () => {
     event.preventDefault();
     setWebglError(true);
     
-    const recoveryState = { attempts: 0, maxAttempts: 3, isRecovering: true };
+    // More aggressive recovery strategy
+    const recoveryState = { attempts: 0, maxAttempts: 5, isRecovering: true };
     
     const attemptRecovery = () => {
       if (!recoveryState.isRecovering) return;
@@ -248,16 +249,51 @@ const ThreeDView = () => {
       console.log(`WebGL recovery attempt ${recoveryState.attempts}/${recoveryState.maxAttempts}`);
       
       if (recoveryState.attempts < recoveryState.maxAttempts) {
-        setTimeout(() => {
-          if (recoveryState.isRecovering) {
+        // Try different recovery strategies
+        const strategies = [
+          () => {
+            // Strategy 1: Force context recreation
+            setWebglError(false);
+            setTimeout(() => {
+              if (recoveryState.isRecovering) {
+                attemptRecovery();
+              }
+            }, 500);
+          },
+          () => {
+            // Strategy 2: Clear canvas and retry
+            const canvas = canvasRef.current;
+            if (canvas) {
+              const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+              if (gl) {
+                gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+              }
+            }
             setWebglError(false);
             setTimeout(() => {
               if (recoveryState.isRecovering) {
                 attemptRecovery();
               }
             }, 1000);
+          },
+          () => {
+            // Strategy 3: Force page refresh as last resort
+            if (recoveryState.attempts >= 3) {
+              console.warn('Attempting page refresh to recover WebGL context');
+              window.location.reload();
+              return;
+            }
+            setWebglError(false);
+            setTimeout(() => {
+              if (recoveryState.isRecovering) {
+                attemptRecovery();
+              }
+            }, 2000);
           }
-        }, 2000 * recoveryState.attempts);
+        ];
+        
+        const strategy = strategies[Math.min(recoveryState.attempts - 1, strategies.length - 1)];
+        strategy();
       } else {
         console.error('WebGL context recovery failed after multiple attempts');
         recoveryState.isRecovering = false;
@@ -334,10 +370,32 @@ const ThreeDView = () => {
           </p>
           <div className="space-y-3">
             <button 
-              onClick={() => setWebglError(false)}
+              onClick={() => {
+                setWebglError(false);
+                // Force a complete re-render
+                setTimeout(() => {
+                  window.location.reload();
+                }, 100);
+              }}
               className="bg-[#F84565] hover:bg-[#e63950] text-white px-6 py-3 rounded-lg font-semibold transition-colors"
             >
               Try Again
+            </button>
+            <button 
+              onClick={() => {
+                // Clear all WebGL resources and try again
+                const canvas = document.querySelector('canvas');
+                if (canvas) {
+                  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                  if (gl) {
+                    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+                  }
+                }
+                setWebglError(false);
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors ml-2"
+            >
+              Clear & Retry
             </button>
             {import.meta.env.PROD && (
               <button 
@@ -353,6 +411,7 @@ const ThreeDView = () => {
                 <li>Refreshing the page</li>
                 <li>Closing other browser tabs</li>
                 <li>Updating your browser</li>
+                <li>Disabling browser extensions</li>
                 {import.meta.env.PROD && <li>Try a different browser</li>}
               </ul>
             </div>
@@ -433,16 +492,56 @@ const ThreeDView = () => {
             }
             
             const preventContextLoss = () => {
-              setInterval(() => {
+              // Keep context alive with periodic checks
+              const keepAliveInterval = setInterval(() => {
                 try {
-                  gl.getContext().getParameter(gl.getContext().VERSION);
+                  const context = gl.getContext();
+                  if (context) {
+                    context.getParameter(context.VERSION);
+                    // Additional context validation
+                    context.getParameter(context.MAX_TEXTURE_SIZE);
+                  }
                 } catch (e) {
                   console.warn('WebGL context check failed:', e);
+                  clearInterval(keepAliveInterval);
                 }
-              }, 5000);
+              }, 3000); // More frequent checks
+              
+              // Memory pressure monitoring
+              const memoryCheckInterval = setInterval(() => {
+                if (performance.memory) {
+                  const usedMB = performance.memory.usedJSHeapSize / 1024 / 1024;
+                  const limitMB = performance.memory.jsHeapSizeLimit / 1024 / 1024;
+                  const usagePercent = (usedMB / limitMB) * 100;
+                  
+                  if (usagePercent > 85) {
+                    console.warn(`High memory usage: ${usagePercent.toFixed(1)}% - clearing resources`);
+                    // Force garbage collection if available
+                    if (window.gc) {
+                      window.gc();
+                    }
+                    // Clear WebGL resources
+                    try {
+                      const context = gl.getContext();
+                      if (context) {
+                        context.clear(context.COLOR_BUFFER_BIT | context.DEPTH_BUFFER_BIT);
+                      }
+                    } catch (e) {
+                      console.warn('Error clearing WebGL resources:', e);
+                    }
+                  }
+                }
+              }, 10000);
+              
+              // Cleanup intervals on component unmount
+              return () => {
+                clearInterval(keepAliveInterval);
+                clearInterval(memoryCheckInterval);
+              };
             };
             
-            preventContextLoss();
+            const cleanup = preventContextLoss();
+            return cleanup;
           }}
           gl={{ 
             antialias: true, 
