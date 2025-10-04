@@ -64,23 +64,69 @@ export const getRiskFlags = async (req, res) => {
             .filter(([_, revenue]) => Math.abs(revenue - avgRevenue) > avgRevenue * 0.5)
             .map(([date, revenue]) => ({ date, revenue, deviation: ((revenue - avgRevenue) / avgRevenue * 100).toFixed(1) }));
 
-        res.json({ 
-            success: true, 
-            flags: {
-                heavyUsers: manyBookingsUsers,
-                zeroPaid,
+        // Check if we have real data
+        const hasRealData = recent.length > 0 || allRecent.length > 0;
+        
+        let riskFlags = {
+            heavyUsers: manyBookingsUsers,
+            zeroPaid,
+            rapidBookings: rapidBookings.length,
+            highValueBookings: highValueBookings.length,
+            cancellationRate: Math.round(cancellationRate * 100) / 100,
+            revenueAnomalies,
+            riskScore: calculateRiskScore({
+                heavyUsers: manyBookingsUsers.length,
+                zeroPaid: zeroPaid.length,
                 rapidBookings: rapidBookings.length,
                 highValueBookings: highValueBookings.length,
-                cancellationRate: Math.round(cancellationRate * 100) / 100,
-                revenueAnomalies,
+                cancellationRate
+            })
+        };
+
+        // If no real data, generate sample data for development
+        if (!hasRealData && process.env.NODE_ENV !== 'production') {
+            console.log('No real risk data found, generating sample data for development');
+            
+            // Generate sample heavy users
+            const sampleHeavyUsers = [
+                { user: 'user-123', count: 15, name: 'John Doe', email: 'john@example.com' },
+                { user: 'user-456', count: 12, name: 'Jane Smith', email: 'jane@example.com' },
+                { user: 'user-789', count: 11, name: 'Bob Johnson', email: 'bob@example.com' }
+            ];
+
+            // Generate sample zero amount bookings
+            const sampleZeroPaid = [
+                { _id: 'booking-1', user: 'user-123', amount: 0, createdAt: new Date() },
+                { _id: 'booking-2', user: 'user-456', amount: 0, createdAt: new Date() }
+            ];
+
+            // Generate sample revenue anomalies
+            const sampleRevenueAnomalies = [
+                { date: '2024-01-15', revenue: 2500, deviation: 150.5 },
+                { date: '2024-01-20', revenue: 3200, deviation: 200.0 },
+                { date: '2024-01-25', revenue: 1800, deviation: -25.3 }
+            ];
+
+            riskFlags = {
+                heavyUsers: sampleHeavyUsers,
+                zeroPaid: sampleZeroPaid,
+                rapidBookings: 3,
+                highValueBookings: 2,
+                cancellationRate: 12.5,
+                revenueAnomalies: sampleRevenueAnomalies,
                 riskScore: calculateRiskScore({
-                    heavyUsers: manyBookingsUsers.length,
-                    zeroPaid: zeroPaid.length,
-                    rapidBookings: rapidBookings.length,
-                    highValueBookings: highValueBookings.length,
-                    cancellationRate
+                    heavyUsers: sampleHeavyUsers.length,
+                    zeroPaid: sampleZeroPaid.length,
+                    rapidBookings: 3,
+                    highValueBookings: 2,
+                    cancellationRate: 12.5
                 })
-            }
+            };
+        }
+
+        res.json({ 
+            success: true, 
+            flags: riskFlags
         })
     } catch (error) {
         console.error(error);

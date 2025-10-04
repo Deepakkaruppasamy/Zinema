@@ -51,7 +51,22 @@ const RiskManagement = () => {
   if (!riskData) {
     return (
       <div className="text-center text-gray-400 py-8">
-        Failed to load risk data
+        <div className="mb-4">
+          <Shield className="w-12 h-12 mx-auto text-gray-500 mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No Risk Data Available</h3>
+          <p className="text-sm text-gray-400 mb-4">
+            Risk management data will appear here once you have bookings and user activity in your system.
+          </p>
+          <button
+            onClick={() => {
+              setLoading(true);
+              fetchRiskData();
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Refresh Data
+          </button>
+        </div>
       </div>
     );
   }
@@ -95,7 +110,7 @@ const RiskManagement = () => {
             <span className="text-sm text-gray-300">Heavy Users</span>
           </div>
           <div className="text-2xl font-bold text-orange-500">
-            {riskData.heavyUsers.length}
+            {riskData.heavyUsers?.length || 0}
           </div>
           <div className="text-xs text-gray-400">
             Users with 10+ bookings (7 days)
@@ -108,7 +123,7 @@ const RiskManagement = () => {
             <span className="text-sm text-gray-300">Zero Amount</span>
           </div>
           <div className="text-2xl font-bold text-red-500">
-            {riskData.zeroPaid.length}
+            {riskData.zeroPaid?.length || 0}
           </div>
           <div className="text-xs text-gray-400">
             Paid bookings with $0 amount
@@ -121,7 +136,7 @@ const RiskManagement = () => {
             <span className="text-sm text-gray-300">Rapid Bookings</span>
           </div>
           <div className="text-2xl font-bold text-yellow-500">
-            {riskData.rapidBookings}
+            {riskData.rapidBookings || 0}
           </div>
           <div className="text-xs text-gray-400">
             Bookings within 1 minute
@@ -134,7 +149,7 @@ const RiskManagement = () => {
             <span className="text-sm text-gray-300">Cancellation Rate</span>
           </div>
           <div className="text-2xl font-bold text-purple-500">
-            {riskData.cancellationRate}%
+            {riskData.cancellationRate || 0}%
           </div>
           <div className="text-xs text-gray-400">
             Last 30 days
@@ -145,7 +160,7 @@ const RiskManagement = () => {
       {/* Detailed Risk Items */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Heavy Users */}
-        {riskData.heavyUsers.length > 0 && (
+        {riskData.heavyUsers && riskData.heavyUsers.length > 0 ? (
           <div className="bg-gray-800/50 p-4 rounded-lg border border-white/10">
             <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
               <Users className="w-5 h-5 text-orange-500" />
@@ -162,10 +177,21 @@ const RiskManagement = () => {
               ))}
             </div>
           </div>
+        ) : (
+          <div className="bg-gray-800/50 p-4 rounded-lg border border-white/10">
+            <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              <Users className="w-5 h-5 text-orange-500" />
+              Heavy Users
+            </h4>
+            <div className="text-center text-gray-400 py-4">
+              <Users className="w-8 h-8 mx-auto mb-2 text-gray-500" />
+              <p className="text-sm">No heavy users detected</p>
+            </div>
+          </div>
         )}
 
         {/* Zero Amount Bookings */}
-        {riskData.zeroPaid.length > 0 && (
+        {riskData.zeroPaid && riskData.zeroPaid.length > 0 ? (
           <div className="bg-gray-800/50 p-4 rounded-lg border border-white/10">
             <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
               <DollarSign className="w-5 h-5 text-red-500" />
@@ -187,10 +213,21 @@ const RiskManagement = () => {
               )}
             </div>
           </div>
+        ) : (
+          <div className="bg-gray-800/50 p-4 rounded-lg border border-white/10">
+            <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-red-500" />
+              Zero Amount Bookings
+            </h4>
+            <div className="text-center text-gray-400 py-4">
+              <DollarSign className="w-8 h-8 mx-auto mb-2 text-gray-500" />
+              <p className="text-sm">No zero amount bookings detected</p>
+            </div>
+          </div>
         )}
 
         {/* Revenue Anomalies */}
-        {riskData.revenueAnomalies.length > 0 && (
+        {riskData.revenueAnomalies && riskData.revenueAnomalies.length > 0 ? (
           <div className="bg-gray-800/50 p-4 rounded-lg border border-white/10 lg:col-span-2">
             <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
               <Activity className="w-5 h-5 text-blue-500" />
@@ -205,6 +242,17 @@ const RiskManagement = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        ) : (
+          <div className="bg-gray-800/50 p-4 rounded-lg border border-white/10 lg:col-span-2">
+            <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              <Activity className="w-5 h-5 text-blue-500" />
+              Revenue Anomalies
+            </h4>
+            <div className="text-center text-gray-400 py-4">
+              <Activity className="w-8 h-8 mx-auto mb-2 text-gray-500" />
+              <p className="text-sm">No revenue anomalies detected</p>
             </div>
           </div>
         )}
