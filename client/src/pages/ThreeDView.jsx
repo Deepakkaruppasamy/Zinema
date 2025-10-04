@@ -274,6 +274,11 @@ const ThreeDView = () => {
       // Update the ref
       canvasRef.current = newCanvas;
       
+      // Force garbage collection of old canvas
+      if (window.gc) {
+        window.gc();
+      }
+      
       console.log('Canvas recreated successfully');
       return newCanvas;
     } catch (error) {
@@ -568,18 +573,20 @@ const ThreeDView = () => {
           window.THREE.WebGLRenderer = function(canvas, options) {
             console.log('Three.js WebGLRenderer called, checking for context conflicts...');
             
-            // Check if canvas has existing context
-            const existingContext = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-            if (existingContext) {
-              console.log('Context conflict detected in Three.js renderer, recreating canvas...');
+            // Always force recreate canvas to ensure clean context
+            console.log('Force recreating canvas before Three.js renderer creation...');
+            const newCanvas = forceRecreateCanvas();
+            if (newCanvas) {
+              // Use the new canvas for Three.js
+              canvas = newCanvas;
+              console.log('Using recreated canvas for Three.js renderer');
               
-              // Force recreate canvas
-              const newCanvas = forceRecreateCanvas();
-              if (newCanvas) {
-                // Use the new canvas for Three.js
-                canvas = newCanvas;
-                console.log('Using recreated canvas for Three.js renderer');
-              }
+              // Wait a bit to ensure DOM is updated
+              setTimeout(() => {
+                console.log('Canvas recreation completed, Three.js can now create renderer');
+              }, 100);
+            } else {
+              console.warn('Failed to recreate canvas, proceeding with original canvas');
             }
             
             // Call original constructor with potentially new canvas
