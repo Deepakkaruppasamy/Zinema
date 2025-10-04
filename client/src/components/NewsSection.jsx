@@ -13,7 +13,7 @@ const news = [
     id: 2,
     imagePath: '/w500/6agKYU5IQFpuDyUYPu39w7UCRrJ.jpg',
     title: 'Oscar Buzz: Early Favorites Revealed',
-    summary: 'Critics are already talking about the top contenders for this year's Academy Awards. See which films are leading the pack.',
+    summary: 'Critics are already talking about the top contenders for this year\'s Academy Awards. See which films are leading the pack.',
     link: '#',
   },
   {
