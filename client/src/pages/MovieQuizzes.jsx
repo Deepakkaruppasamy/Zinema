@@ -17,8 +17,11 @@ import {
   XCircle,
   Play,
   Pause,
-  RotateCcw
+  RotateCcw,
+  Brain
 } from 'lucide-react';
+import QuizEngine from '../components/quiz/QuizEngine';
+import UserChallenges from '../components/quiz/UserChallenges';
 
 const MovieQuizzes = () => {
   const [activeTab, setActiveTab] = useState('trivia');
@@ -268,31 +271,47 @@ const MovieQuizzes = () => {
               exit={{ opacity: 0, y: -20 }}
               className="space-y-6"
             >
-              {/* Quiz Selection */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {triviaQuestions.map((quiz) => (
-                  <motion.div
-                    key={quiz.id}
-                    whileHover={{ scale: 1.05 }}
-                    className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20"
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getDifficultyColor(quiz.difficulty)}`}>
-                        {quiz.difficulty}
-                      </span>
-                      <span className="text-yellow-400 font-bold">{quiz.points} pts</span>
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">{quiz.question}</h3>
-                    <p className="text-gray-300 text-sm mb-4">{quiz.category}</p>
-                    <button
-                      onClick={() => startQuiz(quiz.id)}
-                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-2 px-4 rounded-lg transition-all"
-                    >
-                      Start Quiz
-                    </button>
-                  </motion.div>
-                ))}
-              </div>
+              {currentQuiz ? (
+                <QuizEngine
+                  questions={[currentQuiz]}
+                  onComplete={(result) => {
+                    setCurrentQuiz(null);
+                    setUserPoints(prev => prev + result.score);
+                  }}
+                  timeLimit={30}
+                  showTimer={true}
+                  allowSkip={false}
+                  showHints={false}
+                />
+              ) : (
+                <div>
+                  <h3 className="text-2xl font-bold mb-6">🧠 Choose Your Trivia Challenge</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {triviaQuestions.map((quiz) => (
+                      <motion.div
+                        key={quiz.id}
+                        whileHover={{ scale: 1.05 }}
+                        className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20"
+                      >
+                        <div className="flex items-center justify-between mb-4">
+                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${getDifficultyColor(quiz.difficulty)}`}>
+                            {quiz.difficulty}
+                          </span>
+                          <span className="text-yellow-400 font-bold">{quiz.points} pts</span>
+                        </div>
+                        <h3 className="text-lg font-semibold mb-2">{quiz.question}</h3>
+                        <p className="text-gray-300 text-sm mb-4">{quiz.category}</p>
+                        <button
+                          onClick={() => setCurrentQuiz(quiz)}
+                          className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-2 px-4 rounded-lg transition-all"
+                        >
+                          Start Quiz
+                        </button>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -342,42 +361,8 @@ const MovieQuizzes = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="space-y-6"
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {userChallenges.map((challenge) => (
-                  <div key={challenge.id} className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-                    <div className="flex items-center gap-3 mb-4">
-                      <span className="text-2xl">{challenge.icon}</span>
-                      <div>
-                        <h3 className="text-lg font-semibold">{challenge.title}</h3>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(challenge.difficulty)}`}>
-                          {challenge.difficulty}
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-gray-300 text-sm mb-4">{challenge.description}</p>
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between text-sm">
-                        <span>Progress</span>
-                        <span>{challenge.progress}/{challenge.maxProgress}</span>
-                      </div>
-                      <div className="w-full bg-gray-700 rounded-full h-2">
-                        <div
-                          className="bg-gradient-to-r from-green-500 to-blue-500 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${(challenge.progress / challenge.maxProgress) * 100}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-yellow-400 font-bold">+{challenge.reward} pts</span>
-                      <button className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold py-1 px-3 rounded-lg transition-all text-sm">
-                        Continue
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <UserChallenges />
             </motion.div>
           )}
 
