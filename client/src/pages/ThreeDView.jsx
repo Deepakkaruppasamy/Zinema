@@ -455,8 +455,7 @@ const ThreeDView = () => {
             physicallyCorrectLights: false,
             stencil: false,
             depth: true,
-            premultipliedAlpha: false,
-            preserveDrawingBuffer: false
+            premultipliedAlpha: false
           }}
         >
           <ambientLight intensity={0.5} />
