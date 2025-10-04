@@ -47,6 +47,9 @@ if (!fs.existsSync(publicDir)) {
     fs.mkdirSync(publicDir, { recursive: true });
 }
 
+// Stripe webhooks (MUST be before express.json() middleware)
+app.use('/api/stripe', express.raw({type: 'application/json'}), stripeWebhooks);
+
 // Middleware
 app.use(express.json())
 const staticAllowed = new Set([
@@ -146,8 +149,7 @@ app.get('/api/tmdb-image', async (req, res) => {
   }
 });
 
-// Stripe webhooks (must be before catch-all and use raw body)
-app.use('/api/stripe', express.raw({type: 'application/json'}), stripeWebhooks);
+// Stripe webhooks moved to top of file (before express.json() middleware)
 
 // Catch-all handler for undefined routes
 app.use((req, res) => {
