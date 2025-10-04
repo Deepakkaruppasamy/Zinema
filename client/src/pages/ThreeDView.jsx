@@ -119,7 +119,8 @@ function ModelWithFallback({ url, fallbackUrls = [] }) {
     
     const isConnectionError = error?.message?.includes('Failed to fetch') || 
                              error?.message?.includes('ERR_CONNECTION_RESET') ||
-                             error?.message?.includes('Could not load');
+                             error?.message?.includes('Could not load') ||
+                             error?.message?.includes('URL not accessible');
     
     const isLocalFileError = error?.message?.includes('Unexpected token') ||
                             error?.message?.includes('is not valid JSON') ||
@@ -209,10 +210,13 @@ const ThreeDView = () => {
   };
 
   const fallbackModels = [
-    addCacheBuster('https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatre.glb'),
+    // Start with reliable external models first
     'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
     import.meta.env.VITE_3D_MODEL_URL,
+    // Then try local model
     '/models/theature.glb',
+    // Finally try the Vercel blob storage (known to have issues)
+    addCacheBuster('https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatre.glb'),
   ].filter(Boolean);
   
   const defaultSrc = fallbackModels[0];

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Model Loading Test</title>
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .loading { background: #e3f2fd; color: #1976d2; }
+        .success { background: #e8f5e8; color: #2e7d32; }
+        .error { background: #ffebee; color: #c62828; }
+        .info { background: #f3e5f5; color: #7b1fa2; }
+        model-viewer {
+            width: 100%;
+            height: 400px;
+            margin: 20px 0;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+        }
+        .fallback-order {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+            border-radius: 5px;
+        }
+        h1 { color: #333; text-align: center; }
+        h2 { color: #555; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎭 3D Model Loading Test</h1>
+        
+        <div class="status info">
+            <strong>Testing Updated Fallback Order:</strong><br>
+            1. Reliable external model (Astronaut)<br>
+            2. Environment configured model<br>
+            3. Local theater model<br>
+            4. Vercel blob storage (known issues)
+        </div>
+        
+        <h2>Test 1: Reliable External Model</h2>
+        <div id="status1" class="status loading">🔄 Loading reliable external model...</div>
+        <model-viewer 
+            id="model-viewer1"
+            src="https://modelviewer.dev/shared-assets/models/Astronaut.glb"
+            alt="Astronaut 3D Model"
+            auto-rotate
+            camera-controls
+            shadow-intensity="1"
+            environment-image="neutral"
+            loading="eager">
+        </model-viewer>
+        
+        <h2>Test 2: Local Theater Model</h2>
+        <div id="status2" class="status loading">🔄 Loading local theater model...</div>
+        <model-viewer 
+            id="model-viewer2"
+            src="/models/theature.glb"
+            alt="Local Theater Model"
+            auto-rotate
+            camera-controls
+            shadow-intensity="1"
+            environment-image="neutral"
+            loading="eager">
+        </model-viewer>
+        
+        <h2>Test 3: Vercel Blob Storage (Expected to Fail)</h2>
+        <div id="status3" class="status loading">🔄 Testing Vercel blob storage...</div>
+        <model-viewer 
+            id="model-viewer3"
+            src="https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatre.glb"
+            alt="Madame Walker Theatre 3D Model"
+            auto-rotate
+            camera-controls
+            shadow-intensity="1"
+            environment-image="neutral"
+            loading="eager">
+        </model-viewer>
+        
+        <h2>URL Accessibility Test</h2>
+        <div id="accessibility-results" class="status info">
+            <strong>Testing URL accessibility...</strong>
+        </div>
+    </div>
+
+    <script>
+        // Test URL accessibility
+        async function testUrlAccessibility(url) {
+            try {
+                const response = await fetch(url, { 
+                    method: 'HEAD',
+                    mode: 'cors',
+                    cache: 'no-cache'
+                });
+                return response.ok;
+            } catch (error) {
+                console.warn(`URL accessibility test failed for ${url}:`, error.message);
+                return false;
+            }
+        }
+        
+        // Test all URLs
+        Promise.all([
+            testUrlAccessibility('https://modelviewer.dev/shared-assets/models/Astronaut.glb'),
+            testUrlAccessibility('/models/theature.glb'),
+            testUrlAccessibility('https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatre.glb')
+        ]).then(([reliable, local, vercel]) => {
+            const results = document.getElementById('accessibility-results');
+            results.innerHTML = `
+                <strong>URL Accessibility Test Results:</strong><br>
+                ✅ Reliable External: ${reliable ? 'Accessible' : 'Not accessible'}<br>
+                ${local ? '✅' : '❌'} Local Model: ${local ? 'Accessible' : 'Not accessible'}<br>
+                ${vercel ? '✅' : '❌'} Vercel Blob: ${vercel ? 'Accessible' : 'Not accessible'}
+            `;
+        });
+        
+        // Model loading event handlers
+        document.getElementById('model-viewer1').addEventListener('load', () => {
+            document.getElementById('status1').innerHTML = '✅ Reliable external model loaded successfully!';
+            document.getElementById('status1').className = 'status success';
+        });
+        
+        document.getElementById('model-viewer1').addEventListener('error', (e) => {
+            document.getElementById('status1').innerHTML = '❌ Failed to load reliable external model';
+            document.getElementById('status1').className = 'status error';
+        });
+        
+        document.getElementById('model-viewer2').addEventListener('load', () => {
+            document.getElementById('status2').innerHTML = '✅ Local theater model loaded successfully!';
+            document.getElementById('status2').className = 'status success';
+        });
+        
+        document.getElementById('model-viewer2').addEventListener('error', (e) => {
+            document.getElementById('status2').innerHTML = '❌ Failed to load local theater model';
+            document.getElementById('status2').className = 'status error';
+        });
+        
+        document.getElementById('model-viewer3').addEventListener('load', () => {
+            document.getElementById('status3').innerHTML = '✅ Vercel blob storage model loaded successfully!';
+            document.getElementById('status3').className = 'status success';
+        });
+        
+        document.getElementById('model-viewer3').addEventListener('error', (e) => {
+            document.getElementById('status3').innerHTML = '❌ Failed to load Vercel blob storage model (expected)';
+            document.getElementById('status3').className = 'status error';
+        });
+    </script>
+</body>
+</html>
