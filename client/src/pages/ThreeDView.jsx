@@ -210,13 +210,13 @@ const ThreeDView = () => {
   };
 
   const fallbackModels = [
-    // Start with reliable external models first
+    // Primary model: Madame Walker Theatre
+    addCacheBuster('https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatre.glb'),
+    // Fallback models
     'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
     import.meta.env.VITE_3D_MODEL_URL,
     // Then try local model
     '/models/theature.glb',
-    // Finally try the Vercel blob storage (known to have issues)
-    addCacheBuster('https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatre.glb'),
   ].filter(Boolean);
   
   const defaultSrc = fallbackModels[0];
@@ -707,7 +707,7 @@ const ThreeDView = () => {
           </p>
           {src.includes('vercel-storage.com') && (
             <span className='text-xs bg-purple-500/20 text-purple-300 px-2 py-1 rounded'>
-              🎭 Your Custom Theater Model
+              🎭 Madame Walker Theatre
             </span>
           )}
           {src.startsWith('/models/') && (
