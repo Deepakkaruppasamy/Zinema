@@ -243,8 +243,8 @@ const ThreeDView = () => {
     event.preventDefault();
     setWebglError(true);
     
-    // More aggressive recovery strategy
-    const recoveryState = { attempts: 0, maxAttempts: 5, isRecovering: true };
+    // Recovery state management
+    const recoveryState = { attempts: 0, maxAttempts: 3, isRecovering: true };
     
     const attemptRecovery = () => {
       if (!recoveryState.isRecovering) return;
@@ -252,59 +252,48 @@ const ThreeDView = () => {
       recoveryState.attempts++;
       console.log(`WebGL recovery attempt ${recoveryState.attempts}/${recoveryState.maxAttempts}`);
       
-      if (recoveryState.attempts < recoveryState.maxAttempts) {
-        // Try different recovery strategies
-        const strategies = [
-          () => {
-            // Strategy 1: Force context recreation
-            setWebglError(false);
-            setTimeout(() => {
-              if (recoveryState.isRecovering) {
-                attemptRecovery();
-              }
-            }, 500);
-          },
-          () => {
-            // Strategy 2: Clear canvas and retry
-            const canvas = canvasRef.current;
-            if (canvas) {
-              const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-              if (gl) {
-                gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-              }
+      if (recoveryState.attempts <= recoveryState.maxAttempts) {
+        // Strategy 1: Force context recreation
+        if (recoveryState.attempts === 1) {
+          console.log('Strategy 1: Force context recreation');
+          setWebglError(false);
+          setTimeout(() => {
+            if (recoveryState.isRecovering) {
+              attemptRecovery();
             }
-            setWebglError(false);
-            setTimeout(() => {
-              if (recoveryState.isRecovering) {
-                attemptRecovery();
-              }
-            }, 1000);
-          },
-          () => {
-            // Strategy 3: Force page refresh as last resort
-            if (recoveryState.attempts >= 3) {
-              console.warn('Attempting page refresh to recover WebGL context');
-              window.location.reload();
-              return;
+          }, 1000);
+        }
+        // Strategy 2: Clear canvas and retry
+        else if (recoveryState.attempts === 2) {
+          console.log('Strategy 2: Clear canvas and retry');
+          const canvas = canvasRef.current;
+          if (canvas) {
+            const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            if (gl) {
+              gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             }
-            setWebglError(false);
-            setTimeout(() => {
-              if (recoveryState.isRecovering) {
-                attemptRecovery();
-              }
-            }, 2000);
           }
-        ];
-        
-        const strategy = strategies[Math.min(recoveryState.attempts - 1, strategies.length - 1)];
-        strategy();
+          setWebglError(false);
+          setTimeout(() => {
+            if (recoveryState.isRecovering) {
+              attemptRecovery();
+            }
+          }, 2000);
+        }
+        // Strategy 3: Force page refresh as last resort
+        else {
+          console.warn('Strategy 3: Force page refresh to recover WebGL context');
+          recoveryState.isRecovering = false;
+          window.location.reload();
+        }
       } else {
         console.error('WebGL context recovery failed after multiple attempts');
         recoveryState.isRecovering = false;
       }
     };
     
-    attemptRecovery();
+    // Start recovery process
+    setTimeout(attemptRecovery, 100);
     
     return () => {
       recoveryState.isRecovering = false;
@@ -329,6 +318,41 @@ const ThreeDView = () => {
     canvas.addEventListener('webglcontextlost', handleWebGLContextLost);
     canvas.addEventListener('webglcontextrestored', handleWebGLContextRestored);
     
+    // Optimize WebGL context to prevent loss
+    const optimizeWebGLContext = () => {
+      const gl = canvas.getContext('webgl', {
+        preserveDrawingBuffer: false,
+        antialias: false,
+        alpha: false,
+        depth: true,
+        stencil: false,
+        failIfMajorPerformanceCaveat: false
+      });
+      
+      if (gl) {
+        // Set conservative limits to prevent context loss
+        const loseContextExt = gl.getExtension('WEBGL_lose_context');
+        if (loseContextExt) {
+          console.log('WebGL context loss extension available');
+        }
+        
+        // Monitor WebGL context health
+        const checkWebGLHealth = () => {
+          if (gl.isContextLost()) {
+            console.warn('WebGL context is lost - triggering recovery');
+            handleWebGLContextLost(new Event('webglcontextlost'));
+          }
+        };
+        
+        // Check WebGL health every 5 seconds
+        const healthCheckInterval = setInterval(checkWebGLHealth, 5000);
+        
+        return () => clearInterval(healthCheckInterval);
+      }
+    };
+
+    const cleanupWebGL = optimizeWebGLContext();
+    
     if (import.meta.env.PROD) {
       canvas.style.willChange = 'auto';
       canvas.style.transform = 'translateZ(0)';
@@ -352,12 +376,14 @@ const ThreeDView = () => {
       
       return () => {
         clearInterval(memoryInterval);
+        if (cleanupWebGL) cleanupWebGL();
         canvas.removeEventListener('webglcontextlost', handleWebGLContextLost);
         canvas.removeEventListener('webglcontextrestored', handleWebGLContextRestored);
       };
     }
     
     return () => {
+      if (cleanupWebGL) cleanupWebGL();
       canvas.removeEventListener('webglcontextlost', handleWebGLContextLost);
       canvas.removeEventListener('webglcontextrestored', handleWebGLContextRestored);
     };
