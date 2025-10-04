@@ -238,6 +238,50 @@ const ThreeDView = () => {
   const [webglError, setWebglError] = useState(false);
   const canvasRef = useRef();
 
+  // Force recreate canvas element to prevent context conflicts
+  const forceRecreateCanvas = useCallback(() => {
+    try {
+      const canvas = canvasRef.current;
+      if (!canvas) return null;
+      
+      console.log('Force recreating canvas to prevent context conflicts');
+      
+      // Get canvas parent and position
+      const parent = canvas.parentNode;
+      const nextSibling = canvas.nextSibling;
+      const style = canvas.style.cssText;
+      const className = canvas.className;
+      const id = canvas.id;
+      
+      // Remove the old canvas
+      parent.removeChild(canvas);
+      
+      // Create a new canvas element
+      const newCanvas = document.createElement('canvas');
+      newCanvas.className = className;
+      newCanvas.id = id;
+      newCanvas.style.cssText = style;
+      newCanvas.width = canvas.offsetWidth;
+      newCanvas.height = canvas.offsetHeight;
+      
+      // Insert the new canvas in the same position
+      if (nextSibling) {
+        parent.insertBefore(newCanvas, nextSibling);
+      } else {
+        parent.appendChild(newCanvas);
+      }
+      
+      // Update the ref
+      canvasRef.current = newCanvas;
+      
+      console.log('Canvas recreated successfully');
+      return newCanvas;
+    } catch (error) {
+      console.error('Error recreating canvas:', error);
+      return null;
+    }
+  }, []);
+
   const handleWebGLContextLost = useCallback((event) => {
     console.warn('WebGL context lost - attempting recovery');
     event.preventDefault();
@@ -258,8 +302,8 @@ const ThreeDView = () => {
           console.log('Strategy 1: Force context recreation with cleanup');
           
           // Clean up existing context
-          const canvas = canvasRef.current;
-          if (canvas) {
+            const canvas = canvasRef.current;
+            if (canvas) {
             try {
               const existingContext = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
               if (existingContext) {
@@ -273,12 +317,12 @@ const ThreeDView = () => {
             }
           }
           
-          setWebglError(false);
-          setTimeout(() => {
-            if (recoveryState.isRecovering) {
-              attemptRecovery();
-            }
-          }, 1000);
+            setWebglError(false);
+            setTimeout(() => {
+              if (recoveryState.isRecovering) {
+                attemptRecovery();
+              }
+            }, 1000);
         }
         // Strategy 2: Force canvas recreation
         else if (recoveryState.attempts === 2) {
@@ -334,46 +378,6 @@ const ThreeDView = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Force recreate canvas element to prevent context conflicts
-    const forceRecreateCanvas = () => {
-      try {
-        console.log('Force recreating canvas to prevent context conflicts');
-        
-        // Get canvas parent and position
-        const parent = canvas.parentNode;
-        const nextSibling = canvas.nextSibling;
-        const style = canvas.style.cssText;
-        const className = canvas.className;
-        const id = canvas.id;
-        
-        // Remove the old canvas
-        parent.removeChild(canvas);
-        
-        // Create a new canvas element
-        const newCanvas = document.createElement('canvas');
-        newCanvas.className = className;
-        newCanvas.id = id;
-        newCanvas.style.cssText = style;
-        newCanvas.width = canvas.offsetWidth;
-        newCanvas.height = canvas.offsetHeight;
-        
-        // Insert the new canvas in the same position
-        if (nextSibling) {
-          parent.insertBefore(newCanvas, nextSibling);
-        } else {
-          parent.appendChild(newCanvas);
-        }
-        
-        // Update the ref
-        canvasRef.current = newCanvas;
-        
-        console.log('Canvas recreated successfully');
-        return newCanvas;
-      } catch (error) {
-        console.error('Error recreating canvas:', error);
-        return canvas;
-      }
-    };
 
     // Intercept Three.js renderer creation to prevent context conflicts
     const interceptThreeJSRenderer = () => {
