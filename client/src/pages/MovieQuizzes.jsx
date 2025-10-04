@@ -347,6 +347,20 @@ const MovieQuizzes = () => {
     console.log('Leaderboard:', leaderboard.length);
     console.log('User Points:', userPoints);
     console.log('User Votes:', userVotes);
+    
+    // Force load data if empty
+    if (polls.length === 0) {
+      console.log('Loading polls...');
+      setPolls(initializePolls());
+    }
+    if (userChallenges.length === 0) {
+      console.log('Loading challenges...');
+      setUserChallenges(initializeChallenges());
+    }
+    if (leaderboard.length === 0) {
+      console.log('Loading leaderboard...');
+      setLeaderboard(initializeLeaderboard());
+    }
   };
 
   // Test on component mount
@@ -439,12 +453,26 @@ const MovieQuizzes = () => {
                 <div className={`text-2xl font-bold ${getLevelColor(userLevel)}`}>Level {userLevel}</div>
                 <div className="text-sm text-gray-300">Movie Expert</div>
               </div>
-              <button
-                onClick={testFeatures}
-                className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 font-semibold py-2 px-3 rounded-lg transition-all text-sm"
-              >
-                Test Features
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={testFeatures}
+                  className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 font-semibold py-2 px-3 rounded-lg transition-all text-sm"
+                >
+                  Test Features
+                </button>
+                <button
+                  onClick={() => {
+                    console.log('Initializing all data...');
+                    setPolls(initializePolls());
+                    setUserChallenges(initializeChallenges());
+                    setLeaderboard(initializeLeaderboard());
+                    alert('All data loaded! Check the tabs now.');
+                  }}
+                  className="bg-green-500/20 hover:bg-green-500/30 text-green-400 font-semibold py-2 px-3 rounded-lg transition-all text-sm"
+                >
+                  Load All Data
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -563,7 +591,21 @@ const MovieQuizzes = () => {
                 </div>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {polls.map((poll) => (
+                {polls.length === 0 ? (
+                  <div className="col-span-2 text-center py-8">
+                    <div className="text-gray-400">Loading polls...</div>
+                    <button 
+                      onClick={() => {
+                        console.log('Manually loading polls...');
+                        setPolls(initializePolls());
+                      }}
+                      className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-all"
+                    >
+                      Load Polls
+                    </button>
+                  </div>
+                ) : (
+                  polls.map((poll) => (
                   <motion.div 
                     key={poll.id} 
                     whileHover={{ scale: 1.02 }}
@@ -628,7 +670,8 @@ const MovieQuizzes = () => {
                       </div>
                     )}
                   </motion.div>
-                ))}
+                  ))
+                )}
               </div>
             </motion.div>
           )}
@@ -654,7 +697,21 @@ const MovieQuizzes = () => {
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {userChallenges.map((challenge) => (
+                {userChallenges.length === 0 ? (
+                  <div className="col-span-3 text-center py-8">
+                    <div className="text-gray-400">Loading challenges...</div>
+                    <button 
+                      onClick={() => {
+                        console.log('Manually loading challenges...');
+                        setUserChallenges(initializeChallenges());
+                      }}
+                      className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-all"
+                    >
+                      Load Challenges
+                    </button>
+                  </div>
+                ) : (
+                  userChallenges.map((challenge) => (
                   <motion.div
                     key={challenge.id}
                     whileHover={{ scale: 1.05 }}
@@ -738,7 +795,8 @@ const MovieQuizzes = () => {
                       </div>
                     </div>
                   </motion.div>
-                ))}
+                  ))
+                )}
               </div>
             </motion.div>
           )}
@@ -765,7 +823,21 @@ const MovieQuizzes = () => {
                   </div>
                 </div>
                 <div className="space-y-4">
-                  {leaderboard.map((user, index) => (
+                  {leaderboard.length === 0 ? (
+                    <div className="text-center py-8">
+                      <div className="text-gray-400">Loading leaderboard...</div>
+                      <button 
+                        onClick={() => {
+                          console.log('Manually loading leaderboard...');
+                          setLeaderboard(initializeLeaderboard());
+                        }}
+                        className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-all"
+                      >
+                        Load Leaderboard
+                      </button>
+                    </div>
+                  ) : (
+                    leaderboard.map((user, index) => (
                     <motion.div 
                       key={user.rank} 
                       initial={{ opacity: 0, x: -20 }}
@@ -810,7 +882,8 @@ const MovieQuizzes = () => {
                         )}
                       </div>
                     </motion.div>
-                  ))}
+                    ))
+                  )}
                 </div>
                 
                 {/* User Stats Summary */}
