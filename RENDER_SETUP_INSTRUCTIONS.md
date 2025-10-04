@@ -1,6 +1,6 @@
 # 🚀 Render Environment Setup
 
-## Your API Key: `AIzaSyAC11SMd2r8EAmHlXO5ZgjBKPa3ulN0GlU`
+## Your API Key: `AIzaSyAw5KOWC-_4_t4TVagYL6Fz1qwzgQE5dqY`
 
 ---
 

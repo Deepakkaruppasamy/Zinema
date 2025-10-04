@@ -80,7 +80,7 @@ https://zinema-clvk.onrender.com/api/deepai/health
 
 ### Issue 4: API Key Issue
 **Solution:**
-- Verify the key is exactly: `AIzaSyAC11SMd2r8EAmHlXO5ZgjBKPa3ulN0GlU`
+- Verify the key is exactly: `AIzaSyAw5KOWC-_4_t4TVagYL6Fz1qwzgQE5dqY`
 - No extra spaces or characters
 
 ---

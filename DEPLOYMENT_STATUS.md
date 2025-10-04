@@ -3,7 +3,7 @@
 ## ✅ **SUCCESS: Environment Variables Configured**
 
 Based on your screenshot, I can see you've successfully added:
-- ✅ `GEMINI_API_KEY` = `AIzaSyAC11SMd2r8EAmHlXO5ZgjBKPa3ulN0GlU`
+- ✅ `GEMINI_API_KEY` = `AIzaSyAw5KOWC-_4_t4TVagYL6Fz1qwzgQE5dqY`
 - ✅ `GEMINI_MODEL` = `gemini-1.5-pro-002`
 
 ---

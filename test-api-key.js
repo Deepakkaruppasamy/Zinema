@@ -1,8 +1,8 @@
 // Test your Gemini API key locally
 import fetch from 'node-fetch';
 
-const API_KEY = 'AIzaSyAC11SMd2r8EAmHlXO5ZgjBKPa3ulN0GlU';
-const MODEL = 'gemini-1.5-pro';
+const API_KEY = 'AIzaSyAw5KOWC-_4_t4TVagYL6Fz1qwzgQE5dqY';
+const MODEL = 'gemini-2.0-flash';
 
 async function testGeminiAPI() {
     console.log('🧪 Testing your Gemini API key...\n');

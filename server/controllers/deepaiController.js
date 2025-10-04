@@ -4,7 +4,7 @@ import Movie from '../models/Movie.js'
 import Show from '../models/Show.js'
 
 // Use a model alias that Google serves consistently on v1beta
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-pro'
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash'
 
 function buildPrompt(messages = [], userProfile = {}) {
   const system = `You are DeepAI, a personalized Gemini-powered assistant for Zinema.

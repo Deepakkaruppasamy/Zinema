@@ -82,7 +82,7 @@ After deployment completes:
 
 ❌ **Forgot to click "Save Changes"** - Environment variable not saved
 ❌ **Service didn't redeploy** - Need to manually deploy
-❌ **Typo in API key** - Copy/paste exactly: `AIzaSyAC11SMd2r8EAmHlXO5ZgjBKPa3ulN0GlU`
+❌ **Typo in API key** - Copy/paste exactly: `AIzaSyAw5KOWC-_4_t4TVagYL6Fz1qwzgQE5dqY`
 ❌ **Wrong service** - Make sure you're editing the backend service, not frontend
 
 ---
@@ -92,7 +92,7 @@ After deployment completes:
 ### Render Environment Tab:
 ```
 Environment Variables:
-✅ GEMINI_API_KEY = AIzaSyAC11SMd2r8EAmHlXO5ZgjBKPa3ulN0GlU
+✅ GEMINI_API_KEY = AIzaSyAw5KOWC-_4_t4TVagYL6Fz1qwzgQE5dqY
 ```
 
 ### Health Check Success:
