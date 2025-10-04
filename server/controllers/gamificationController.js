@@ -225,6 +225,7 @@ export const addExperience = async (userId, amount, reason = '') => {
     
     if (!gamification) {
       gamification = new Gamification({ userId });
+      await gamification.save();
     }
     
     const leveledUp = gamification.addExperience(amount);
@@ -306,6 +307,7 @@ export const updateBookingStats = async (userId, amount, isGroupBooking = false,
     
     if (!gamification) {
       gamification = new Gamification({ userId });
+      await gamification.save();
     }
     
     // Update stats based on whether this is initial booking or payment
