@@ -9,6 +9,7 @@ const resources = {
         movies: 'Movies',
         theatres: 'Theatres',
         events: 'Events',
+        quizzes: 'Quizzes',
         releases: 'Releases',
         community: 'Community',
         favorites: 'Favorites',

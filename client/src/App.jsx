@@ -36,6 +36,7 @@ import AdminNotifications from './pages/AdminNotifications'
 import Concessions from './pages/admin/Concessions'
 import Feedbacks from './pages/admin/Feedbacks'
 import EventsAdmin from './pages/admin/EventsAdmin'
+import MovieQuizzes from './pages/MovieQuizzes'
 import Events from './pages/Events'
 import EventDetails from './pages/EventDetails'
 import GreenTicketing from './components/GreenTicketing'
@@ -61,6 +62,7 @@ const App = () => {
         <Route path='/theatre' element={<Theatre/>} />
         <Route path='/ticket/:id' element={<Ticket/>} />
         <Route path='/community' element={<CommunityChat/>} />
+        <Route path='/quizzes' element={<MovieQuizzes/>} />
         <Route path='/events' element={<Events/>} />
         <Route path='/events/:id' element={<EventDetails/>} />
         <Route path='/admin/*' element={user ? <Layout/> : (
