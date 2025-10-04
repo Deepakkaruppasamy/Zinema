@@ -21,7 +21,6 @@ function Loader() {
 }
 
 function FallbackModel() {
-  // Create a more sophisticated fallback model
   const geometry = useMemo(() => {
     const geo = new THREE.BoxGeometry(2, 2, 2);
     const material = new THREE.MeshStandardMaterial({ 
@@ -53,136 +52,16 @@ function FallbackModel() {
   );
 }
 
-function PerformanceMonitor() {
-  const [fps, setFps] = useState(60);
-  const [frameTime, setFrameTime] = useState(16);
-  const [showStats, setShowStats] = useState(false);
-  
-  React.useEffect(() => {
-    // Only show performance stats in development
-    if (import.meta.env.PROD) {
-      return;
-    }
-    
-    let frameCount = 0;
-    let lastTime = performance.now();
-    
-    const monitor = () => {
-      frameCount++;
-      const currentTime = performance.now();
-      const deltaTime = currentTime - lastTime;
-      
-      if (deltaTime >= 1000) {
-        const currentFps = Math.round((frameCount * 1000) / deltaTime);
-        const currentFrameTime = Math.round(deltaTime / frameCount);
-        
-        setFps(currentFps);
-        setFrameTime(currentFrameTime);
-        
-        // Warn if performance is poor
-        if (currentFps < 30) {
-          console.warn('Low FPS detected:', currentFps, 'fps');
-        }
-        
-        frameCount = 0;
-        lastTime = currentTime;
-      }
-      
-      requestAnimationFrame(monitor);
-    };
-    
-    requestAnimationFrame(monitor);
-  }, []);
-  
-  // Don't render in production
-  if (import.meta.env.PROD) {
-    return null;
-  }
-  
-  return (
-    <Html position={[0, 0, 0]}>
-      <div className="absolute top-4 left-4 bg-black/60 text-white text-xs px-2 py-1 rounded">
-        FPS: {fps} | Frame: {frameTime}ms
-      </div>
-    </Html>
-  );
-}
-
-function WebGLHealthMonitor() {
-  const [contextStatus, setContextStatus] = useState('healthy');
-  const [lastCheck, setLastCheck] = useState(Date.now());
-  
-  React.useEffect(() => {
-    const checkWebGLHealth = () => {
-      try {
-        const canvas = document.querySelector('canvas');
-        if (!canvas) return;
-        
-        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-        if (!gl) {
-          setContextStatus('no-webgl');
-          return;
-        }
-        
-        // Test context validity
-        gl.getParameter(gl.VERSION);
-        setContextStatus('healthy');
-        setLastCheck(Date.now());
-        
-      } catch (error) {
-        console.warn('WebGL health check failed:', error);
-        setContextStatus('error');
-      }
-    };
-    
-    // Check every 10 seconds
-    const interval = setInterval(checkWebGLHealth, 10000);
-    checkWebGLHealth(); // Initial check
-    
-    return () => clearInterval(interval);
-  }, []);
-  
-  // Only show in development
-  if (import.meta.env.PROD) {
-    return null;
-  }
-  
-  const getStatusColor = () => {
-    switch (contextStatus) {
-      case 'healthy': return 'text-green-400';
-      case 'error': return 'text-red-400';
-      case 'no-webgl': return 'text-yellow-400';
-      default: return 'text-gray-400';
-    }
-  };
-  
-  return (
-    <Html position={[0, 0, 0]}>
-      <div className="absolute top-4 right-4 bg-black/60 text-white text-xs px-2 py-1 rounded">
-        <div className={`flex items-center gap-1 ${getStatusColor()}`}>
-          <div className="w-2 h-2 rounded-full bg-current"></div>
-          WebGL: {contextStatus}
-        </div>
-        <div className="text-xs text-gray-400 mt-1">
-          Last check: {new Date(lastCheck).toLocaleTimeString()}
-        </div>
-      </div>
-    </Html>
-  );
-}
-
 function Model({ url }) {
   const { scene } = useGLTF(url);
   
-  // Auto fit: compute bounding box and scale to target size
   const scaled = useMemo(() => {
     const clone = scene.clone(true);
-    // compute size
     const box = new THREE.Box3().setFromObject(clone);
     const size = new THREE.Vector3();
     box.getSize(size);
     const maxDim = Math.max(size.x, size.y, size.z) || 1;
-    const target = 2.5; // world units target span
+    const target = 2.5;
     const scale = target / maxDim;
     clone.scale.setScalar(scale);
     return clone;
@@ -205,7 +84,6 @@ function ModelWithFallback({ url, fallbackUrls = [] }) {
   const allUrls = [url, ...fallbackUrls];
   const currentUrl = allUrls[currentUrlIndex];
   
-  // Preload test function to check URL accessibility
   const testUrlAccessibility = useCallback(async (testUrl) => {
     try {
       const response = await fetch(testUrl, { 
@@ -220,7 +98,6 @@ function ModelWithFallback({ url, fallbackUrls = [] }) {
     }
   }, []);
   
-  // Test current URL accessibility on mount and URL change
   React.useEffect(() => {
     const testCurrentUrl = async () => {
       setIsLoading(true);
@@ -240,7 +117,6 @@ function ModelWithFallback({ url, fallbackUrls = [] }) {
   const handleError = useCallback((error) => {
     console.error('3D Model loading error:', error);
     
-    // Check if this is a connection reset error or local file serving issue
     const isConnectionError = error?.message?.includes('Failed to fetch') || 
                              error?.message?.includes('ERR_CONNECTION_RESET') ||
                              error?.message?.includes('Could not load');
@@ -249,7 +125,6 @@ function ModelWithFallback({ url, fallbackUrls = [] }) {
                             error?.message?.includes('is not valid JSON') ||
                             (currentUrl.startsWith('/') && error?.message?.includes('version ht'));
     
-    // Don't retry for local file serving issues - move to next URL immediately
     if (isLocalFileError) {
       console.warn(`Local file serving issue detected for ${currentUrl}. Moving to next fallback immediately.`);
       const nextIndex = currentUrlIndex + 1;
@@ -262,14 +137,8 @@ function ModelWithFallback({ url, fallbackUrls = [] }) {
       return;
     }
     
-    // Special handling for your custom theater model
-    if (currentUrl.includes('vercel-storage.com')) {
-      console.warn(`Custom theater model connection issue detected. This may be due to network restrictions or Vercel blob storage availability.`);
-    }
-    
     if (isConnectionError && retryCount < maxRetries) {
-      // Retry the same URL with exponential backoff
-      const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+      const delay = Math.pow(2, retryCount) * 1000;
       console.warn(`Connection error detected. Retrying ${currentUrl} in ${delay}ms (attempt ${retryCount + 1}/${maxRetries})`);
       
       setTimeout(() => {
@@ -278,14 +147,13 @@ function ModelWithFallback({ url, fallbackUrls = [] }) {
       return;
     }
     
-    // Move to next URL or show fallback
     const nextIndex = currentUrlIndex + 1;
     if (nextIndex < allUrls.length) {
       console.warn(`Failed to load 3D model from ${currentUrl}. Trying fallback ${nextIndex}/${allUrls.length - 1}`);
       setCurrentUrlIndex(nextIndex);
-      setRetryCount(0); // Reset retry count for new URL
+      setRetryCount(0);
     } else {
-      console.error('Failed to load all 3D model options, showing geometric fallback. This may be due to network issues or CORS restrictions.');
+      console.error('Failed to load all 3D model options, showing geometric fallback.');
       setShowFallback(true);
     }
   }, [currentUrlIndex, allUrls.length, currentUrl, retryCount, maxRetries]);
@@ -317,14 +185,12 @@ class ErrorBoundary extends React.Component {
   }
   componentDidCatch(error, errorInfo) {
     console.error('3D Model Error Boundary caught an error:', error, errorInfo);
-    // Call the onError callback if provided
     if (this.props.onError) {
       this.props.onError(error);
     }
   }
   render() {
     if (this.state.hasError) {
-      // Let the parent handle the fallback
       return null;
     }
     return this.props.children;
@@ -333,7 +199,7 @@ class ErrorBoundary extends React.Component {
 
 const ThreeDView = () => {
   const q = useQuery();
-  // Add cache-busting to Vercel blob URL to avoid stale cache issues
+  
   const addCacheBuster = (url) => {
     if (url.includes('vercel-storage.com')) {
       const separator = url.includes('?') ? '&' : '?';
@@ -342,19 +208,16 @@ const ThreeDView = () => {
     return url;
   };
 
-  // Use a working fallback model with multiple options - prioritize your custom theater model
   const fallbackModels = [
-    // Start with your custom theater model first
-    addCacheBuster('https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatre.glb'), // Your custom theater model with cache-busting
-    'https://modelviewer.dev/shared-assets/models/Astronaut.glb', // Reliable external fallback
-    import.meta.env.VITE_3D_MODEL_URL, // Environment configured model
-    '/models/theature.glb', // Local theater model (may have serving issues)
+    addCacheBuster('https://o9k2jza8ktnsxuxu.public.blob.vercel-storage.com/madame_walker_theatre.glb'),
+    'https://modelviewer.dev/shared-assets/models/Astronaut.glb',
+    import.meta.env.VITE_3D_MODEL_URL,
+    '/models/theature.glb',
   ].filter(Boolean);
   
   const defaultSrc = fallbackModels[0];
   const requestedSrc = q.get('src');
   
-  // Validate and sanitize the requested source
   const isValidUrl = (url) => {
     try {
       new URL(url);
@@ -371,13 +234,11 @@ const ThreeDView = () => {
   const [webglError, setWebglError] = useState(false);
   const canvasRef = useRef();
 
-  // Handle WebGL context lost/restored with enhanced recovery
   const handleWebGLContextLost = useCallback((event) => {
     console.warn('WebGL context lost - attempting recovery');
     event.preventDefault();
     setWebglError(true);
     
-    // Store recovery state in ref to avoid stale closures
     const recoveryState = { attempts: 0, maxAttempts: 3, isRecovering: true };
     
     const attemptRecovery = () => {
@@ -390,14 +251,13 @@ const ThreeDView = () => {
         setTimeout(() => {
           if (recoveryState.isRecovering) {
             setWebglError(false);
-            // Force a re-render to check if context is restored
             setTimeout(() => {
               if (recoveryState.isRecovering) {
                 attemptRecovery();
               }
             }, 1000);
           }
-        }, 2000 * recoveryState.attempts); // Exponential backoff
+        }, 2000 * recoveryState.attempts);
       } else {
         console.error('WebGL context recovery failed after multiple attempts');
         recoveryState.isRecovering = false;
@@ -406,7 +266,6 @@ const ThreeDView = () => {
     
     attemptRecovery();
     
-    // Cleanup function to stop recovery attempts
     return () => {
       recoveryState.isRecovering = false;
     };
@@ -416,31 +275,24 @@ const ThreeDView = () => {
     console.log('WebGL context restored successfully');
     setWebglError(false);
     
-    // Force a complete re-render to ensure everything is working
     setTimeout(() => {
       if (canvasRef.current) {
-        // Trigger a resize event to refresh the canvas
         window.dispatchEvent(new Event('resize'));
       }
     }, 100);
   }, []);
 
-  // Enhanced WebGL context monitoring and recovery
   React.useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Add event listeners
     canvas.addEventListener('webglcontextlost', handleWebGLContextLost);
     canvas.addEventListener('webglcontextrestored', handleWebGLContextRestored);
     
-    // Production-specific optimizations
     if (import.meta.env.PROD) {
-      // Reduce memory pressure in production
       canvas.style.willChange = 'auto';
-      canvas.style.transform = 'translateZ(0)'; // Force hardware acceleration
+      canvas.style.transform = 'translateZ(0)';
       
-      // Add memory pressure monitoring
       const checkMemoryPressure = () => {
         if (performance.memory) {
           const usedMB = performance.memory.usedJSHeapSize / 1024 / 1024;
@@ -449,7 +301,6 @@ const ThreeDView = () => {
           
           if (usagePercent > 80) {
             console.warn(`High memory usage: ${usagePercent.toFixed(1)}%`);
-            // Trigger garbage collection if available
             if (window.gc) {
               window.gc();
             }
@@ -457,7 +308,6 @@ const ThreeDView = () => {
         }
       };
       
-      // Check memory every 30 seconds
       const memoryInterval = setInterval(checkMemoryPressure, 30000);
       
       return () => {
@@ -566,31 +416,23 @@ const ThreeDView = () => {
           ref={canvasRef}
           camera={{ position: [2, 2, 4], fov: 50 }}
           onCreated={({ gl, scene, camera }) => {
-            // Store references for recovery
             canvasRef.current = gl.domElement;
             
-            // Optimize WebGL settings to prevent context loss
             gl.setClearColor(0x000000, 0);
             gl.antialias = true;
             gl.powerPreference = "high-performance";
             
-            // Set up context loss prevention
             gl.domElement.style.outline = 'none';
             gl.domElement.tabIndex = -1;
             
-            // Production-specific optimizations
             if (import.meta.env.PROD) {
-              // Reduce precision to save memory
               gl.getContext().getParameter(gl.getContext().MAX_TEXTURE_SIZE);
               
-              // Disable unnecessary features
               gl.domElement.style.imageRendering = 'optimizeSpeed';
               gl.domElement.style.imageRendering = '-webkit-optimize-contrast';
             }
             
-            // Add context loss prevention
             const preventContextLoss = () => {
-              // Keep the context alive by periodically calling getParameter
               setInterval(() => {
                 try {
                   gl.getContext().getParameter(gl.getContext().VERSION);
@@ -608,11 +450,9 @@ const ThreeDView = () => {
             powerPreference: "high-performance",
             preserveDrawingBuffer: false,
             failIfMajorPerformanceCaveat: false,
-            // Production optimizations
             precision: "mediump",
             logarithmicDepthBuffer: false,
             physicallyCorrectLights: false,
-            // Additional context loss prevention
             stencil: false,
             depth: true,
             premultipliedAlpha: false,
@@ -624,12 +464,7 @@ const ThreeDView = () => {
           <ModelWithFallback url={src} fallbackUrls={fallbackModels.slice(1)} />
           <Environment preset='city' />
           <OrbitControls ref={controlsRef} enableDamping makeDefault autoRotate={autoRotate} autoRotateSpeed={0.5} />
-          {/* Only show Stats in development */}
           {!import.meta.env.PROD && <Stats className='!left-auto !right-2 !top-20' />}
-          {/* Performance monitoring */}
-          <PerformanceMonitor />
-          {/* WebGL health monitoring */}
-          <WebGLHealthMonitor />
         </Canvas>
       </div>
     </div>
@@ -637,5 +472,3 @@ const ThreeDView = () => {
 };
 
 export default ThreeDView;
-
-// Optional: callers may add their own preload via env or query
