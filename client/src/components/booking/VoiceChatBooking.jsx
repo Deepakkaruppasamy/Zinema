@@ -152,7 +152,7 @@ const VoiceChatBooking = ({ isOpen, onClose, onBookingComplete }) => {
     const lowerMessage = message.toLowerCase();
     
     // Movie search
-    if (bookingContext.step === 'movie_selection' || lowerMessage.includes('movie') || lowerMessage.includes('watch')) {
+    if (bookingContext.step === 'movie_selection' || lowerMessage.includes('movie') || lowerMessage.includes('watch') || lowerMessage.includes('available') || lowerMessage.includes('show me')) {
       return await handleMovieSearch(message);
     }
     
@@ -190,21 +190,74 @@ const VoiceChatBooking = ({ isOpen, onClose, onBookingComplete }) => {
       const { data } = await axios.get('/api/show/all');
       const movies = data.shows || [];
       
-      // Simple movie matching
-      const matchedMovies = movies.filter(movie => 
-        movie.title.toLowerCase().includes(message.toLowerCase()) ||
-        movie.overview?.toLowerCase().includes(message.toLowerCase())
-      );
+      // Enhanced movie matching with genre support
+      const lowerMessage = message.toLowerCase();
       
-      if (matchedMovies.length === 0) {
+      // Special case: show all available movies
+      if (lowerMessage.includes('available') || lowerMessage.includes('show me') || lowerMessage.includes('what movies') || lowerMessage.includes('all movies')) {
+        const availableMovies = movies.slice(0, 10).map(movie => {
+          const genres = movie.genres?.map(g => g.name).join(', ') || 'Unknown genre';
+          return {
+            text: `${movie.title} (${genres})`,
+            action: () => selectMovie(movie)
+          };
+        });
+        
         return {
-          content: "I couldn't find any movies matching your request. Here are some popular movies:",
+          content: `Here are the available movies:`,
           options: { 
             showActions: true,
-            actions: movies.slice(0, 5).map(movie => ({
-              text: movie.title,
-              action: () => selectMovie(movie)
-            }))
+            actions: availableMovies
+          }
+        };
+      }
+      
+      const matchedMovies = movies.filter(movie => {
+        const title = movie.title?.toLowerCase() || '';
+        const overview = movie.overview?.toLowerCase() || '';
+        const genres = movie.genres?.map(g => g.name?.toLowerCase()).join(' ') || '';
+        
+        // Direct title/overview match
+        if (title.includes(lowerMessage) || overview.includes(lowerMessage)) {
+          return true;
+        }
+        
+        // Genre-based matching
+        const genreKeywords = {
+          'comedy': ['comedy', 'funny', 'humor', 'laugh'],
+          'action': ['action', 'adventure', 'thriller', 'fight'],
+          'drama': ['drama', 'serious', 'emotional'],
+          'horror': ['horror', 'scary', 'frightening', 'terror'],
+          'romance': ['romance', 'love', 'romantic'],
+          'sci-fi': ['science fiction', 'sci-fi', 'futuristic', 'space'],
+          'fantasy': ['fantasy', 'magic', 'supernatural'],
+          'animation': ['animation', 'animated', 'cartoon']
+        };
+        
+        for (const [genre, keywords] of Object.entries(genreKeywords)) {
+          if (lowerMessage.includes(genre) || keywords.some(keyword => lowerMessage.includes(keyword))) {
+            return genres.includes(genre);
+          }
+        }
+        
+        return false;
+      });
+      
+      if (matchedMovies.length === 0) {
+        // Show available movies with genres
+        const availableMovies = movies.slice(0, 5).map(movie => {
+          const genres = movie.genres?.map(g => g.name).join(', ') || 'Unknown genre';
+          return {
+            text: `${movie.title} (${genres})`,
+            action: () => selectMovie(movie)
+          };
+        });
+        
+        return {
+          content: "I couldn't find any movies matching your request. Here are some available movies:",
+          options: { 
+            showActions: true,
+            actions: availableMovies
           }
         };
       }
@@ -217,10 +270,13 @@ const VoiceChatBooking = ({ isOpen, onClose, onBookingComplete }) => {
         content: `I found ${matchedMovies.length} movies matching "${message}". Which one would you like?`,
         options: {
           showActions: true,
-          actions: matchedMovies.slice(0, 5).map(movie => ({
-            text: movie.title,
-            action: () => selectMovie(movie)
-          }))
+          actions: matchedMovies.slice(0, 5).map(movie => {
+            const genres = movie.genres?.map(g => g.name).join(', ') || 'Unknown genre';
+            return {
+              text: `${movie.title} (${genres})`,
+              action: () => selectMovie(movie)
+            };
+          })
         }
       };
     } catch (error) {

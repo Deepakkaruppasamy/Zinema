@@ -452,14 +452,58 @@ export default function ZineBot() {
       }
     }
 
-    // Genre-based search: "show action movies"
-    if (/show\s+([a-z]+)\s+movies/i.test(userText)) {
+    // Show all movies: "show me movies", "what movies are available"
+    if (/show\s+me\s+movies/i.test(userText) || /what\s+movies/i.test(userText) || /available\s+movies/i.test(userText)) {
       try {
-        const genre = RegExp.$1.toLowerCase()
         const { data } = await api.get('/api/show/all')
         const movies = Array.isArray(data?.shows) ? data.shows : []
-        const results = movies.filter(mv => Array.isArray(mv.genres) && mv.genres.some(g => (g.name || '').toLowerCase() === genre))
-        if (!results.length) return { text: `I couldn't find ${genre} movies right now.` }
+        if (!movies.length) return { text: 'No movies are currently available.' }
+        const names = movies.slice(0, 8).map(m => m.title).join(', ')
+        return { text: `Here are the available movies: ${names}. You can say: "Open movie [title]" or ask for a specific genre like "comedy movies".` }
+      } catch { return { text: 'I could not fetch movies right now.' } }
+    }
+
+    // Enhanced genre-based search: "show action movies", "comedy movies", "I want comedy"
+    if (/show\s+([a-z\s]+)\s+movies/i.test(userText) || /([a-z\s]+)\s+movies/i.test(userText) || /want\s+([a-z\s]+)/i.test(userText)) {
+      try {
+        let genre = '';
+        if (/show\s+([a-z\s]+)\s+movies/i.test(userText)) {
+          genre = RegExp.$1.toLowerCase().trim();
+        } else if (/([a-z\s]+)\s+movies/i.test(userText)) {
+          genre = RegExp.$1.toLowerCase().trim();
+        } else if (/want\s+([a-z\s]+)/i.test(userText)) {
+          genre = RegExp.$1.toLowerCase().trim();
+        }
+        
+        const { data } = await api.get('/api/show/all')
+        const movies = Array.isArray(data?.shows) ? data.shows : []
+        
+        // Enhanced genre matching
+        const genreKeywords = {
+          'comedy': ['comedy', 'funny', 'humor'],
+          'action': ['action', 'adventure', 'thriller'],
+          'drama': ['drama', 'serious'],
+          'horror': ['horror', 'scary'],
+          'romance': ['romance', 'love', 'romantic'],
+          'sci-fi': ['science fiction', 'sci-fi', 'futuristic'],
+          'fantasy': ['fantasy', 'magic'],
+          'animation': ['animation', 'animated']
+        };
+        
+        let results = [];
+        for (const [genreKey, keywords] of Object.entries(genreKeywords)) {
+          if (genre.includes(genreKey) || keywords.some(keyword => genre.includes(keyword))) {
+            results = movies.filter(mv => Array.isArray(mv.genres) && mv.genres.some(g => (g.name || '').toLowerCase().includes(genreKey)))
+            break;
+          }
+        }
+        
+        if (!results.length) {
+          // Fallback: show all movies
+          const allMovies = movies.slice(0, 5).map(m => m.title).join(', ');
+          return { text: `I couldn't find ${genre} movies right now. Here are some available movies: ${allMovies}` }
+        }
+        
         const names = results.slice(0, 5).map(m => m.title).join(', ')
         return { text: `Here are some ${genre} movies: ${names}. You can say: "Open movie ${results[0].title}"` }
       } catch { return { text: 'I could not search genres right now.' } }
