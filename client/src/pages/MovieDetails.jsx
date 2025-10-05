@@ -58,12 +58,15 @@ const MovieDetails = () => {
   useEffect(() => {
     const run = async () => {
       try {
-        const url = show?.movie?.poster_path ? (image_base_url + show.movie.poster_path) : null
-        if (!url) return setAccent(null)
-        const rgb = await extractDominantColor(url)
+        // Use server-side proxy to avoid CORS issues for canvas pixel sampling.
+        // Visible images still use `image_base_url + poster_path`, but sampling uses `/api/tmdb-image?path=`.
+        const posterPath = show?.movie?.poster_path
+        if (!posterPath) return setAccent(null)
+        const proxyUrl = `/api/tmdb-image?path=${encodeURIComponent(posterPath)}`
+        const rgb = await extractDominantColor(proxyUrl)
         if (!rgb) return setAccent(null)
         setAccent(rgb)
-      } catch (_) {
+      } catch (err) {
         setAccent(null)
       }
     }
