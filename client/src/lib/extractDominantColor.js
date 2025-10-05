@@ -7,6 +7,8 @@ export default async function extractDominantColor(imgUrl, { sample = 10 } = {})
       img.crossOrigin = 'anonymous';
       img.decoding = 'async';
       img.loading = 'eager';
+      let triedProxy = false;
+      const attempt = (url) => { img.src = url }
       img.src = imgUrl;
       img.onload = () => {
         try {
@@ -37,7 +39,20 @@ export default async function extractDominantColor(imgUrl, { sample = 10 } = {})
           resolve(null);
         }
       };
-      img.onerror = () => resolve(null);
+      img.onerror = () => {
+        // If the source was a TMDB image and we haven't tried the proxy, retry via server proxy.
+        try {
+          const tmdbPrefix = 'https://image.tmdb.org/t/p';
+          if (!triedProxy && typeof imgUrl === 'string' && imgUrl.startsWith(tmdbPrefix)) {
+            triedProxy = true;
+            const path = imgUrl.substring(tmdbPrefix.length);
+            const proxy = `/api/tmdb-image?path=${encodeURIComponent(path)}`;
+            attempt(proxy);
+            return;
+          }
+        } catch (_) {}
+        resolve(null);
+      };
     } catch (e) {
       resolve(null);
     }

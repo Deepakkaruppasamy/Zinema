@@ -20,6 +20,11 @@ const MovieCard = ({movie}) => {
       movie.backdrop_path ? (image_base_url + movie.backdrop_path) : 'https://placehold.co/500x300?text=No+Image'
     ), [movie?.backdrop_path, image_base_url])
 
+    // Proxy URL for canvas sampling to avoid CORS issues
+    const posterProxyUrl = useMemo(() => (
+      movie.backdrop_path ? (`/api/tmdb-image?path=${encodeURIComponent(movie.backdrop_path)}`) : null
+    ), [movie?.backdrop_path])
+
     const handleImageError = (e) => {
       e.target.src = 'https://placehold.co/500x300?text=No+Image'
     }
@@ -40,8 +45,8 @@ const MovieCard = ({movie}) => {
       ref={cardRef}
       onMouseEnter={async () => {
         setHover(true)
-        if (!accent && posterUrl) {
-          const rgb = await extractDominantColor(posterUrl)
+        if (!accent && posterProxyUrl) {
+          const rgb = await extractDominantColor(posterProxyUrl)
           if (rgb) setAccent(rgb)
         }
       }}
@@ -69,7 +74,11 @@ const MovieCard = ({movie}) => {
           <div className='absolute inset-0 rounded-lg overflow-hidden pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
             <iframe
               className='w-full h-full scale-[1.02]'
-              src={`https://www.youtube-nocookie.com/embed?listType=search&list=${encodeURIComponent(`${movie.title} official trailer`)}&autoplay=1&mute=1&controls=0&modestbranding=1&playsinline=1&rel=0`}
+              src={(function(){
+                const q = encodeURIComponent(`${movie.title} official trailer`)
+                const origin = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : ''
+                return `https://www.youtube-nocookie.com/embed?listType=search&list=${q}&autoplay=1&mute=1&controls=0&modestbranding=1&playsinline=1&rel=0&origin=${encodeURIComponent(origin)}`
+              })()}
               title={`${movie.title} trailer preview`}
               sandbox="allow-scripts allow-same-origin allow-presentation"
               allow="autoplay; encrypted-media; picture-in-picture"
