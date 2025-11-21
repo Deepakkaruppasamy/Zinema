@@ -37,9 +37,8 @@ const Navbar = () => {
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/theatre'>{t('nav.theatres')}</Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/events'>{t('nav.events')}</Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/'>{t('nav.releases')}</Link>
-        <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/community' className='flex items-center gap-1'>
-          <MessageCircle className='w-4 h-4' />
-          {t('nav.community')}
+        <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/community' className='flex items-center'>
+          Chat
         </Link>
        {favoriteMovies.length > 0 && <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/favorite'>{t('nav.favorites')}</Link>}
       </div>
