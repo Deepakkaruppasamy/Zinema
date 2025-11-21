@@ -3,6 +3,66 @@ import fetch from 'node-fetch'
 import Movie from '../models/Movie.js'
 import Show from '../models/Show.js'
 
+// Initialize Google Generative AI with error handling
+let GoogleGenerativeAI;
+let genAI;
+
+// Lazy load the Google Generative AI package
+async function getGenerativeAI() {
+  if (!GoogleGenerativeAI) {
+    try {
+      const module = await import('@google/generative-ai');
+      GoogleGenerativeAI = module.GoogleGenerativeAI;
+      
+      if (!process.env.GEMINI_API_KEY) {
+        console.error('GEMINI_API_KEY is not set in environment variables');
+        throw new Error('Gemini API key is not configured');
+      }
+      
+      genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+      return genAI;
+    } catch (error) {
+      console.error('Error initializing Google Generative AI:', error);
+      throw new Error('Failed to initialize AI service: ' + error.message);
+    }
+  }
+  return genAI;
+}
+
+// Health check function
+export const checkAIServiceHealth = async () => {
+  try {
+    if (!process.env.GEMINI_API_KEY) {
+      return {
+        healthy: false,
+        error: 'GEMINI_API_KEY is not configured',
+        timestamp: new Date().toISOString()
+      };
+    }
+    
+    // Test a simple request to verify the API key works
+    const genAI = await getGenerativeAI();
+    const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || 'gemini-1.5-pro' });
+    
+    // Test with a simple prompt
+    const result = await model.generateContent('Ping');
+    const response = await result.response;
+    
+    return {
+      healthy: true,
+      model: process.env.GEMINI_MODEL || 'gemini-1.5-pro',
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('AI Service Health Check Failed:', error);
+    return {
+      healthy: false,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    };
+  }
+};
+
 // Use a model alias that Google serves consistently on v1beta
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash'
 
@@ -46,7 +106,6 @@ function buildPrompt(messages = [], userProfile = {}) {
     ...messages.map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] })),
   ]
 
-  if (userProfile && (userProfile.name || userProfile.email)) {
     history.unshift({ role: 'user', parts: [{ text: `User profile: ${userProfile.name || ''} ${userProfile.email || ''}`.trim() }] })
   }
   return history
@@ -54,49 +113,129 @@ function buildPrompt(messages = [], userProfile = {}) {
 
 export async function deepaiChat(req, res) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY
-    if (!apiKey) {
-      console.error('GEMINI_API_KEY environment variable is not set')
-      return res.status(500).json({ error: 'GEMINI_API_KEY is not configured' })
+    // Check if API key is configured
+    if (!process.env.GEMINI_API_KEY) {
+      console.error('GEMINI_API_KEY is not configured');
+      return res.status(503).json({
+        success: false,
+        code: 'SERVICE_UNAVAILABLE',
+        message: 'AI service is not properly configured. Please contact support.',
+        timestamp: new Date().toISOString()
+      });
     }
 
-    const { messages = [], user = {} } = req.body || {}
+    // Validate request body
+    const { messages = [], user = {} } = req.body || {};
+    if (!Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({
+        success: false,
+        code: 'INVALID_REQUEST',
+        message: 'Messages array is required in the request body',
+        timestamp: new Date().toISOString()
+      });
+    }
 
-    const contents = buildPrompt(messages, user)
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${apiKey}`
-    const resp = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents })
-    })
+    try {
+      // Initialize the Generative AI client
+      const genAI = await getGenerativeAI();
+      const model = genAI.getGenerativeModel({ 
+        model: GEMINI_MODEL,
+        generationConfig: {
+          temperature: 0.7,
+          topP: 0.8,
+          topK: 40,
+          maxOutputTokens: 2048,
+        },
+      });
 
-    if (!resp.ok) {
-      const text = await resp.text().catch(() => '')
-      console.error(`Gemini API Error (${resp.status}):`, text)
+      // Build the prompt
+      const contents = buildPrompt(messages, user);
       
-      // Provide more specific error messages
-      if (resp.status === 404) {
-        return res.status(502).json({ 
-          error: 'Gemini model not found', 
-          detail: `Model "${GEMINI_MODEL}" is not available. Please check the model name.`,
-          suggestion: 'Try using "gemini-1.5-pro" or "gemini-1.0-pro"'
-        })
-      } else if (resp.status === 403) {
-        return res.status(502).json({ 
-          error: 'Gemini API access denied', 
-          detail: 'Invalid API key or quota exceeded'
-        })
-      } else {
-        // Do not leak upstream 404 to client as route 404; use 502 Bad Gateway
-        return res.status(502).json({ error: 'Gemini request failed', detail: text })
+      // Generate content
+      const result = await model.generateContent({
+        contents,
+        safetySettings: [
+          {
+            category: 'HARM_CATEGORY_HARASSMENT',
+            threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+          },
+          {
+            category: 'HARM_CATEGORY_HATE_SPEECH',
+            threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+          },
+          {
+            category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+            threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+          },
+          {
+            category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+            threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+          },
+        ],
+      });
+
+      // Get the response text
+      const response = await result.response;
+      const text = response.text();
+
+      return res.json({
+        success: true,
+        text,
+        model: GEMINI_MODEL,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('Error generating content with Gemini:', error);
+      
+      // Handle specific Gemini API errors
+      if (error.message.includes('API key not valid')) {
+        return res.status(401).json({
+          success: false,
+          code: 'INVALID_API_KEY',
+          message: 'The provided Gemini API key is invalid',
+          timestamp: new Date().toISOString()
+        });
       }
+
+      if (error.message.includes('quota')) {
+        return res.status(429).json({
+          success: false,
+          code: 'QUOTA_EXCEEDED',
+          message: 'API quota exceeded. Please check your Google Cloud account.',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      if (error.message.includes('model not found')) {
+        return res.status(400).json({
+          success: false,
+          code: 'MODEL_NOT_FOUND',
+          message: `The model "${GEMINI_MODEL}" was not found`,
+          suggestion: 'Try using "gemini-1.5-pro" or "gemini-1.0-pro"',
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // For other errors, return a generic error message
+      return res.status(500).json({
+        success: false,
+        code: 'INTERNAL_SERVER_ERROR',
+        message: 'An error occurred while processing your request',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        timestamp: new Date().toISOString()
+      });
     }
-    const data = await resp.json()
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I could not generate a response.'
-    return res.json({ text })
-  } catch (e) {
-    console.error('DeepAI chat error:', e)
-    return res.status(500).json({ error: 'Internal error' })
+
+  } catch (error) {
+    console.error('Unexpected error in deepaiChat:', error);
+    return res.status(500).json({
+      success: false,
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'An unexpected error occurred',
+      timestamp: new Date().toISOString(),
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
+    });
   }
 }
 

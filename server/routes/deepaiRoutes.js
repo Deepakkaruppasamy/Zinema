@@ -1,21 +1,21 @@
-import { Router } from 'express'
-import { deepaiChat, deepaiAssistant } from '../controllers/deepaiController.js'
+
+import { deepaiChat, deepaiAssistant, checkAIServiceHealth } from '../controllers/deepaiController.js'
 
 const router = Router()
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    })
+  }
+})
 
-// Health check endpoint for DeepAI service
-router.get('/health', (req, res) => {
-  const hasApiKey = !!process.env.GEMINI_API_KEY
-  const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-pro'
-  
-  res.json({
-    status: hasApiKey ? 'configured' : 'missing_api_key',
-    hasApiKey,
-    modelName,
-    message: hasApiKey 
-      ? 'DeepAI service is properly configured' 
-      : 'GEMINI_API_KEY environment variable is not set'
-  })
+// Add error handling middleware for DeepAI routes
+router.use((req, res, next) => {
+  if (!process.env.GEMINI_API_KEY) {
+    return res.status(503).json({
+      status: 'service_unavailable',
+      message: 'DeepAI service is not properly configured. Please check server logs.'
+    })
+  }
+  next()
 })
 
 router.post('/chat', deepaiChat)
