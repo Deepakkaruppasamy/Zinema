@@ -106,9 +106,17 @@ function buildPrompt(messages = [], userProfile = {}) {
     ...messages.map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] })),
   ]
 
-    history.unshift({ role: 'user', parts: [{ text: `User profile: ${userProfile.name || ''} ${userProfile.email || ''}`.trim() }] })
+  // Add user profile to history if available
+  if (userProfile && (userProfile.name || userProfile.email)) {
+    history.unshift({ 
+      role: 'user', 
+      parts: [{ 
+        text: `User profile: ${userProfile.name || ''} ${userProfile.email || ''}`.trim() 
+      }] 
+    });
   }
-  return history
+  
+  return history;
 }
 
 export async function deepaiChat(req, res) {
