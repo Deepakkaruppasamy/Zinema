@@ -36,9 +36,6 @@ const Navbar = () => {
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/movies'>{t('nav.movies')}</Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/theatre'>{t('nav.theatres')}</Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/events'>{t('nav.events')}</Link>
-        <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/quizzes' className='flex items-center gap-2'>
-          🎮 {t('nav.quizzes')}
-        </Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/'>{t('nav.releases')}</Link>
         <Link onClick={()=> {scrollTo(0,0); setIsOpen(false)}} to='/community' className='flex items-center gap-2'>
           <MessageCircle className='w-4 h-4' />
