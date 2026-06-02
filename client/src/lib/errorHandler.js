@@ -1,4 +1,3 @@
-// Error handling utilities for better user experience
 
 export const ErrorTypes = {
   NETWORK_ERROR: 'NETWORK_ERROR',
@@ -45,16 +44,13 @@ export function shouldRetry(error, retryCount = 0) {
   const maxRetries = 3
   const errorType = categorizeError(error)
   
-  // Don't retry auth errors or if we've exceeded max retries
   if (errorType === ErrorTypes.AUTH_ERROR || retryCount >= maxRetries) {
     return false
   }
   
-  // Retry network and timeout errors
   return errorType === ErrorTypes.NETWORK_ERROR || errorType === ErrorTypes.TIMEOUT_ERROR
 }
 
 export function getRetryDelay(retryCount) {
-  // Exponential backoff: 1s, 2s, 4s
   return Math.min(1000 * Math.pow(2, retryCount), 4000)
 }

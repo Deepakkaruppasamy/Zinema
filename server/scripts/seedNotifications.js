@@ -9,10 +9,8 @@ async function seedNotifications() {
     await mongoose.connect(MONGODB_URI);
     console.log('Connected to MongoDB');
 
-    // Get a sample movie
     const sampleMovie = await Movie.findOne();
     
-    // Create sample notifications
     const notifications = [
       {
         title: 'Welcome to Zinema!',

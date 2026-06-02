@@ -11,7 +11,6 @@ import {
 
 const chatRouter = express.Router();
 
-// Chat routes
 chatRouter.get('/messages', getChatMessages);
 chatRouter.post('/messages', sendChatMessage);
 chatRouter.put('/messages/:messageId/like', likeMessage);

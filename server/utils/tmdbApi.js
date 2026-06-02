@@ -1,20 +1,17 @@
 import axios from 'axios';
 
-// Create axios instance with default configuration
 const tmdbApi = axios.create({
   baseURL: 'https://api.themoviedb.org/3',
-  timeout: 30000, // 30 seconds timeout
+  timeout: 30000,
   headers: {
     'Authorization': `Bearer ${process.env.TMDB_API_KEY}`,
     'Accept': 'application/json',
     'User-Agent': 'Zinema-App/1.0'
   },
-  // Retry configuration
   retry: 3,
-  retryDelay: 1000, // 1 second
+  retryDelay: 1000,
 });
 
-// Retry interceptor
 const retryInterceptor = (error) => {
   const { config } = error;
   
@@ -30,7 +27,6 @@ const retryInterceptor = (error) => {
 
   config.retryCount++;
 
-  // Only retry on network errors or 5xx status codes
   const shouldRetry = 
     error.code === 'ECONNRESET' ||
     error.code === 'ENOTFOUND' ||
@@ -44,7 +40,6 @@ const retryInterceptor = (error) => {
 
   console.log(`Retrying request (${config.retryCount}/${config.retry}): ${config.url}`);
 
-  // Exponential backoff delay
   const delay = config.retryDelay * Math.pow(2, config.retryCount - 1);
   
   return new Promise((resolve) => {
@@ -54,7 +49,6 @@ const retryInterceptor = (error) => {
   });
 };
 
-// Request interceptor for logging
 tmdbApi.interceptors.request.use(
   (config) => {
     console.log(`Making TMDB API request: ${config.method?.toUpperCase()} ${config.url}`);
@@ -66,7 +60,6 @@ tmdbApi.interceptors.request.use(
   }
 );
 
-// Response interceptor for error handling
 tmdbApi.interceptors.response.use(
   (response) => {
     console.log(`TMDB API response: ${response.status} ${response.config.url}`);
@@ -75,7 +68,6 @@ tmdbApi.interceptors.response.use(
   retryInterceptor
 );
 
-// Helper function to make API calls with better error handling
 export const makeTmdbRequest = async (url, options = {}) => {
   try {
     const response = await tmdbApi.get(url, {
@@ -92,7 +84,6 @@ export const makeTmdbRequest = async (url, options = {}) => {
       statusText: error.response?.statusText,
     });
     
-    // Provide more specific error messages
     if (error.code === 'ECONNRESET') {
       throw new Error('Connection to TMDB API was reset. Please try again.');
     } else if (error.code === 'ETIMEDOUT') {
@@ -109,7 +100,6 @@ export const makeTmdbRequest = async (url, options = {}) => {
   }
 };
 
-// Specific functions for common TMDB API calls
 export const getNowPlayingMovies = async () => {
   return await makeTmdbRequest('/movie/now_playing');
 };

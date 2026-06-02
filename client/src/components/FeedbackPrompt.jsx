@@ -21,7 +21,6 @@ const setLastShownAt = (ts) => {
 }
 
 const shouldOpen = (now, lastShownAt) => {
-  // If never shown before, open immediately
   if (lastShownAt == null) return true
   return now - lastShownAt >= TEN_MIN_MS
 }
@@ -53,7 +52,6 @@ const FeedbackPrompt = () => {
       }
     }
 
-    // Run immediately on mount for first-time popup, then poll periodically
     runCheck()
     timers.current.checkTimer = setInterval(runCheck, CHECK_INTERVAL_MS)
 

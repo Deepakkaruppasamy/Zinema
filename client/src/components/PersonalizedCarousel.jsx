@@ -55,7 +55,6 @@ const PersonalizedCarousel = () => {
     newReleases: true
   });
 
-  // Mock data for when API calls fail
   const mockMovies = [
     {
       _id: '1',
@@ -159,7 +158,6 @@ const PersonalizedCarousel = () => {
         const { data } = await axios.get('/api/discovery/trending');
         if (!cancelled && data.success) setTrending(data.movies || []);
       } catch (error) {
-        // Use mock data when API fails
         if (!cancelled) setTrending(mockMovies.slice(0, 4));
       } finally {
         if (!cancelled) setLoading((l) => ({ ...l, trending: false }));
@@ -171,7 +169,6 @@ const PersonalizedCarousel = () => {
         const { data } = await axios.get('/api/user/favorites', { headers: { Authorization: `Bearer ${await getToken()}` } });
         if (!cancelled && data.success) setForYou(data.movies || []);
       } catch (error) {
-        // Use mock data when API fails
         if (!cancelled) setForYou(mockMovies.slice(2, 5));
       } finally {
         if (!cancelled) setLoading((l) => ({ ...l, forYou: false }));
@@ -183,14 +180,12 @@ const PersonalizedCarousel = () => {
         const { data } = await axios.get('/api/discovery/feed');
         if (!cancelled && data.success) setFeed(data.movies || []);
       } catch (error) {
-        // Use mock data when API fails
         if (!cancelled) setFeed(mockMovies.slice(1, 4));
       } finally {
         if (!cancelled) setLoading((l) => ({ ...l, feed: false }));
       }
     };
 
-    // AI-powered recommendations
     const fetchAIRecommendations = async () => {
       try {
         if (user) {
@@ -200,7 +195,6 @@ const PersonalizedCarousel = () => {
           if (!cancelled && data.success) setAiRecommendations(data.movies || []);
         }
       } catch (error) {
-        // Use mock data when API fails
         if (!cancelled) setAiRecommendations(mockMovies.slice(0, 3));
       } finally {
         if (!cancelled) setLoading((l) => ({ ...l, aiRecommendations: false }));
@@ -212,7 +206,6 @@ const PersonalizedCarousel = () => {
         const { data } = await axios.get('/api/discovery/similar');
         if (!cancelled && data.success) setSimilarMovies(data.movies || []);
       } catch (error) {
-        // Use mock data when API fails
         if (!cancelled) setSimilarMovies(mockMovies.slice(3, 6));
       } finally {
         if (!cancelled) setLoading((l) => ({ ...l, similarMovies: false }));
@@ -224,7 +217,6 @@ const PersonalizedCarousel = () => {
         const { data } = await axios.get('/api/discovery/new-releases');
         if (!cancelled && data.success) setNewReleases(data.movies || []);
       } catch (error) {
-        // Use mock data when API fails
         if (!cancelled) setNewReleases(mockMovies.slice(1, 5));
       } finally {
         if (!cancelled) setLoading((l) => ({ ...l, newReleases: false }));
@@ -248,7 +240,7 @@ const PersonalizedCarousel = () => {
       <BlurCircle top='-80px' left='-80px' />
       <BlurCircle bottom='-40px' right='-40px' />
       
-      {/* AI-Powered Recommendations */}
+      {}
       {user && (
         <Section 
           title='Recommended for You' 

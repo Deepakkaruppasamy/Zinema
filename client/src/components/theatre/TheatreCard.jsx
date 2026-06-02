@@ -7,13 +7,10 @@ const AmenityBadge = ({ icon, label }) => {
   let IconComponent = null;
   
   if (React.isValidElement(icon)) {
-    // If icon is already a React element, clone it with our props
     IconComponent = React.cloneElement(icon, { ...iconProps, ...icon.props });
   } else if (typeof icon === 'function') {
-    // If icon is a component constructor, create element
     IconComponent = React.createElement(icon, iconProps);
   } else {
-    // Fallback to default icon
     IconComponent = <BadgeInfo {...iconProps} />;
   }
   

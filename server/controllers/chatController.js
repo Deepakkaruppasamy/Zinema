@@ -2,7 +2,6 @@ import ChatMessage from '../models/ChatMessage.js';
 import Movie from '../models/Movie.js';
 import { clerkClient } from '@clerk/clerk-sdk-node';
 
-// Get chat messages
 export const getChatMessages = async (req, res) => {
   try {
     const { page = 1, limit = 50, movieId } = req.query;
@@ -19,7 +18,6 @@ export const getChatMessages = async (req, res) => {
       .populate('movieId', 'title poster_path')
       .lean();
     
-    // Reverse to show oldest first
     messages.reverse();
     
     const total = await ChatMessage.countDocuments(query);
@@ -36,7 +34,6 @@ export const getChatMessages = async (req, res) => {
   } catch (error) {
     console.error('Error fetching chat messages:', error);
     
-    // Return empty messages on database timeout to prevent UI issues
     if (error.name === 'MongooseError' && error.message.includes('buffering timed out')) {
       return res.json({
         success: true,
@@ -53,13 +50,11 @@ export const getChatMessages = async (req, res) => {
   }
 };
 
-// Send chat message
 export const sendChatMessage = async (req, res) => {
   try {
     const { content, movieId, messageType = 'text', isSpoiler = false } = req.body;
     const userId = req.user?.userId || 'demo-user';
     
-    // Fetch user details from Clerk if authenticated
     let userName = 'Demo User';
     let userEmail = 'demo@example.com';
     let userAvatar = '';
@@ -74,7 +69,6 @@ export const sendChatMessage = async (req, res) => {
         userAvatar = clerkUser.imageUrl || '';
       } catch (error) {
         console.error('Error fetching user from Clerk:', error);
-        // Fallback to demo data
       }
     }
     
@@ -110,7 +104,6 @@ export const sendChatMessage = async (req, res) => {
     
     await message.save();
     
-    // Populate movie data for response
     await message.populate('movieId', 'title poster_path');
     
     res.status(201).json({
@@ -124,7 +117,6 @@ export const sendChatMessage = async (req, res) => {
   }
 };
 
-// Like a message
 export const likeMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
@@ -135,14 +127,11 @@ export const likeMessage = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Message not found' });
     }
     
-    // Check if already liked
     const alreadyLiked = message.likes.some(like => like.userId === userId);
     
     if (alreadyLiked) {
-      // Unlike
       message.likes = message.likes.filter(like => like.userId !== userId);
     } else {
-      // Like
       message.likes.push({ userId, likedAt: new Date() });
     }
     
@@ -160,14 +149,12 @@ export const likeMessage = async (req, res) => {
   }
 };
 
-// Reply to a message
 export const replyToMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
     const { content } = req.body;
     const userId = req.user?.userId || 'demo-user';
     
-    // Fetch user details from Clerk if authenticated
     let userName = 'Demo User';
     let userEmail = 'demo@example.com';
     let userAvatar = '';
@@ -182,7 +169,6 @@ export const replyToMessage = async (req, res) => {
         userAvatar = clerkUser.imageUrl || '';
       } catch (error) {
         console.error('Error fetching user from Clerk:', error);
-        // Fallback to demo data
       }
     }
     
@@ -220,7 +206,6 @@ export const replyToMessage = async (req, res) => {
   }
 };
 
-// Edit a message
 export const editMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
@@ -236,7 +221,6 @@ export const editMessage = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Message not found' });
     }
     
-    // Check if user is the sender
     if (message.sender.userId !== userId) {
       return res.status(403).json({ success: false, message: 'You can only edit your own messages' });
     }
@@ -258,7 +242,6 @@ export const editMessage = async (req, res) => {
   }
 };
 
-// Delete a message
 export const deleteMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
@@ -270,7 +253,6 @@ export const deleteMessage = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Message not found' });
     }
     
-    // Check if user is the sender or admin
     if (message.sender.userId !== userId && !isAdmin) {
       return res.status(403).json({ success: false, message: 'You can only delete your own messages' });
     }
@@ -291,7 +273,6 @@ export const deleteMessage = async (req, res) => {
   }
 };
 
-// Get chat stats
 export const getChatStats = async (req, res) => {
   try {
     const totalMessages = await ChatMessage.countDocuments({ isDeleted: false });
@@ -312,7 +293,6 @@ export const getChatStats = async (req, res) => {
   } catch (error) {
     console.error('Error fetching chat stats:', error);
     
-    // Return default stats on database timeout to prevent UI issues
     if (error.name === 'MongooseError' && error.message.includes('buffering timed out')) {
       return res.json({
         success: true,

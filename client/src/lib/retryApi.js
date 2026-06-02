@@ -1,9 +1,6 @@
 import { api } from './api.js'
 import { shouldRetry, getRetryDelay, getErrorMessage } from './errorHandler.js'
 
-/**
- * Retry wrapper for API calls with exponential backoff
- */
 export async function retryApiCall(apiCall, retryCount = 0) {
   try {
     return await apiCall()
@@ -16,14 +13,10 @@ export async function retryApiCall(apiCall, retryCount = 0) {
       return retryApiCall(apiCall, retryCount + 1)
     }
     
-    // If we shouldn't retry or have exhausted retries, throw the error
     throw error
   }
 }
 
-/**
- * Enhanced API methods with retry logic
- */
 export const retryApi = {
   get: (url, config = {}) => retryApiCall(() => api.get(url, config)),
   post: (url, data, config = {}) => retryApiCall(() => api.post(url, data, config)),
@@ -32,16 +25,12 @@ export const retryApi = {
   patch: (url, data, config = {}) => retryApiCall(() => api.patch(url, data, config))
 }
 
-/**
- * Safe API call that handles errors gracefully
- */
 export async function safeApiCall(apiCall, fallbackValue = null) {
   try {
     return await retryApiCall(apiCall)
   } catch (error) {
     console.error('API call failed:', error)
     
-    // Return fallback value instead of throwing
     if (fallbackValue !== null) {
       return { data: fallbackValue, error: getErrorMessage(error) }
     }

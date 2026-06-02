@@ -5,7 +5,6 @@ import dynamicGamificationService from '../services/dynamicGamificationService.j
 
 const router = express.Router();
 
-// Dynamic Pricing Routes
 router.get('/pricing/:showId', async (req, res) => {
   try {
     const { showId } = req.params;
@@ -47,7 +46,6 @@ router.get('/pricing/:showId/recommendations', async (req, res) => {
   }
 });
 
-// Dynamic Seat Recommendations Routes
 router.get('/seats/:showId/recommendations', async (req, res) => {
   try {
     const { showId } = req.params;
@@ -94,7 +92,6 @@ router.get('/seats/:showId/analytics', async (req, res) => {
   }
 });
 
-// Dynamic Gamification Routes
 router.get('/gamification/dashboard', async (req, res) => {
   try {
     const { userId } = req.auth();
@@ -155,7 +152,6 @@ router.post('/gamification/rewards/generate', async (req, res) => {
   }
 });
 
-// Dynamic Analytics Route
 router.get('/analytics/overview', async (req, res) => {
   try {
     const overview = {

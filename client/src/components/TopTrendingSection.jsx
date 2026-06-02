@@ -33,7 +33,7 @@ const TopTrendingSection = () => {
       if (!res.ok) throw new Error('TMDB fetch failed');
       const data = await res.json();
       return (data.results || []).map(m => ({
-        _id: m.id, // adapt for MovieCard links
+        _id: m.id,
         title: m.title,
         release_date: m.release_date || '2025-01-01',
         genres: (m.genre_ids || []).slice(0,2).map(id => ({ id, name: `#${id}` })),

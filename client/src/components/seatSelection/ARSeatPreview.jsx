@@ -46,7 +46,6 @@ const ARSeatPreview = ({ isOpen, onClose, seatData, theaterLayout }) => {
   };
 
   const calculateSeatPosition = (seat) => {
-    // Calculate seat position based on theater layout and camera view
     const theaterWidth = theaterLayout?.width || 20;
     const theaterHeight = theaterLayout?.height || 15;
     const seatX = (seat.x / theaterWidth) * 100;
@@ -71,25 +70,20 @@ const ARSeatPreview = ({ isOpen, onClose, seatData, theaterLayout }) => {
     canvas.width = rect.width;
     canvas.height = rect.height;
 
-    // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw seat overlay
     const seatPos = calculateSeatPosition(seatData);
     
-    // Draw seat indicator
     ctx.fillStyle = seatData.available ? '#10B981' : '#EF4444';
     ctx.beginPath();
     ctx.arc(seatPos.x * canvas.width / 100, seatPos.y * canvas.height / 100, 20, 0, 2 * Math.PI);
     ctx.fill();
 
-    // Draw seat number
     ctx.fillStyle = 'white';
     ctx.font = 'bold 14px Arial';
     ctx.textAlign = 'center';
     ctx.fillText(seatData.number, seatPos.x * canvas.width / 100, seatPos.y * canvas.height / 100 + 5);
 
-    // Draw distance indicator
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.fillRect(10, 10, 200, 60);
     
@@ -102,8 +96,7 @@ const ARSeatPreview = ({ isOpen, onClose, seatData, theaterLayout }) => {
   };
 
   const calculateViewAngle = (seatPos) => {
-    // Calculate optimal viewing angle
-    const optimalDistance = 8; // meters
+    const optimalDistance = 8;
     const angle = Math.atan2(seatPos.y - 50, seatPos.x - 50) * (180 / Math.PI);
     return Math.round(angle);
   };
@@ -125,7 +118,7 @@ const ARSeatPreview = ({ isOpen, onClose, seatData, theaterLayout }) => {
   return (
     <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
       <div className="relative w-full max-w-4xl bg-gray-900 rounded-xl overflow-hidden">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between p-4 bg-gray-800">
           <h3 className="text-xl font-bold text-white flex items-center gap-2">
             <Camera className="w-6 h-6" />
@@ -151,7 +144,7 @@ const ARSeatPreview = ({ isOpen, onClose, seatData, theaterLayout }) => {
           </div>
         </div>
 
-        {/* AR View */}
+        {}
         <div className="relative">
           {isARActive ? (
             <div className="relative">
@@ -166,7 +159,7 @@ const ARSeatPreview = ({ isOpen, onClose, seatData, theaterLayout }) => {
                 className="absolute inset-0 w-full h-full"
               />
               
-              {/* AR Controls */}
+              {}
               <div className="absolute top-4 right-4 flex flex-col gap-2">
                 <button className="p-2 bg-black/50 rounded-lg text-white hover:bg-black/70">
                   <RotateCcw className="w-5 h-5" />
@@ -203,7 +196,7 @@ const ARSeatPreview = ({ isOpen, onClose, seatData, theaterLayout }) => {
           )}
         </div>
 
-        {/* Seat Information */}
+        {}
         {seatData && (
           <div className="p-4 bg-gray-800 border-t border-gray-700">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">

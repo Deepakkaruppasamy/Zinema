@@ -3,12 +3,9 @@ import Badge from '../models/Badge.js';
 import Reward from '../models/Reward.js';
 import User from '../models/User.js';
 
-// Get user gamification stats
 export const getUserStats = async (req, res) => {
   try {
-    // Check if user is authenticated
     if (!req.user || !req.user.userId) {
-      // For demo purposes, try to get test user data
       try {
         const testGamification = await Gamification.findOne({ userId: '68ce9e2aa941cab26d99762c' });
         if (testGamification) {
@@ -34,7 +31,6 @@ export const getUserStats = async (req, res) => {
         console.error('Error fetching test gamification data:', error);
       }
       
-      // Fallback to default demo data
       return res.json({
         success: true,
         gamification: {
@@ -59,7 +55,6 @@ export const getUserStats = async (req, res) => {
     let gamification = await Gamification.findOne({ userId });
     
     if (!gamification) {
-      // Create new gamification profile
       gamification = new Gamification({ userId });
       await gamification.save();
     }
@@ -77,7 +72,6 @@ export const getUserStats = async (req, res) => {
   }
 };
 
-// Get available badges
 export const getAvailableBadges = async (req, res) => {
   try {
     const badges = await Badge.find({ isActive: true }).sort({ points: 1 });
@@ -95,7 +89,6 @@ export const getAvailableBadges = async (req, res) => {
   }
 };
 
-// Get leaderboard
 export const getLeaderboard = async (req, res) => {
   try {
     const { limit = 50 } = req.query;
@@ -128,12 +121,10 @@ export const getLeaderboard = async (req, res) => {
   }
 };
 
-// Get available rewards
 export const getRewards = async (req, res) => {
   try {
     const { userId } = req.user;
     
-    // Get user's current stats
     const gamification = await Gamification.findOne({ userId });
     if (!gamification) {
       return res.status(404).json({
@@ -148,11 +139,10 @@ export const getRewards = async (req, res) => {
       'requirements.minRank': { $in: ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'].slice(0, ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'].indexOf(gamification.rank) + 1) }
     }).sort({ cost: 1 });
     
-    // Add claimed status to each reward
     const rewardsWithStatus = rewards.map(reward => ({
       ...reward.toObject(),
       canClaim: gamification.points >= reward.cost,
-      claimed: false // This would need to be tracked separately
+      claimed: false
     }));
     
     res.json({
@@ -168,7 +158,6 @@ export const getRewards = async (req, res) => {
   }
 };
 
-// Claim reward
 export const claimReward = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -197,12 +186,9 @@ export const claimReward = async (req, res) => {
       });
     }
     
-    // Deduct points
     gamification.points -= reward.cost;
     await gamification.save();
     
-    // Here you would typically create a reward claim record
-    // and send the reward to the user
     
     res.json({
       success: true,
@@ -218,7 +204,6 @@ export const claimReward = async (req, res) => {
   }
 };
 
-// Add experience (internal function)
 export const addExperience = async (userId, amount, reason = '') => {
   try {
     let gamification = await Gamification.findOne({ userId });
@@ -231,7 +216,6 @@ export const addExperience = async (userId, amount, reason = '') => {
     const leveledUp = gamification.addExperience(amount);
     await gamification.save();
     
-    // Check for new badges
     await checkForNewBadges(gamification, reason);
     
     return { leveledUp, newLevel: gamification.level };
@@ -241,7 +225,6 @@ export const addExperience = async (userId, amount, reason = '') => {
   }
 };
 
-// Check for new badges
 const checkForNewBadges = async (gamification, reason = '') => {
   try {
     const badges = await Badge.find({ isActive: true });
@@ -300,7 +283,6 @@ const checkForNewBadges = async (gamification, reason = '') => {
   }
 };
 
-// Update booking stats
 export const updateBookingStats = async (userId, amount, isGroupBooking = false, isPayment = false) => {
   try {
     let gamification = await Gamification.findOne({ userId });
@@ -310,17 +292,13 @@ export const updateBookingStats = async (userId, amount, isGroupBooking = false,
       await gamification.save();
     }
     
-    // Update stats based on whether this is initial booking or payment
     if (!isPayment) {
-      // Initial booking - count the booking but don't add to total spent yet
       gamification.totalBookings += 1;
       gamification.lastBookingDate = new Date();
     } else {
-      // Payment completion - add to total spent
       gamification.totalSpent += amount;
     }
     
-    // Update streak
     const today = new Date();
     const lastBooking = gamification.lastBookingDate;
     
@@ -335,10 +313,9 @@ export const updateBookingStats = async (userId, amount, isGroupBooking = false,
       gamification.streak = 1;
     }
     
-    // Add experience
-    let experienceGained = 10; // Base experience
-    if (amount > 50) experienceGained += 5; // Bonus for high-value booking
-    if (isGroupBooking) experienceGained += 5; // Bonus for group booking
+    let experienceGained = 10;
+    if (amount > 50) experienceGained += 5;
+    if (isGroupBooking) experienceGained += 5;
     
     const { leveledUp } = await addExperience(userId, experienceGained, isGroupBooking ? 'group_booking' : 'booking');
     

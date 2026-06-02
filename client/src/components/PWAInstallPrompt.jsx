@@ -9,35 +9,27 @@ const PWAInstallPrompt = () => {
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
-    // Check if running on iOS
     const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     setIsIOS(iOS);
 
-    // Check if already installed (standalone mode)
     const standalone = window.matchMedia('(display-mode: standalone)').matches;
     setIsStandalone(standalone);
 
-    // Check if already installed by checking if the app is in standalone mode
     if (standalone) {
       setIsInstalled(true);
       return;
     }
 
-    // Listen for the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e) => {
-      // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
       
-      // Stash the event so it can be triggered later
       setDeferredPrompt(e);
       
-      // Show our custom install prompt after a delay
       setTimeout(() => {
         setShowInstallPrompt(true);
-      }, 2000); // Show after 2 seconds to avoid being intrusive
+      }, 2000);
     };
 
-    // Listen for the appinstalled event
     const handleAppInstalled = () => {
       setIsInstalled(true);
       setShowInstallPrompt(false);
@@ -47,7 +39,6 @@ const PWAInstallPrompt = () => {
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
 
-    // Check if the app was previously installed
     if (localStorage.getItem('pwa-installed') === 'true') {
       setIsInstalled(true);
     }
@@ -65,11 +56,9 @@ const PWAInstallPrompt = () => {
     }
 
     try {
-      // Show the install prompt
       const result = await deferredPrompt.prompt();
       console.log('Install prompt shown:', result);
 
-      // Wait for the user to respond to the prompt
       const { outcome } = await deferredPrompt.userChoice;
 
       if (outcome === 'accepted') {
@@ -89,11 +78,9 @@ const PWAInstallPrompt = () => {
 
   const handleDismiss = () => {
     setShowInstallPrompt(false);
-    // Don't show again for this session
     sessionStorage.setItem('pwa-prompt-dismissed', 'true');
   };
 
-  // Don't show if already installed or dismissed this session
   if (isInstalled || !showInstallPrompt || sessionStorage.getItem('pwa-prompt-dismissed') === 'true') {
     return null;
   }

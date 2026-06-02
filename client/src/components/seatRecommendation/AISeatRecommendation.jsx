@@ -7,9 +7,9 @@ const AISeatRecommendation = ({ showId, occupiedSeats = [], onSeatSelect, userPr
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [preferences, setPreferences] = useState({
-    priceSensitivity: 'medium', // low, medium, high
-    viewPreference: 'center', // front, center, back
-    seatType: 'standard', // standard, premium, aisle
+    priceSensitivity: 'medium',
+    viewPreference: 'center',
+    seatType: 'standard',
     groupSize: 1,
     accessibility: false,
     ...userPreferences
@@ -19,19 +19,17 @@ const AISeatRecommendation = ({ showId, occupiedSeats = [], onSeatSelect, userPr
   const seatColumns = Array.from({ length: 12 }, (_, i) => i + 1);
   const totalSeats = seatRows.length * seatColumns.length;
 
-  // AI recommendation algorithm
   const calculateSeatScore = (row, col) => {
     const seatId = `${row}${col}`;
     if (occupiedSeats.includes(seatId)) return 0;
 
     let score = 0;
     const rowIndex = seatRows.indexOf(row);
-    const isAisle = col === 6 || col === 7; // Center aisle
-    const isPremium = rowIndex >= 6; // Back rows are premium
+    const isAisle = col === 6 || col === 7;
+    const isPremium = rowIndex >= 6;
     const isFront = rowIndex <= 2;
     const isCenter = rowIndex >= 3 && rowIndex <= 5;
 
-    // View preference scoring
     switch (preferences.viewPreference) {
       case 'front':
         score += isFront ? 30 : (isCenter ? 20 : 10);
@@ -44,32 +42,26 @@ const AISeatRecommendation = ({ showId, occupiedSeats = [], onSeatSelect, userPr
         break;
     }
 
-    // Seat type preference
     if (preferences.seatType === 'aisle' && isAisle) score += 25;
     if (preferences.seatType === 'premium' && isPremium) score += 25;
     if (preferences.seatType === 'standard' && !isPremium && !isAisle) score += 20;
 
-    // Price sensitivity
     const basePrice = isPremium ? 15 : 10;
     const priceMultiplier = preferences.priceSensitivity === 'low' ? 1.2 : 
                            preferences.priceSensitivity === 'high' ? 0.8 : 1.0;
     const priceScore = (20 - basePrice * priceMultiplier) * 2;
     score += Math.max(0, priceScore);
 
-    // Accessibility
     if (preferences.accessibility && (isAisle || rowIndex >= 8)) score += 15;
 
-    // Group seating (prefer contiguous seats)
     if (preferences.groupSize > 1) {
       const adjacentSeats = checkAdjacentSeats(row, col, preferences.groupSize);
       score += adjacentSeats * 10;
     }
 
-    // Popularity factor (center seats are generally more popular)
     const centerDistance = Math.abs(col - 6.5);
     score += (6 - centerDistance) * 2;
 
-    // Avoid edge seats unless specifically requested
     if (col === 1 || col === 12) score -= 5;
 
     return Math.max(0, Math.min(100, score));
@@ -108,11 +100,9 @@ const AISeatRecommendation = ({ showId, occupiedSeats = [], onSeatSelect, userPr
       });
     });
 
-    // Sort by score and take top recommendations
     const sortedSeats = seatScores.sort((a, b) => b.score - a.score);
     const topRecommendations = sortedSeats.slice(0, 8);
 
-    // Group recommendations by type
     const grouped = {
       best: topRecommendations.filter(s => s.score >= 80),
       good: topRecommendations.filter(s => s.score >= 60 && s.score < 80),
@@ -169,7 +159,7 @@ const AISeatRecommendation = ({ showId, occupiedSeats = [], onSeatSelect, userPr
 
   return (
     <div className="space-y-6">
-      {/* AI Brain Header */}
+      {}
       <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-lg border border-purple-500/30">
         <Brain className="w-6 h-6 text-purple-400" />
         <div>
@@ -178,7 +168,7 @@ const AISeatRecommendation = ({ showId, occupiedSeats = [], onSeatSelect, userPr
         </div>
       </div>
 
-      {/* Preference Settings */}
+      {}
       <div className="bg-gray-800/50 p-4 rounded-lg border border-white/10">
         <h4 className="text-md font-semibold mb-4 text-white">Your Preferences</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -248,7 +238,7 @@ const AISeatRecommendation = ({ showId, occupiedSeats = [], onSeatSelect, userPr
         </div>
       </div>
 
-      {/* Recommendations */}
+      {}
       <div className="space-y-4">
         {Object.entries(recommendations).map(([type, seats]) => {
           if (seats.length === 0) return null;
@@ -302,7 +292,7 @@ const AISeatRecommendation = ({ showId, occupiedSeats = [], onSeatSelect, userPr
         })}
       </div>
 
-      {/* AI Insights */}
+      {}
       <div className="bg-gray-800/50 p-4 rounded-lg border border-white/10">
         <h4 className="text-md font-semibold mb-3 text-white flex items-center gap-2">
           <Eye className="w-5 h-5 text-blue-400" />

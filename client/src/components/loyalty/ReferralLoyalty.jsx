@@ -201,7 +201,7 @@ const ReferralLoyalty = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Crown className="w-6 h-6 text-yellow-400" />
@@ -220,7 +220,7 @@ const ReferralLoyalty = () => {
         </div>
       </div>
 
-      {/* Tabs */}
+      {}
       <div className="flex gap-2 border-b border-white/10">
         <button
           onClick={() => setActiveTab('overview')}
@@ -254,10 +254,10 @@ const ReferralLoyalty = () => {
         </button>
       </div>
 
-      {/* Overview Tab */}
+      {}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          {/* Tier Progress */}
+          {}
           <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-lg border border-yellow-500/30 p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">Loyalty Tier</h3>
@@ -277,7 +277,7 @@ const ReferralLoyalty = () => {
             </div>
           </div>
 
-          {/* Stats Grid */}
+          {}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-gray-800/50 p-4 rounded-lg border border-white/10">
               <div className="flex items-center gap-2 mb-2">
@@ -312,7 +312,7 @@ const ReferralLoyalty = () => {
             </div>
           </div>
 
-          {/* Tier Benefits */}
+          {}
           <div className="bg-gray-800/50 rounded-lg border border-white/10 p-6">
             <h3 className="text-lg font-semibold text-white mb-4">Your {loyaltyStats.tier} Benefits</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -327,10 +327,10 @@ const ReferralLoyalty = () => {
         </div>
       )}
 
-      {/* Referrals Tab */}
+      {}
       {activeTab === 'referrals' && (
         <div className="space-y-6">
-          {/* Referral Code */}
+          {}
           <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg border border-blue-500/30 p-6">
             <h3 className="text-lg font-semibold text-white mb-4">Your Referral Code</h3>
             <div className="flex items-center gap-3 mb-4">
@@ -367,7 +367,7 @@ const ReferralLoyalty = () => {
             </div>
           </div>
 
-          {/* Referral Stats */}
+          {}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-gray-800/50 p-4 rounded-lg border border-white/10">
               <div className="flex items-center gap-2 mb-2">
@@ -396,7 +396,7 @@ const ReferralLoyalty = () => {
             </div>
           </div>
 
-          {/* Referral List */}
+          {}
           <div className="bg-gray-800/50 rounded-lg border border-white/10 p-6">
             <h3 className="text-lg font-semibold text-white mb-4">Your Referrals</h3>
             {referrals.length === 0 ? (
@@ -434,7 +434,7 @@ const ReferralLoyalty = () => {
         </div>
       )}
 
-      {/* Rewards Tab */}
+      {}
       {activeTab === 'rewards' && (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-white">Available Rewards</h3>

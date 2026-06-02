@@ -24,7 +24,6 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
   const recognitionRef = useRef(null);
   const searchTimeoutRef = useRef(null);
 
-  // Initialize speech recognition
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -46,7 +45,6 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
     }
   }, []);
 
-  // Mock suggestions data
   const mockSuggestions = [
     'Action movies 2024',
     'Christopher Nolan films',
@@ -61,20 +59,17 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
   const handleSearch = async (query = searchQuery) => {
     if (!query.trim()) return;
 
-    // Add to search history
     setSearchHistory(prev => {
       const newHistory = [query, ...prev.filter(item => item !== query)].slice(0, 10);
       return newHistory;
     });
 
-    // Simulate search with filters
     const searchResults = await performSearch(query, filters);
     onResults?.(searchResults);
     onSearch?.(query);
   };
 
   const performSearch = async (query, searchFilters) => {
-    // Mock search results - replace with actual API call
     const mockResults = [
       {
         id: 1,
@@ -102,7 +97,6 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
       }
     ];
 
-    // Filter results based on search filters
     return mockResults.filter(movie => {
       if (searchFilters.genre.length > 0 && !searchFilters.genre.some(g => movie.genre.includes(g))) {
         return false;
@@ -140,7 +134,6 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
       reader.onload = (e) => {
         setImagePreview(e.target.result);
         setIsImageSearch(true);
-        // Here you would send the image to your image recognition API
         performImageSearch(file);
       };
       reader.readAsDataURL(file);
@@ -148,7 +141,6 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
   };
 
   const performImageSearch = async (imageFile) => {
-    // Mock image search - replace with actual API call
     const mockImageResults = [
       {
         id: 3,
@@ -167,12 +159,10 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
   const handleInputChange = (value) => {
     setSearchQuery(value);
     
-    // Clear previous timeout
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
 
-    // Set new timeout for suggestions
     searchTimeoutRef.current = setTimeout(() => {
       if (value.length > 2) {
         const filteredSuggestions = mockSuggestions.filter(suggestion =>
@@ -201,10 +191,10 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      {/* Search Bar */}
+      {}
       <div className="relative">
         <div className="flex items-center bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-          {/* Search Input */}
+          {}
           <div className="flex-1 relative">
             <input
               type="text"
@@ -215,7 +205,7 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
               className="w-full px-6 py-4 text-lg border-0 focus:ring-0 focus:outline-none"
             />
             
-            {/* Suggestions Dropdown */}
+            {}
             {suggestions.length > 0 && (
               <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-b-xl shadow-lg z-10">
                 {suggestions.map((suggestion, index) => (
@@ -232,9 +222,9 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
             )}
           </div>
 
-          {/* Action Buttons */}
+          {}
           <div className="flex items-center border-l border-gray-200">
-            {/* Voice Search */}
+            {}
             <button
               onClick={startVoiceSearch}
               disabled={isListening}
@@ -246,7 +236,7 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
               <Mic className={`w-5 h-5 ${isListening ? 'animate-pulse' : ''}`} />
             </button>
 
-            {/* Image Search */}
+            {}
             <button
               onClick={() => fileInputRef.current?.click()}
               className="p-4 text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-colors"
@@ -255,7 +245,7 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
               <Camera className="w-5 h-5" />
             </button>
 
-            {/* Filters */}
+            {}
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`p-4 hover:bg-gray-50 transition-colors ${
@@ -266,7 +256,7 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
               <Filter className="w-5 h-5" />
             </button>
 
-            {/* Search Button */}
+            {}
             <button
               onClick={() => handleSearch()}
               className="px-6 py-4 bg-blue-600 text-white hover:bg-blue-700 transition-colors"
@@ -274,7 +264,7 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
               <Search className="w-5 h-5" />
             </button>
 
-            {/* Clear Button */}
+            {}
             {(searchQuery || imagePreview) && (
               <button
                 onClick={clearSearch}
@@ -287,7 +277,7 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
           </div>
         </div>
 
-        {/* Image Preview */}
+        {}
         {imagePreview && (
           <div className="mt-4 p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center gap-4">
@@ -304,7 +294,7 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
           </div>
         )}
 
-        {/* Voice Search Indicator */}
+        {}
         {isListening && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
             <div className="flex items-center gap-2 text-red-600">
@@ -315,13 +305,13 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
         )}
       </div>
 
-      {/* Advanced Filters */}
+      {}
       {showFilters && (
         <div className="mt-6 p-6 bg-gray-50 rounded-xl border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-800 mb-4">Advanced Filters</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Genre Filter */}
+            {}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Genres</label>
               <div className="space-y-2">
@@ -345,7 +335,7 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
               </div>
             </div>
 
-            {/* Year Range */}
+            {}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Year: {filters.year.min} - {filters.year.max}
@@ -376,7 +366,7 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
               </div>
             </div>
 
-            {/* Rating Range */}
+            {}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Rating: {filters.rating.min} - {filters.rating.max}
@@ -409,7 +399,7 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
               </div>
             </div>
 
-            {/* Director */}
+            {}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Director</label>
               <input
@@ -421,7 +411,7 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
               />
             </div>
 
-            {/* Cast */}
+            {}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Cast</label>
               <input
@@ -433,7 +423,7 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
               />
             </div>
 
-            {/* Sort By */}
+            {}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
               <select
@@ -475,7 +465,7 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
         </div>
       )}
 
-      {/* Search History */}
+      {}
       {searchHistory.length > 0 && !searchQuery && (
         <div className="mt-6">
           <h4 className="text-sm font-medium text-gray-700 mb-3">Recent Searches</h4>
@@ -493,7 +483,7 @@ const AdvancedSearch = ({ onSearch, onResults }) => {
         </div>
       )}
 
-      {/* Hidden file input for image search */}
+      {}
       <input
         ref={fileInputRef}
         type="file"

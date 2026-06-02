@@ -24,13 +24,11 @@ const SeatLayout = () => {
   const [expiresAt, setExpiresAt] = useState(null)
   const timerRef = useRef(null)
   
-  // AI Features State
   const [showAIRecommendations, setShowAIRecommendations] = useState(false)
   const [show360View, setShow360View] = useState(false)
   const [selectedSeatFor360, setSelectedSeatFor360] = useState(null)
   const [showVoiceBooking, setShowVoiceBooking] = useState(false)
   
-  // Derived UI states
   const isActionDisabled = !selectedTime
   const [showSmartSeatSelector, setShowSmartSeatSelector] = useState(false)
   const [aiPreferences, setAiPreferences] = useState({
@@ -51,7 +49,6 @@ const SeatLayout = () => {
       const { data } = await axios.get(`/api/show/${id}`)
       if (data.success){
         setShow(data)
-        // If deep-linked with showId, auto-select the matching time
         const params = new URLSearchParams(location.search)
         const showIdParam = params.get('showId')
         if (showIdParam && data?.dateTime?.[date]) {
@@ -74,7 +71,6 @@ const SeatLayout = () => {
       if(occupiedSeats.includes(seatId)){
         return toast('This seat is already booked')
       }
-      // Start countdown on first selection
       setExpiresAt(prev => prev || new Date(Date.now() + 10 * 60 * 1000))
 
       const isShift = e && (e.shiftKey || e.metaKey)
@@ -83,7 +79,6 @@ const SeatLayout = () => {
         return
       }
 
-      // Bulk select within the same row between last selected and current
       const row = seatId[0]
       const lastInRow = [...selectedSeats].reverse().find(s => s[0] === row)
       if (!lastInRow) {
@@ -109,7 +104,6 @@ const SeatLayout = () => {
       setSelectedSeats([...next])
   }
 
-  // AI-powered seat selection
   const handleAISeatSelect = (seatId) => {
     if (!selectedTime) {
       return toast("Please select time first")
@@ -125,7 +119,6 @@ const SeatLayout = () => {
     setExpiresAt(prev => prev || new Date(Date.now() + 10 * 60 * 1000))
   }
 
-  // 360° view functionality
   const handleSeat360View = (seatId) => {
     if (occupiedSeats.includes(seatId)) {
       return toast('Cannot preview booked seats')
@@ -153,7 +146,7 @@ const SeatLayout = () => {
                             >
                                 {seatId}
                             </button>
-                            {/* 360° View Button - only for available seats */}
+                            {}
                             {!isOccupied && (
                                 <button
                                     onClick={() => handleSeat360View(seatId)}
@@ -175,7 +168,6 @@ const SeatLayout = () => {
   const getOccupiedSeats = async ()=>{
     try {
       if (!selectedTime?.showId || !isValidObjectId(selectedTime.showId)) {
-        // Guard against mock/demo showIds like 's_zinema_1000'
         setOccupiedSeats([])
         return toast('This is a demo showtime. Please pick a real show to load seats.')
       }
@@ -197,10 +189,8 @@ const SeatLayout = () => {
 
         if(!selectedTime || !selectedSeats.length) return toast.error('Please select a time and seats');
 
-        // Small pre-success confetti for delightful feedback
         runConfetti()
 
-        // Check if green ticketing is enabled
         const greenTicketingEnabled = localStorage.getItem('green_ticketing_enabled') === 'true';
         
         const {data} = await axios.post('/api/booking/create', {
@@ -229,7 +219,6 @@ const SeatLayout = () => {
     }
   },[selectedTime])
 
-  // Countdown timer effect
   useEffect(() => {
     if (!expiresAt) return
     const tick = () => {
@@ -244,7 +233,6 @@ const SeatLayout = () => {
     return () => timerRef.current && clearInterval(timerRef.current)
   }, [expiresAt])
 
-  // Keyboard shortcuts for quick access: A (AI), S (Smart), V (Voice)
   useEffect(() => {
     const handler = (e) => {
       if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return
@@ -262,7 +250,6 @@ const SeatLayout = () => {
     return () => window.removeEventListener('keydown', handler)
   }, [isActionDisabled])
 
-  // Lightweight confetti (no deps)
   const confettiRef = useRef(null)
   const runConfetti = () => {
     const c = document.createElement('canvas')
@@ -309,7 +296,7 @@ const SeatLayout = () => {
 
   return show ? (
     <div className='flex flex-col md:flex-row px-6 md:px-16 lg:px-40 py-30 md:pt-50'>
-      {/* Available Timings */}
+      {}
       <div className='w-60 bg-primary/10 border border-primary/20 rounded-lg py-10 h-max md:sticky md:top-30'>
         <p className='text-lg font-semibold px-6'>Available Timings</p>
         <div className='mt-5 space-y-1'>
@@ -322,7 +309,7 @@ const SeatLayout = () => {
         </div>
       </div>
 
-      {/* Seats Layout */}
+      {}
       <div className='relative flex-1 flex flex-col items-center max-md:mt-16'>
           <BlurCircle top="-100px" left="-100px"/>
           <BlurCircle bottom="0" right="0"/>
@@ -386,7 +373,7 @@ const SeatLayout = () => {
             </div>
           </div>
           <p className='sr-only'>Use keyboard shortcuts A, S, V to toggle AI, Smart Selector, and Voice Booking when a time is selected.</p>
-          {/* Accessibility Legend and Timer */}
+          {}
           <div className='flex flex-col items-center gap-2 mb-4'>
             {timeLeft && (
               <div className='text-sm text-red-300'>Hold expires in: <span className='font-semibold'>{timeLeft}</span></div>
@@ -429,7 +416,7 @@ const SeatLayout = () => {
             <ArrowRightIcon strokeWidth={3} className="w-4 h-4"/>
           </button>
 
-          {/* AI Recommendations Panel */}
+          {}
           {showAIRecommendations && selectedTime && (
             <div className="mt-8 w-full max-w-4xl">
               <AISeatRecommendation
@@ -441,7 +428,7 @@ const SeatLayout = () => {
             </div>
           )}
 
-          {/* Smart Seat Selector Panel */}
+          {}
           {showSmartSeatSelector && selectedTime && (
             <div className="mt-8 w-full max-w-6xl">
               <SmartSeatSelector
@@ -457,7 +444,7 @@ const SeatLayout = () => {
          
       </div>
 
-      {/* 360° View Modal */}
+      {}
       {show360View && selectedSeatFor360 && (
         <SeatView360
           seatId={selectedSeatFor360}
@@ -467,7 +454,7 @@ const SeatLayout = () => {
         />
       )}
 
-      {/* Voice Booking Modal */}
+      {}
       {showVoiceBooking && (
         <VoiceChatBooking
           isOpen={showVoiceBooking}

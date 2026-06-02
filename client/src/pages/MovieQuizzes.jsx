@@ -20,8 +20,6 @@ import {
   RotateCcw,
   Brain
 } from 'lucide-react';
-// import QuizEngine from '../components/quiz/QuizEngine';
-// import UserChallenges from '../components/quiz/UserChallenges';
 
 const MovieQuizzes = () => {
   const [activeTab, setActiveTab] = useState('trivia');
@@ -44,7 +42,6 @@ const MovieQuizzes = () => {
     rank: 6
   });
 
-  // Sample trivia questions
   const triviaQuestions = [
     {
       id: 1,
@@ -93,7 +90,6 @@ const MovieQuizzes = () => {
     }
   ];
 
-  // Dynamic polls with voting functionality
   const initializePolls = () => [
     {
       id: 1,
@@ -136,7 +132,6 @@ const MovieQuizzes = () => {
     }
   ];
 
-  // Dynamic challenges with progress tracking
   const initializeChallenges = () => [
     {
       id: 1,
@@ -196,7 +191,6 @@ const MovieQuizzes = () => {
     }
   ];
 
-  // Dynamic leaderboard with user integration
   const initializeLeaderboard = () => [
     { rank: 1, name: "MovieBuff2024", points: 3450, level: 12, avatar: "🎭", isOnline: true },
     { rank: 2, name: "CinemaLover", points: 3200, level: 11, avatar: "🎬", isOnline: false },
@@ -245,10 +239,8 @@ const MovieQuizzes = () => {
       totalQuizzes: prev.totalQuizzes + 1,
       totalPoints: prev.totalPoints + quizScore
     }));
-    // Add completion logic here
   };
 
-  // Dynamic poll voting functionality
   const handleVote = (pollId, optionIndex) => {
     console.log('Voting on poll:', pollId, 'option:', optionIndex);
     if (userVotes[pollId]) {
@@ -283,10 +275,9 @@ const MovieQuizzes = () => {
     });
 
     setUserVotes(prev => ({ ...prev, [pollId]: optionIndex }));
-    setUserPoints(prev => prev + 10); // Award points for voting
+    setUserPoints(prev => prev + 10);
   };
 
-  // Dynamic challenge progress update
   const updateChallengeProgress = (challengeId, increment = 1) => {
     console.log('Updating challenge progress:', challengeId, 'increment:', increment);
     setUserChallenges(prevChallenges => {
@@ -296,7 +287,6 @@ const MovieQuizzes = () => {
           const isCompleted = newProgress >= challenge.maxProgress;
           
           if (isCompleted && challenge.progress < challenge.maxProgress) {
-            // Award points for completion
             setUserPoints(prev => prev + challenge.reward);
             setUserStats(prev => ({
               ...prev,
@@ -315,7 +305,6 @@ const MovieQuizzes = () => {
     });
   };
 
-  // Dynamic leaderboard update
   const updateLeaderboard = () => {
     setLeaderboard(prevLeaderboard => {
       return prevLeaderboard.map(user => {
@@ -334,12 +323,10 @@ const MovieQuizzes = () => {
     });
   };
 
-  // Update leaderboard when points change
   useEffect(() => {
     updateLeaderboard();
   }, [userPoints]);
 
-  // Test function to verify features are working
   const testFeatures = () => {
     console.log('Testing Movie Quizzes features...');
     console.log('Polls:', polls.length);
@@ -348,7 +335,6 @@ const MovieQuizzes = () => {
     console.log('User Points:', userPoints);
     console.log('User Votes:', userVotes);
     
-    // Force load data if empty
     if (polls.length === 0) {
       console.log('Loading polls...');
       setPolls(initializePolls());
@@ -363,19 +349,16 @@ const MovieQuizzes = () => {
     }
   };
 
-  // Test on component mount
   useEffect(() => {
     setTimeout(testFeatures, 1000);
   }, [polls, userChallenges, leaderboard]);
 
-  // Simulate real-time leaderboard updates
   useEffect(() => {
     const interval = setInterval(() => {
       setLeaderboard(prevLeaderboard => {
         return prevLeaderboard.map(user => {
           if (!user.isCurrentUser && Math.random() > 0.7) {
-            // Randomly update other users' points
-            const pointChange = Math.floor(Math.random() * 50) - 25; // -25 to +25
+            const pointChange = Math.floor(Math.random() * 50) - 25;
             return {
               ...user,
               points: Math.max(0, user.points + pointChange),
@@ -388,7 +371,7 @@ const MovieQuizzes = () => {
           rank: index + 1
         }));
       });
-    }, 10000); // Update every 10 seconds
+    }, 10000);
 
     return () => clearInterval(interval);
   }, []);
@@ -397,7 +380,6 @@ const MovieQuizzes = () => {
     if (selectedOption === currentQuiz.correct) {
       setQuizScore(prev => prev + currentQuiz.points);
     }
-    // Move to next question or end quiz
     handleQuizEnd();
   };
 
@@ -434,7 +416,7 @@ const MovieQuizzes = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white">
-      {/* Header */}
+      {}
       <div className="bg-black/20 backdrop-blur-sm border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
@@ -478,7 +460,7 @@ const MovieQuizzes = () => {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
+      {}
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex space-x-1 bg-black/20 rounded-lg p-1 mb-8">
           {tabs.map((tab) => (
@@ -497,7 +479,7 @@ const MovieQuizzes = () => {
           ))}
         </div>
 
-        {/* Content */}
+        {}
         <AnimatePresence mode="wait">
           {activeTab === 'trivia' && (
             <motion.div
@@ -886,7 +868,7 @@ const MovieQuizzes = () => {
                   )}
                 </div>
                 
-                {/* User Stats Summary */}
+                {}
                 <div className="mt-6 p-4 bg-white/5 rounded-lg">
                   <h4 className="text-lg font-semibold mb-3">Your Stats</h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -913,7 +895,7 @@ const MovieQuizzes = () => {
           )}
         </AnimatePresence>
 
-        {/* Quiz Modal */}
+        {}
         {currentQuiz && isQuizActive && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
             <motion.div

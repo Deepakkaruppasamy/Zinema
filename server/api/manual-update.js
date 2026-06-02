@@ -4,11 +4,9 @@ import Booking from '../models/Booking.js';
 
 const app = express();
 
-// Middleware
 app.use(express.json());
 app.use(cors());
 
-// Manual booking status update endpoint
 app.post('/update-status', async (req, res) => {
     try {
         const { bookingId, isPaid = true } = req.body;
@@ -21,7 +19,7 @@ app.post('/update-status', async (req, res) => {
             bookingId, 
             { 
                 isPaid: isPaid,
-                paymentLink: isPaid ? "" : booking?.paymentLink // Clear payment link if paid
+                paymentLink: isPaid ? "" : booking?.paymentLink
             }, 
             { new: true }
         ).populate({
@@ -55,7 +53,6 @@ app.post('/update-status', async (req, res) => {
     }
 });
 
-// Get booking details
 app.get('/booking/:bookingId', async (req, res) => {
     try {
         const { bookingId } = req.params;
@@ -84,7 +81,6 @@ app.get('/booking/:bookingId', async (req, res) => {
     }
 });
 
-// Debug endpoint to list all bookings
 app.get('/debug-all', async (req, res) => {
     try {
         const bookings = await Booking.find({})

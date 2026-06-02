@@ -1,7 +1,6 @@
 import Review from "../models/Review.js";
 import reviewIntelligenceService from "../services/reviewIntelligenceService.js";
 
-// GET /api/review/:movieId - list reviews for a movie (newest first)
 export const listReviews = async (req, res) => {
   try {
     const { movieId } = req.params;
@@ -15,7 +14,6 @@ export const listReviews = async (req, res) => {
   }
 };
 
-// POST /api/review - create or upsert current user's review with AI analysis
 export const createReview = async (req, res) => {
   try {
     const { userId } = req.auth();
@@ -24,21 +22,18 @@ export const createReview = async (req, res) => {
       return res.json({ success: false, message: "movieId, text and rating are required" });
     }
 
-    // Perform AI analysis on the review
     const aiAnalysis = await reviewIntelligenceService.analyzeReview(
       String(text).trim(), 
       Number(rating),
-      { userId } // Pass user context for personalization
+      { userId }
     );
 
-    // Check for quality flags and auto-moderate if needed
     const moderationStatus = aiAnalysis.qualityFlags.isSpam || aiAnalysis.qualityFlags.isFake 
       ? 'flagged' 
       : aiAnalysis.qualityFlags.toxicityScore > 0.7 
       ? 'flagged' 
       : 'approved';
 
-    // Match existing docs stored with either `movie` or legacy `movieId`, then set both
     const filter = { user: userId, $or: [{ movie: movieId }, { movieId }] };
     const update = { 
       movie: movieId, 
@@ -55,7 +50,6 @@ export const createReview = async (req, res) => {
 
     const doc = await Review.findOneAndUpdate(filter, update, { new: true, upsert: true, setDefaultsOnInsert: true });
     
-    // Don't return sensitive AI analysis data to client, just the review
     const clientReview = {
       ...doc.toObject(),
       aiAnalysis: {
@@ -73,19 +67,17 @@ export const createReview = async (req, res) => {
   }
 };
 
-// GET /api/review/:movieId/summary - get AI-powered personalized review summary
 export const getReviewSummary = async (req, res) => {
   try {
     const { movieId } = req.params;
-    const { userId } = req.auth ? req.auth() : { userId: null }; // Optional auth for personalization
+    const { userId } = req.auth ? req.auth() : { userId: null };
     
-    // Get approved reviews for the movie
     const reviews = await Review.find({ 
       $or: [{ movie: movieId }, { movieId }],
       moderationStatus: { $in: ['approved', 'pending'] }
     })
     .sort({ createdAt: -1 })
-    .limit(50) // Limit for performance
+    .limit(50)
     .lean();
 
     if (reviews.length === 0) {
@@ -102,10 +94,8 @@ export const getReviewSummary = async (req, res) => {
       });
     }
 
-    // Get user preferences for personalization (if logged in)
     let userPreferences = {};
     if (userId) {
-      // TODO: Fetch user preferences from database
       userPreferences = {
         favoriteGenres: ['action', 'drama'],
         importantAspects: ['plot', 'acting'],
@@ -122,11 +112,10 @@ export const getReviewSummary = async (req, res) => {
   }
 };
 
-// POST /api/review/:id/helpful - mark review as helpful
 export const markReviewHelpful = async (req, res) => {
   try {
     const { id } = req.params;
-    const { helpful } = req.body; // true for helpful, false for unhelpful
+    const { helpful } = req.body;
     
     const update = helpful 
       ? { $inc: { helpfulVotes: 1 } }
@@ -145,7 +134,6 @@ export const markReviewHelpful = async (req, res) => {
   }
 };
 
-// POST /api/review/:id/report - report review for moderation
 export const reportReview = async (req, res) => {
   try {
     const { id } = req.params;
@@ -172,12 +160,10 @@ export const reportReview = async (req, res) => {
   }
 };
 
-// GET /api/review/analytics/:movieId - get review analytics for admins
 export const getReviewAnalytics = async (req, res) => {
   try {
     const { movieId } = req.params;
     
-    // Aggregate review analytics
     const analytics = await Review.aggregate([
       { $match: { $or: [{ movie: movieId }, { movieId }] } },
       {
@@ -197,7 +183,6 @@ export const getReviewAnalytics = async (req, res) => {
       }
     ]);
 
-    // Process emotions and themes
     const result = analytics[0] || {};
     if (result.topEmotions) {
       const emotionCounts = {};
@@ -232,7 +217,6 @@ export const getReviewAnalytics = async (req, res) => {
   }
 };
 
-// PUT /api/review/:id - update own review
 export const updateReview = async (req, res) => {
   try {
     const { userId } = req.auth();
@@ -251,7 +235,6 @@ export const updateReview = async (req, res) => {
   }
 };
 
-// DELETE /api/review/:id - delete own review
 export const deleteReview = async (req, res) => {
   try {
     const { userId } = req.auth();

@@ -15,14 +15,12 @@ import {
 
 const EnhancedSearchFilters = ({ onFiltersChange, initialFilters = {} }) => {
   const [filters, setFilters] = useState({
-    // Basic filters
     genre: [],
     year: { min: 1990, max: 2024 },
     rating: { min: 0, max: 10 },
     duration: { min: 60, max: 300 },
     language: [],
     
-    // Advanced filters
     director: '',
     cast: '',
     studio: '',
@@ -31,27 +29,22 @@ const EnhancedSearchFilters = ({ onFiltersChange, initialFilters = {} }) => {
     budget: { min: 0, max: 500000000 },
     boxOffice: { min: 0, max: 3000000000 },
     
-    // Content filters
     contentRating: [],
     themes: [],
     mood: [],
     
-    // Technical filters
     aspectRatio: [],
     colorType: [],
     soundMix: [],
     
-    // Availability filters
     streamingPlatform: [],
     theaterAvailability: false,
     releaseStatus: [],
     
-    // Personalization
     watchlist: false,
     watched: false,
     recommended: false,
     
-    // Sorting
     sortBy: 'relevance',
     sortOrder: 'desc',
     
@@ -61,7 +54,6 @@ const EnhancedSearchFilters = ({ onFiltersChange, initialFilters = {} }) => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [presetFilters, setPresetFilters] = useState([]);
 
-  // Filter options
   const filterOptions = {
     genre: [
       'Action', 'Adventure', 'Animation', 'Biography', 'Comedy', 'Crime', 'Documentary',
@@ -98,7 +90,6 @@ const EnhancedSearchFilters = ({ onFiltersChange, initialFilters = {} }) => {
     streamingPlatform: ['Netflix', 'Amazon Prime', 'Disney+', 'HBO Max', 'Hulu', 'Apple TV+']
   };
 
-  // Preset filter configurations
   const presets = [
     {
       name: 'Oscar Winners',
@@ -193,22 +184,18 @@ const EnhancedSearchFilters = ({ onFiltersChange, initialFilters = {} }) => {
   const getActiveFilterCount = () => {
     let count = 0;
     
-    // Count array filters
     ['genre', 'language', 'country', 'awards', 'contentRating', 'themes', 'mood', 'aspectRatio', 'colorType', 'soundMix', 'streamingPlatform', 'releaseStatus'].forEach(key => {
       if (filters[key].length > 0) count++;
     });
     
-    // Count text filters
     ['director', 'cast', 'studio'].forEach(key => {
       if (filters[key].trim()) count++;
     });
     
-    // Count boolean filters
     ['theaterAvailability', 'watchlist', 'watched', 'recommended'].forEach(key => {
       if (filters[key]) count++;
     });
     
-    // Count range filters
     ['year', 'rating', 'duration', 'budget', 'boxOffice'].forEach(key => {
       const range = filters[key];
       if (range.min !== (key === 'year' ? 1990 : key === 'rating' ? 0 : key === 'duration' ? 60 : 0) || 
@@ -276,7 +263,7 @@ const EnhancedSearchFilters = ({ onFiltersChange, initialFilters = {} }) => {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Filter className="w-5 h-5 text-gray-600" />
@@ -303,7 +290,7 @@ const EnhancedSearchFilters = ({ onFiltersChange, initialFilters = {} }) => {
         </div>
       </div>
 
-      {/* Preset Filters */}
+      {}
       <div className="flex flex-wrap gap-2">
         {presets.map((preset, index) => (
           <button
@@ -316,7 +303,7 @@ const EnhancedSearchFilters = ({ onFiltersChange, initialFilters = {} }) => {
         ))}
       </div>
 
-      {/* Basic Filters */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <FilterSection title="Genres" icon={Film}>
           <CheckboxGroup
@@ -377,7 +364,7 @@ const EnhancedSearchFilters = ({ onFiltersChange, initialFilters = {} }) => {
         </FilterSection>
       </div>
 
-      {/* Advanced Filters */}
+      {}
       {showAdvanced && (
         <div className="space-y-4">
           <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -509,7 +496,7 @@ const EnhancedSearchFilters = ({ onFiltersChange, initialFilters = {} }) => {
             </FilterSection>
           </div>
 
-          {/* Personalization Filters */}
+          {}
           <FilterSection title="Personalization">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <label className="flex items-center">
@@ -551,7 +538,7 @@ const EnhancedSearchFilters = ({ onFiltersChange, initialFilters = {} }) => {
             </div>
           </FilterSection>
 
-          {/* Sorting */}
+          {}
           <FilterSection title="Sorting">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>

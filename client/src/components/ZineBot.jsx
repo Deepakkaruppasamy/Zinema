@@ -4,8 +4,6 @@ import { useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import { useUser, useAuth } from '@clerk/clerk-react'
 
-// Lightweight intent-driven assistant that can navigate across the app
-// and guide users to booking. It can also trigger simple API checks if needed.
 
 const ZINEBOT_NAME = 'ZineBot'
 
@@ -29,11 +27,10 @@ function useBotNavigation() {
     myBookings: () => go('/my-bookings'),
     favorites: () => go('/favorite'),
     theatre: () => go('/theatre'),
-    trending: () => go('/admin/trending'), // falls back to admin page if permitted
+    trending: () => go('/admin/trending'),
     admin: () => go('/admin'),
   }
 
-  // Prefs helpers (local-only)
   const updateGenrePrefs = (movie) => {
     try {
       if (!movie) return
@@ -78,7 +75,6 @@ function useBotNavigation() {
   }
 
   const suggestBestSeats = (occupied, count = 2) => {
-    // Heuristic: center seats in middle rows, avoid occupied.
     const rows = 'ABCDEFGHIJ'.split('')
     const cols = Array.from({ length: 12 }, (_, i) => i + 1)
     const prefRows = ['E', 'F', 'D', 'G', 'C', 'H', 'B', 'I', 'A', 'J']
@@ -86,22 +82,18 @@ function useBotNavigation() {
     const isFree = (r, c) => !occ.has(`${r}${c}`)
     const middle = Math.ceil(cols.length / 2)
     for (const r of prefRows) {
-      // look for contiguous block near center
       const candidates = []
       for (let c = 1; c <= cols.length; c++) {
         if (isFree(r, c)) candidates.push(c)
       }
-      // sliding window for contiguous run of size count, closest to center
       for (let i = 0; i <= candidates.length - count; i++) {
         const block = candidates.slice(i, i + count)
         if (block[block.length - 1] - block[0] === count - 1) {
           const centerDist = Math.abs(block.reduce((a,b)=>a+b,0)/block.length - middle)
-          // Return first optimal block found (implicit center-first due to order)
           return block.map(c => `${r}${c}`)
         }
       }
     }
-    // Fallback: any free seats
     const free = []
     for (const r of rows) {
       for (const c of cols) if (isFree(r, c)) free.push(`${r}${c}`)
@@ -128,18 +120,15 @@ function normalize(str) {
 }
 
 function parseRequestedMovie(message) {
-  // Attempts to extract a movie title after keywords like: open/show/movie
   const m = message.trim()
   const match = m.match(/(?:open|show|movie|watch)\s+(.+)/i)
   if (match) {
-    // remove trailing words like 'movie' or 'film' if duplicated
     return match[1].trim()
   }
   return null
 }
 
 function parseDateFromText(message) {
-  // Supports explicit YYYY-MM-DD in text
   const m = message.match(/(20\d{2}-\d{2}-\d{2})/)
   if (m) return m[1]
   const lower = message.toLowerCase()
@@ -191,7 +180,6 @@ export default function ZineBot() {
     if (open && chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' })
   }, [messages, open])
 
-  // Persist state
   useEffect(() => {
     try { localStorage.setItem('zinebot_messages', JSON.stringify(messages)) } catch {}
   }, [messages])
@@ -205,7 +193,6 @@ export default function ZineBot() {
     try { localStorage.setItem('zinebot_coupon', pendingCoupon || '') } catch {}
   }, [pendingCoupon])
 
-  // Voice input (Web Speech API) in component scope
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
     if (SpeechRecognition) {
@@ -234,7 +221,6 @@ export default function ZineBot() {
     }
   }
 
-  // Utilities
   const downloadICS = (title, startISO, durationMinutes = 120) => {
     try {
       const start = new Date(startISO)
@@ -271,7 +257,6 @@ export default function ZineBot() {
   }
 
   const chooseShowForDate = async (movieId, date) => {
-    // Fetch shows for movie and pick the earliest showtime for the given date.
     const { data } = await api.get(`/api/show/${movieId}`)
     if (!data?.success) return null
     const day = data.dateTime?.[date]
@@ -314,7 +299,6 @@ export default function ZineBot() {
   const reply = async (userText) => {
     const intent = inferIntent(userText)
 
-    // Simple action responses
     if (intent === 'home') return { text: 'Taking you home 🏠', action: () => intents.home() }
     if (intent === 'movies') return { text: 'Opening movies 🎬', action: () => intents.movies() }
     if (intent === 'myBookings') return { text: 'Opening your bookings 🎟️', action: () => intents.myBookings() }
@@ -323,7 +307,6 @@ export default function ZineBot() {
     if (intent === 'trending') return { text: 'Taking you to trending 📈 (admin area)', action: () => intents.trending() }
     if (intent === 'admin') return { text: 'Opening admin dashboard 🔐', action: () => intents.admin() }
 
-    // Booking guidance
     if (/(book|buy).*ticket/.test(userText.toLowerCase()) || userText.toLowerCase().includes('help me book')) {
       if (!isSignedIn) {
         return {
@@ -337,7 +320,6 @@ export default function ZineBot() {
       }
     }
 
-    // Availability queries: "Are seats available for <movie> [today|tonight|tomorrow|YYYY-MM-DD]"
     if (/^are\s+seats?\s+available\s+for\s+(.+?)(?:\s+(today|tonight|tomorrow|20\d{2}-\d{2}-\d{2}))?\??$/i.test(userText)) {
       try {
         const [, rawTitle, rawWhen] = userText.match(/^are\s+seats?\s+available\s+for\s+(.+?)(?:\s+(today|tonight|tomorrow|20\d{2}-\d{2}-\d{2}))?\??$/i) || []
@@ -363,7 +345,6 @@ export default function ZineBot() {
       } catch { return { text: 'I could not check availability right now.' } }
     }
 
-    // Natural booking: "Book 2 tickets for Inception tomorrow evening"
     if (/^book\s+\d+\s+tickets?\s+for\s+.+/i.test(userText)) {
       const count = parseCount(userText) || 2
       const movieTitle = parseRequestedMovie(userText)
@@ -383,7 +364,6 @@ export default function ZineBot() {
         return { text: `Great! I found a show for ${best.mv.title} on ${date}${bucket ? ' ('+bucket+')' : ''}. For ${count} tickets, you can say: "book seats A1,A2" or let me know your preferred row.` }
       } catch { return { text: 'I had trouble searching shows right now.' } }
     }
-    // Seat availability quick helper if user provides showId (power user flow)
     const showIdMatch = userText.match(/showid\s*[:#-]?\s*([a-f0-9]{24})/i)
     if (showIdMatch) {
       const showId = showIdMatch[1]
@@ -396,14 +376,12 @@ export default function ZineBot() {
       return { text: 'I could not verify seats for that show right now, but you can proceed to seat selection from the movie page.' }
     }
 
-    // Try deep-linking to a specific movie by title (and optional date)
     const maybeTitle = parseRequestedMovie(userText)
     if (maybeTitle) {
       try {
         const wanted = normalize(maybeTitle)
         const { data } = await api.get('/api/show/all')
         const movies = Array.isArray(data?.shows) ? data.shows : []
-        // simple fuzzy: prioritize exact contains on normalized title; else startswith; else any token match
         const scored = movies.map((mv) => {
           const title = normalize(mv?.title)
           let score = 0
@@ -424,7 +402,6 @@ export default function ZineBot() {
         if (best && best.score >= 30 && best.mv && best.mv._id) {
           const date = parseDateFromText(userText)
           if (date) {
-            // Seat-aware: pick earliest show for the date and check occupancy
             try {
               const chosen = await chooseShowForDate(best.mv._id, date)
               if (chosen?.showId) {
@@ -441,7 +418,6 @@ export default function ZineBot() {
             } catch {}
             return { text: `Opening ${best.mv.title} on ${date}.`, action: () => intents.movies(), deepLink: { id: best.mv._id, date } }
           }
-          // No date provided: open movie details
           setLastContext({ movieId: best.mv._id, title: best.mv.title })
           updateGenrePrefs(best.mv)
           return { text: `Opening ${best.mv.title}.`, action: () => intents.movies(), deepLink: { id: best.mv._id } }
@@ -452,7 +428,6 @@ export default function ZineBot() {
       }
     }
 
-    // Show all movies: "show me movies", "what movies are available"
     if (/show\s+me\s+movies/i.test(userText) || /what\s+movies/i.test(userText) || /available\s+movies/i.test(userText)) {
       try {
         const { data } = await api.get('/api/show/all')
@@ -463,7 +438,6 @@ export default function ZineBot() {
       } catch { return { text: 'I could not fetch movies right now.' } }
     }
 
-    // Enhanced genre-based search: "show action movies", "comedy movies", "I want comedy"
     if (/show\s+([a-z\s]+)\s+movies/i.test(userText) || /([a-z\s]+)\s+movies/i.test(userText) || /want\s+([a-z\s]+)/i.test(userText)) {
       try {
         let genre = '';
@@ -478,7 +452,6 @@ export default function ZineBot() {
         const { data } = await api.get('/api/show/all')
         const movies = Array.isArray(data?.shows) ? data.shows : []
         
-        // Enhanced genre matching
         const genreKeywords = {
           'comedy': ['comedy', 'funny', 'humor'],
           'action': ['action', 'adventure', 'thriller'],
@@ -499,7 +472,6 @@ export default function ZineBot() {
         }
         
         if (!results.length) {
-          // Fallback: show all movies
           const allMovies = movies.slice(0, 5).map(m => m.title).join(', ');
           return { text: `I couldn't find ${genre} movies right now. Here are some available movies: ${allMovies}` }
         }
@@ -509,7 +481,6 @@ export default function ZineBot() {
       } catch { return { text: 'I could not search genres right now.' } }
     }
 
-    // Support ticket quick command: "contact support ..."
     if (/^contact\s+support\b/i.test(userText)) {
       const message = userText.replace(/^contact\s+support\b\s*:?\s*/i, '') || 'Support request from ZineBot'
       try {
@@ -518,7 +489,6 @@ export default function ZineBot() {
       } catch { return { text: 'Sorry, I could not submit your support request right now.' } }
     }
 
-    // Reminders: "add reminder" uses lastContext
     if (/add\s+reminder/i.test(userText)) {
       if (lastContext?.title && lastContext?.startISO) {
         downloadICS(lastContext.title, lastContext.startISO)
@@ -527,7 +497,6 @@ export default function ZineBot() {
       return { text: 'I need a movie and showtime first. Try: "Open movie <title> YYYY-MM-DD" then say "add reminder".' }
     }
 
-    // Show seat layout (ASCII) for current show
     if (/show\s+seat\s+layout/i.test(userText)) {
       if (!lastContext?.showId) return { text: 'I need a selected showtime first. Try: "Open movie <title> YYYY-MM-DD".' }
       try {
@@ -547,7 +516,6 @@ export default function ZineBot() {
       } catch { return { text: 'I could not render the seat layout right now.' } }
     }
 
-    // Offers and coupons
     if (/offers?|discounts?/i.test(userText)) {
       return { text: 'Current offers: Paytm cashback, GPay UPI discount, Credit Card bank offers (if available). At checkout, eligible coupons may auto-apply.' }
     }
@@ -557,12 +525,10 @@ export default function ZineBot() {
       return { text: `Coupon ${code} saved. I will try to apply it during checkout if eligible.` }
     }
 
-    // Reminders (Phase 3)
     if (/^remind\s+me/i.test(userText)) {
       if (!isSignedIn) return { text: 'Please sign in to set reminders.' }
       if (!lastContext?.showId) return { text: 'Select a movie/show first so I can set a reminder.' }
       try {
-        // parse minutes and channel from text
         const m = userText.match(/in\s+(\d{1,3})\s*min/i)
         const minutes = m ? parseInt(m[1], 10) : 30
         const ch = (userText.match(/\b(email|sms|whatsapp)\b/i)?.[1] || 'email').toLowerCase()
@@ -587,7 +553,6 @@ export default function ZineBot() {
       } catch { return { text: 'Could not fetch reminders right now.' } }
     }
 
-    // Community polls (Phase 4)
     if (/^vote\b/i.test(userText)) {
       try {
         const m = userText.match(/^vote\s+(?:for\s+)?(.+?)(?:\s+in\s+([\w-]+))?\s*$/i)
@@ -615,7 +580,6 @@ export default function ZineBot() {
       } catch { return { text: 'Could not fetch poll results right now.' } }
     }
 
-    // Admin commands (protected)
     if (/^admin\s+dashboard/i.test(userText)) {
       if (!isSignedIn) return { text: 'Admin access requires sign-in.' }
       try {
@@ -664,7 +628,6 @@ export default function ZineBot() {
       } catch { return { text: 'Risk flags not available right now.' } }
     }
 
-    // Waitlist stub
     if (/waitlist\s+me/i.test(userText)) {
       if (!isSignedIn) return { text: 'Please sign in so I can add you to the waitlist.' }
       if (!lastContext?.showId) return { text: 'Tell me the movie/date first so I can waitlist you.' }
@@ -678,13 +641,11 @@ export default function ZineBot() {
       } catch { return { text: 'I could not add you to the waitlist right now.' } }
     }
 
-    // Quick rating
     if (/^rate\s+(my\s+)?(experience|movie)\s+(\d)(?:\/5)?/i.test(userText)) {
       const score = parseInt(RegExp.$3, 10)
       return { text: `Thanks for rating ${score}/5! Your feedback helps improve recommendations and service.` }
     }
 
-    // In-chat seat booking: "book seats A1,A2" (uses lastContext.showId)
     const seatMatch = userText.match(/book\s+seats?\s+([A-Z]\d+(?:[\s,]+[A-Z]\d+)*)/i)
     if (seatMatch) {
       if (!isSignedIn) return { text: 'Please sign in to book seats.' }
@@ -692,7 +653,6 @@ export default function ZineBot() {
       const seats = seatMatch[1].split(/[\s,]+/).filter(Boolean)
       try {
         const token = await getToken()
-        // Check if green ticketing is enabled
         const greenTicketingEnabled = localStorage.getItem('green_ticketing_enabled') === 'true';
         
         const res = await api.post('/api/booking/create', { 
@@ -713,7 +673,6 @@ export default function ZineBot() {
       }
     }
 
-    // Seat suggestions: "suggest best seats for 2"
     if (/suggest\s+best\s+seats?(?:\s+for\s+(\d+))?/i.test(userText)) {
       const m = userText.match(/suggest\s+best\s+seats?(?:\s+for\s+(\d+))?/i)
       const count = m && m[1] ? parseInt(m[1], 10) : 2
@@ -730,7 +689,6 @@ export default function ZineBot() {
       } catch { return { text: 'I could not generate suggestions right now.' } }
     }
 
-    // Cancellation guidance
     if (/cancel\s+(my\s+)?(latest\s+)?booking/i.test(userText) || /refund/i.test(userText)) {
       return {
         text: 'To cancel or request a refund, open My Bookings, select the booking, and use the cancel/refund options (subject to policy and showtime cutoff). I’ll open your bookings now.',
@@ -738,7 +696,6 @@ export default function ZineBot() {
       }
     }
 
-    // FAQ: "what's the showtime for <movie> at <time>"
     if (/what'?s\s+the\s+showtime\s+for\s+(.+?)\s+at\s+(.+)\??/i.test(userText)) {
       const [, tTitle, tTime] = userText.match(/what'?s\s+the\s+showtime\s+for\s+(.+?)\s+at\s+(.+)\??/i) || []
       const movieTitle = tTitle?.trim()
@@ -760,7 +717,6 @@ export default function ZineBot() {
       } catch { return { text: 'I could not fetch showtimes right now.' } }
     }
 
-    // Personalized recommendations
     if (/^(recommend|suggest)\b.*movies?/i.test(userText)) {
       try {
         const prefs = getGenrePrefs()
@@ -779,14 +735,12 @@ export default function ZineBot() {
       } catch { return { text: 'I could not compute recommendations right now.' } }
     }
 
-    // Add-ons / Upsell
     if (/add\s+(snack|snacks|combo|popcorn|coffee|parking)/i.test(userText)) {
       const item = userText.match(/add\s+(.+)/i)?.[1] || 'combo'
       addAddon(item)
       return { text: `Added "${item}" to your add-ons. You can manage add-ons during checkout.` }
     }
 
-    // Community voting
     if (/^vote\s+for\s+(.+)/i.test(userText)) {
       const name = RegExp.$1.trim()
       voteFor(name)
@@ -796,7 +750,6 @@ export default function ZineBot() {
       return { text: `Community poll results: ${pollResults()}` }
     }
 
-    // Default small talk
     if (/(hi|hello|hey)\b/i.test(userText)) return { text: 'Hello! How can I help you today?' }
     if (/(help|support)/i.test(userText)) return { text: 'I can navigate you anywhere and guide you through booking. Try: "Show me movies" or "Go to my bookings".' }
 
@@ -813,15 +766,11 @@ export default function ZineBot() {
     setTimeout(() => {
       setMessages((m) => [...m, { from: 'bot', text: r.text }])
       setTyping(false)
-      // Run navigation side-effect after message is appended
       if (typeof r.action === 'function') r.action()
-      // If a deepLink is present, push precise route after a short delay to allow navigation
       if (r.deepLink) {
         const { id, date } = r.deepLink
-        // ensure we navigate after router is ready
         setTimeout(() => {
           if (date) {
-            // date must be in YYYY-MM-DD format per routes
             window.history.pushState({}, '', `/movies/${id}/${date}`)
             window.dispatchEvent(new PopStateEvent('popstate'))
           } else {
@@ -835,7 +784,7 @@ export default function ZineBot() {
 
   return (
     <>
-      {/* Launcher */}
+      {}
       <div className={`fixed z-50 bottom-6 right-6 ${open ? 'hidden' : ''}`}>
         <button
           className="bg-primary rounded-full p-4 shadow-lg hover:bg-primary-dull transition flex items-center justify-center"
@@ -846,7 +795,7 @@ export default function ZineBot() {
         </button>
       </div>
 
-      {/* Panel */}
+      {}
       {open && (
         <div className="fixed z-50 bottom-6 right-6 w-80 max-w-xs bg-gray-900 rounded-xl shadow-2xl flex flex-col border border-primary animate-fadeIn">
           <div className="flex items-center justify-between p-4 border-b border-primary bg-primary/10 rounded-t-xl">
@@ -858,7 +807,7 @@ export default function ZineBot() {
             </button>
           </div>
 
-          {/* Messages */}
+          {}
           <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-900" style={{ maxHeight: 320 }}>
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.from === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -877,7 +826,7 @@ export default function ZineBot() {
             <div ref={chatEndRef} />
           </div>
 
-          {/* Composer */}
+          {}
           <form className="flex items-center gap-2 p-3 border-t border-primary bg-gray-900 rounded-b-xl" onSubmit={(e) => { e.preventDefault(); handleSend() }}>
             <input
               type="text"
@@ -896,7 +845,7 @@ export default function ZineBot() {
             </button>
           </form>
 
-          {/* Quick suggestions */}
+          {}
           <div className="px-4 pb-3 pt-2 text-xs text-gray-400">
             <span>Try:</span>
             <div className="flex flex-wrap gap-2 mt-1">

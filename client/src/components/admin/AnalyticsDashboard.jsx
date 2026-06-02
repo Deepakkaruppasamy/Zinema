@@ -65,7 +65,7 @@ const AnalyticsDashboard = () => {
     if (autoRefresh) {
       const interval = setInterval(() => {
         fetchRealtime();
-      }, 30000); // Refresh every 30 seconds
+      }, 30000);
       return () => clearInterval(interval);
     }
   }, [autoRefresh]);
@@ -117,7 +117,7 @@ const AnalyticsDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header Controls */}
+      {}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold flex items-center gap-2">
           <BarChart3 className="w-6 h-6" />
@@ -149,7 +149,7 @@ const AnalyticsDashboard = () => {
         </div>
       </div>
 
-      {/* Real-time Metrics */}
+      {}
       {realtime && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-gradient-to-r from-blue-500/20 to-blue-600/20 p-4 rounded-lg border border-blue-500/30">
@@ -194,7 +194,7 @@ const AnalyticsDashboard = () => {
         </div>
       )}
 
-      {/* Key Metrics */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-gray-800/50 p-6 rounded-lg border border-white/10">
           <div className="flex items-center gap-2 mb-4">
@@ -236,7 +236,7 @@ const AnalyticsDashboard = () => {
         </div>
       </div>
 
-      {/* Revenue Chart */}
+      {}
       <div className="bg-gray-800/50 p-6 rounded-lg border border-white/10">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <DollarSign className="w-5 h-5" />
@@ -271,7 +271,7 @@ const AnalyticsDashboard = () => {
         </div>
       </div>
 
-      {/* Top Movies */}
+      {}
       <div className="bg-gray-800/50 p-6 rounded-lg border border-white/10">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Film className="w-5 h-5" />
@@ -308,7 +308,7 @@ const AnalyticsDashboard = () => {
         </div>
       </div>
 
-      {/* Peak Hours */}
+      {}
       <div className="bg-gray-800/50 p-6 rounded-lg border border-white/10">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <Clock className="w-5 h-5" />
@@ -338,7 +338,7 @@ const AnalyticsDashboard = () => {
         </div>
       </div>
 
-      {/* Live Occupancy */}
+      {}
       {realtime?.liveOccupancy && realtime.liveOccupancy.length > 0 && (
         <div className="bg-gray-800/50 p-6 rounded-lg border border-white/10">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">

@@ -3,18 +3,15 @@ import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// GET /api/food/:showId - Get available food items for a show
 export const getFoodItemsForShow = async (req, res) => {
   try {
     const { showId } = req.params;
     
-    // Verify show exists
     const show = await Show.findById(showId).populate('movie');
     if (!show) {
       return res.status(404).json({ success: false, message: 'Show not found' });
     }
 
-    // Sample food items for demonstration
     const sampleFoodItems = {
       'appetizers': [
         {
@@ -101,7 +98,6 @@ export const getFoodItemsForShow = async (req, res) => {
   }
 };
 
-// POST /api/food/order - Create food order
 export const createFoodOrder = async (req, res) => {
   try {
     const {
@@ -120,7 +116,6 @@ export const createFoodOrder = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Authentication required' });
     }
 
-    // Validate required fields
     if (!showId || !items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ 
         success: false, 
@@ -128,7 +123,6 @@ export const createFoodOrder = async (req, res) => {
       });
     }
 
-    // Validate delivery method specific fields
     if (deliveryMethod === 'seat_delivery' && (!seatNumber || !rowNumber)) {
       return res.status(400).json({ 
         success: false, 
@@ -136,7 +130,6 @@ export const createFoodOrder = async (req, res) => {
       });
     }
 
-    // Verify show exists
     const show = await Show.findById(showId);
     if (!show) {
       return res.status(404).json({ success: false, message: 'Show not found' });
@@ -146,18 +139,16 @@ export const createFoodOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Cannot order food for past shows' });
     }
 
-    // Calculate totals (simplified for demo)
     let subtotal = 0;
     const processedItems = [];
 
     for (const item of items) {
-      // Sample pricing for demo items
       const samplePrices = {
-        'sample1': 150, // Popcorn
-        'sample2': 200, // Nachos
-        'sample3': 120, // Soft Drink
-        'sample4': 180, // Fresh Juice
-        'sample5': 350  // Burger Combo
+        'sample1': 150,
+        'sample2': 200,
+        'sample3': 120,
+        'sample4': 180,
+        'sample5': 350
       };
       
       const price = samplePrices[item.foodItemId] || 100;
@@ -172,14 +163,12 @@ export const createFoodOrder = async (req, res) => {
       });
     }
 
-    // Calculate totals
-    const tax = Math.round(subtotal * 0.18); // 18% GST
-    const serviceCharge = Math.round(subtotal * 0.05); // 5% service charge
+    const tax = Math.round(subtotal * 0.18);
+    const serviceCharge = Math.round(subtotal * 0.05);
     const totalAmount = subtotal + tax + serviceCharge;
 
-    // Create Stripe payment intent
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(totalAmount * 100), // Convert to cents
+      amount: Math.round(totalAmount * 100),
       currency: 'inr',
       metadata: {
         type: 'food_order',
@@ -211,7 +200,6 @@ export const createFoodOrder = async (req, res) => {
   }
 };
 
-// GET /api/food/orders/my - Get user's food orders (simplified)
 export const getMyFoodOrders = async (req, res) => {
   try {
     const userId = req.auth?.userId;
@@ -219,7 +207,6 @@ export const getMyFoodOrders = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Authentication required' });
     }
 
-    // Return empty array for now since we're not storing orders in DB
     res.json({
       success: true,
       orders: []
@@ -230,7 +217,6 @@ export const getMyFoodOrders = async (req, res) => {
   }
 };
 
-// POST /api/food/orders/:id/cancel - Cancel food order (simplified)
 export const cancelFoodOrder = async (req, res) => {
   try {
     const { id } = req.params;
@@ -240,7 +226,6 @@ export const cancelFoodOrder = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Authentication required' });
     }
 
-    // For demo purposes, just return success
     res.json({
       success: true,
       message: 'Order cancelled successfully',
@@ -253,7 +238,6 @@ export const cancelFoodOrder = async (req, res) => {
   }
 };
 
-// POST /api/food/webhook - Stripe webhook for food order payments
 export const foodOrderPaymentWebhook = async (req, res) => {
   try {
     const sig = req.headers['stripe-signature'];

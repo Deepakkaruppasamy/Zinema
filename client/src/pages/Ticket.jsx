@@ -10,7 +10,6 @@ const Ticket = () => {
   const [qrOk, setQrOk] = useState(false)
   const canvasRef = useRef(null)
 
-  // Persist/retrieve booking for offline viewing
   useEffect(() => {
     if (booking) {
       try { localStorage.setItem(`ticket:${id}`, JSON.stringify(booking)) } catch {}
@@ -22,11 +21,10 @@ const Ticket = () => {
     }
   }, [id, booking])
 
-  // Try to render QR code via dynamic import; fallback to showing text
   useEffect(() => {
     const run = async () => {
       try {
-        const mod = await import(/* webpackIgnore: true */ 'qrcode')
+        const mod = await import( 'qrcode')
         const QRCode = mod.default || mod
         const canvas = canvasRef.current
         if (!canvas) return

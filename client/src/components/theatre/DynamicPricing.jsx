@@ -17,21 +17,20 @@ const DynamicPricing = ({ showId, basePrice = 200, onPriceChange }) => {
   const fetchDynamicPricing = async () => {
     setLoading(true);
     try {
-      // Simulate API call to get dynamic pricing
       const mockPricing = {
         basePrice: basePrice,
-        finalPrice: Math.round(basePrice * 1.3), // 30% premium for demo
+        finalPrice: Math.round(basePrice * 1.3),
         multipliers: {
-          time: 1.2,      // Peak hours
-          demand: 1.1,    // High demand
-          movie: 1.0,     // Standard movie
-          seat: 1.0,      // Standard seat
-          seasonal: 1.0   // Normal season
+          time: 1.2,
+          demand: 1.1,
+          movie: 1.0,
+          seat: 1.0,
+          seasonal: 1.0
         },
         factors: {
           occupancyRate: 0.75,
           trend: 'increasing',
-          timeToShow: 2.5, // hours
+          timeToShow: 2.5,
           popularityScore: 8.5
         },
         recommendations: {
@@ -53,11 +52,9 @@ const DynamicPricing = ({ showId, basePrice = 200, onPriceChange }) => {
         ]
       };
 
-      // Generate price history for the last 24 hours
       const history = generatePriceHistory(basePrice);
       setPriceHistory(history);
 
-      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       setPricing(mockPricing);
       
@@ -79,12 +76,11 @@ const DynamicPricing = ({ showId, basePrice = 200, onPriceChange }) => {
       const time = new Date(now.getTime() - i * 60 * 60 * 1000);
       const hour = time.getHours();
       
-      // Simulate price fluctuations based on time of day
       let multiplier = 1.0;
-      if (hour >= 18 && hour <= 22) multiplier = 1.3; // Peak hours
-      else if (hour >= 12 && hour <= 17) multiplier = 1.1; // Afternoon
-      else if (hour >= 6 && hour <= 11) multiplier = 0.9; // Morning
-      else multiplier = 0.8; // Late night
+      if (hour >= 18 && hour <= 22) multiplier = 1.3;
+      else if (hour >= 12 && hour <= 17) multiplier = 1.1;
+      else if (hour >= 6 && hour <= 11) multiplier = 0.9;
+      else multiplier = 0.8;
       
       const price = Math.round(base * multiplier);
       history.push({
@@ -159,7 +155,7 @@ const DynamicPricing = ({ showId, basePrice = 200, onPriceChange }) => {
         </button>
       </div>
 
-      {/* Price Display */}
+      {}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="text-center p-4 bg-gray-800/30 rounded-xl">
           <div className="text-sm text-gray-400 mb-1">Base Price</div>
@@ -171,7 +167,7 @@ const DynamicPricing = ({ showId, basePrice = 200, onPriceChange }) => {
         </div>
       </div>
 
-      {/* Price Factors */}
+      {}
       <div className="space-y-4 mb-6">
         <h4 className="text-lg font-semibold text-white">Price Factors</h4>
         <div className="grid grid-cols-2 gap-3">
@@ -214,7 +210,7 @@ const DynamicPricing = ({ showId, basePrice = 200, onPriceChange }) => {
         </div>
       </div>
 
-      {/* Demand Status */}
+      {}
       <div className="p-4 bg-gray-800/30 rounded-xl mb-6">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm text-gray-300">Current Demand</span>
@@ -242,7 +238,7 @@ const DynamicPricing = ({ showId, basePrice = 200, onPriceChange }) => {
         </div>
       </div>
 
-      {/* Price History Chart */}
+      {}
       <div className="mb-6">
         <h4 className="text-lg font-semibold text-white mb-3">Price History (24h)</h4>
         <div className="h-32 bg-gray-800/30 rounded-xl p-4">
@@ -271,7 +267,7 @@ const DynamicPricing = ({ showId, basePrice = 200, onPriceChange }) => {
         </div>
       </div>
 
-      {/* Recommendations */}
+      {}
       <AnimatePresence>
         {showDetails && (
           <motion.div

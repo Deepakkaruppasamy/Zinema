@@ -274,7 +274,7 @@ const GamificationSystem = ({ userId, onRewardClaim, onAchievementUnlock }) => {
 
   return (
     <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/20 rounded-lg">
@@ -287,7 +287,7 @@ const GamificationSystem = ({ userId, onRewardClaim, onAchievementUnlock }) => {
         </div>
       </div>
 
-      {/* Tabs */}
+      {}
       <div className="flex space-x-1 mb-6 bg-gray-800/30 rounded-lg p-1">
         {tabs.map(tab => (
           <button
@@ -305,11 +305,11 @@ const GamificationSystem = ({ userId, onRewardClaim, onAchievementUnlock }) => {
         ))}
       </div>
 
-      {/* Content */}
+      {}
       <div className="space-y-6">
         {activeTab === 'profile' && userProfile && (
           <div className="space-y-6">
-            {/* User Profile Card */}
+            {}
             <div className="bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-xl p-6 border border-primary/30">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
@@ -349,7 +349,7 @@ const GamificationSystem = ({ userId, onRewardClaim, onAchievementUnlock }) => {
                 </div>
               </div>
 
-              {/* Progress Bar */}
+              {}
               <div className="mb-4">
                 <div className="flex justify-between text-sm text-gray-400 mb-2">
                   <span>Level {userProfile.level}</span>
@@ -363,7 +363,7 @@ const GamificationSystem = ({ userId, onRewardClaim, onAchievementUnlock }) => {
                 </div>
               </div>
 
-              {/* Tier Benefits */}
+              {}
               <div>
                 <h5 className="text-lg font-semibold text-white mb-2">Your Benefits</h5>
                 <div className="flex flex-wrap gap-2">
@@ -379,7 +379,7 @@ const GamificationSystem = ({ userId, onRewardClaim, onAchievementUnlock }) => {
               </div>
             </div>
 
-            {/* Recent Activity */}
+            {}
             <div>
               <h5 className="text-lg font-semibold text-white mb-4">Recent Activity</h5>
               <div className="space-y-3">
@@ -560,7 +560,7 @@ const GamificationSystem = ({ userId, onRewardClaim, onAchievementUnlock }) => {
         )}
       </div>
 
-      {/* Reward Claim Modal */}
+      {}
       <AnimatePresence>
         {showRewardModal && selectedReward && (
           <motion.div

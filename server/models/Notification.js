@@ -27,10 +27,10 @@ const notificationSchema = new mongoose.Schema({
     default: 'all'
   },
   targetUsers: [{
-    type: String // User IDs for specific targeting
+    type: String
   }],
   movieId: {
-    type: String, // Changed to String to match Movie model's _id type
+    type: String,
     ref: 'Movie',
     required: false
   },
@@ -54,14 +54,13 @@ const notificationSchema = new mongoose.Schema({
     default: true
   },
   createdBy: {
-    type: String, // Admin user ID
+    type: String,
     required: true
   }
 }, {
   timestamps: true
 });
 
-// Index for efficient queries
 notificationSchema.index({ isActive: 1, targetAudience: 1, createdAt: -1 });
 notificationSchema.index({ readBy: 1 });
 

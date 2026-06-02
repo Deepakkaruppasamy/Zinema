@@ -74,7 +74,6 @@ const gamificationSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Calculate rank based on points
 gamificationSchema.methods.calculateRank = function() {
   if (this.points >= 10000) return 'Diamond';
   if (this.points >= 5000) return 'Platinum';
@@ -83,26 +82,21 @@ gamificationSchema.methods.calculateRank = function() {
   return 'Bronze';
 };
 
-// Add experience and check for level up
 gamificationSchema.methods.addExperience = function(amount) {
   this.experience += amount;
   const oldLevel = this.level;
   
-  // Calculate new level (100 XP per level)
   this.level = Math.floor(this.experience / 100) + 1;
   
-  // Add points for leveling up
   if (this.level > oldLevel) {
-    this.points += (this.level - oldLevel) * 50; // 50 points per level
+    this.points += (this.level - oldLevel) * 50;
   }
   
-  // Update rank
   this.rank = this.calculateRank();
   
   return this.level > oldLevel;
 };
 
-// Add badge
 gamificationSchema.methods.addBadge = function(badgeData) {
   const existingBadge = this.badges.find(badge => badge.id === badgeData.id);
   if (!existingBadge) {

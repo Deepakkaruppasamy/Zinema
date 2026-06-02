@@ -104,7 +104,7 @@ const QuizEngine = ({
 
   const skipQuestion = () => {
     if (!allowSkip) return;
-    handleAnswerSelect(-1); // -1 indicates skipped
+    handleAnswerSelect(-1);
   };
 
   const getDifficultyColor = (difficulty) => {
@@ -227,7 +227,7 @@ const QuizEngine = ({
       exit={{ opacity: 0, x: -50 }}
       className="space-y-6"
     >
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="text-2xl">🧠</div>
@@ -254,7 +254,7 @@ const QuizEngine = ({
         </div>
       </div>
 
-      {/* Progress Bar */}
+      {}
       <div className="w-full bg-gray-700 rounded-full h-2">
         <div
           className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
@@ -262,7 +262,7 @@ const QuizEngine = ({
         ></div>
       </div>
 
-      {/* Question */}
+      {}
       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
         <div className="flex items-center justify-between mb-4">
           <span className={`px-3 py-1 rounded-full text-sm font-medium ${getDifficultyColor(currentQuestion.difficulty)}`}>
@@ -322,7 +322,7 @@ const QuizEngine = ({
         )}
       </div>
 
-      {/* Score Display */}
+      {}
       <div className="flex items-center justify-between">
         <div className="text-yellow-400 font-bold">Score: {score} points</div>
         <div className="text-sm text-gray-300">

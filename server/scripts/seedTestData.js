@@ -12,7 +12,6 @@ async function seedTestData() {
     await mongoose.connect(MONGODB_URI);
     console.log('Connected to MongoDB');
 
-    // Create a test user
     const testUser = await User.findOneAndUpdate(
       { email: 'test@zinema.com' },
       {
@@ -25,7 +24,6 @@ async function seedTestData() {
 
     console.log('Test user created:', testUser._id);
 
-    // Create a test movie
     const testMovie = await Movie.findOneAndUpdate(
       { title: 'Test Movie' },
       {
@@ -41,12 +39,11 @@ async function seedTestData() {
 
     console.log('Test movie created:', testMovie._id);
 
-    // Create a test show
     const testShow = await Show.findOneAndUpdate(
       { movie: testMovie._id },
       {
         movie: testMovie._id,
-        showDateTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
+        showDateTime: new Date(Date.now() + 24 * 60 * 60 * 1000),
         showPrice: 250,
         occupiedSeats: {}
       },
@@ -55,7 +52,6 @@ async function seedTestData() {
 
     console.log('Test show created:', testShow._id);
 
-    // Create test bookings
     const testBookings = [
       {
         user: testUser._id,
@@ -63,7 +59,7 @@ async function seedTestData() {
         amount: 500,
         bookedSeats: ['A1', 'A2'],
         isPaid: true,
-        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) // 2 days ago
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
       },
       {
         user: testUser._id,
@@ -71,7 +67,7 @@ async function seedTestData() {
         amount: 250,
         bookedSeats: ['B1'],
         isPaid: false,
-        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) // 1 day ago
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
       }
     ];
 
@@ -84,7 +80,6 @@ async function seedTestData() {
       console.log('Test booking created:', booking._id);
     }
 
-    // Create gamification data
     let gamification = await Gamification.findOne({ userId: testUser._id.toString() });
     
     if (!gamification) {
@@ -100,7 +95,6 @@ async function seedTestData() {
         lastBookingDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
       });
       
-      // Add badges
       gamification.badges.push({
         id: 'first_booking',
         type: 'first_booking',
@@ -119,14 +113,6 @@ async function seedTestData() {
         earnedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
       });
       
-      // Add achievements (simplified for now)
-      // gamification.achievements.push({
-      //   id: 'booked_2_movies',
-      //   type: 'booking_milestone',
-      //   name: 'Movie Buff',
-      //   description: 'Booked 2 movies',
-      //   unlockedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
-      // });
       
       await gamification.save();
     }

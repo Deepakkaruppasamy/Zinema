@@ -9,7 +9,6 @@ const PWAUtils = () => {
   const [notificationPermission, setNotificationPermission] = useState('default');
 
   useEffect(() => {
-    // Check if app is already installed
     const checkInstalled = () => {
       if (window.matchMedia('(display-mode: standalone)').matches || 
           window.navigator.standalone === true) {
@@ -19,24 +18,20 @@ const PWAUtils = () => {
 
     checkInstalled();
 
-    // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
     };
 
-    // Listen for appinstalled event
     const handleAppInstalled = () => {
       setIsInstalled(true);
       setDeferredPrompt(null);
       toast.success('Zinema installed successfully!');
     };
 
-    // Listen for online/offline events
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
-    // Check notification permission
     const checkNotificationPermission = () => {
       if ('Notification' in window) {
         setNotificationPermission(Notification.permission);
@@ -94,7 +89,6 @@ const PWAUtils = () => {
       if (permission === 'granted') {
         toast.success('Notifications enabled!');
         
-        // Register for push notifications
         if ('serviceWorker' in navigator && 'PushManager' in window) {
           try {
             const registration = await navigator.serviceWorker.ready;
@@ -103,7 +97,6 @@ const PWAUtils = () => {
               applicationServerKey: process.env.VITE_VAPID_PUBLIC_KEY
             });
             
-            // Send subscription to server
             console.log('Push subscription:', subscription);
             toast.success('Push notifications enabled!');
           } catch (error) {
@@ -130,12 +123,12 @@ const PWAUtils = () => {
   };
 
   if (isInstalled) {
-    return null; // Don't show install prompt if already installed
+    return null;
   }
 
   return (
     <div className="fixed bottom-4 left-4 z-50 space-y-2">
-      {/* Install Prompt */}
+      {}
       {deferredPrompt && (
         <div className="bg-gray-900 border border-primary/30 rounded-lg p-4 shadow-lg max-w-sm">
           <div className="flex items-center gap-3 mb-3">
@@ -162,7 +155,7 @@ const PWAUtils = () => {
         </div>
       )}
 
-      {/* Connection Status */}
+      {}
       <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
         isOnline ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
       }`}>
@@ -170,7 +163,7 @@ const PWAUtils = () => {
         <span>{isOnline ? 'Online' : 'Offline'}</span>
       </div>
 
-      {/* Notification Controls */}
+      {}
       {notificationPermission !== 'granted' && (
         <div className="bg-gray-900 border border-white/10 rounded-lg p-3 max-w-sm">
           <div className="flex items-center gap-2 mb-2">
@@ -186,7 +179,7 @@ const PWAUtils = () => {
         </div>
       )}
 
-      {/* Test Notification (for development) */}
+      {}
       {notificationPermission === 'granted' && process.env.NODE_ENV === 'development' && (
         <button
           onClick={sendTestNotification}

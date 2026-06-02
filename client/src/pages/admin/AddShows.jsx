@@ -135,7 +135,7 @@ const AddShows = () => {
         </div>
       </div>
 
-       {/* Show Price Input */}
+       {}
        <div className="mt-8">
             <label className="block text-sm font-medium mb-2">Show Price</label>
             <div className="inline-flex items-center gap-2 border border-gray-600 px-3 py-2 rounded-md">
@@ -144,7 +144,7 @@ const AddShows = () => {
               </div>
             </div>
             
-        {/* Date & Time Selection */}
+        {}
         <div className="mt-6">
             <label className="block text-sm font-medium mb-2">Select Date and Time</label>
             <div className="inline-flex gap-5 border border-gray-600 p-1 pl-3 rounded-lg">
@@ -155,7 +155,7 @@ const AddShows = () => {
           </div>
         </div>
         
-       {/* Display Selected Times */}
+       {}
         {Object.keys(dateTimeSelection).length > 0 && (
         <div className="mt-6">
             <h2 className=" mb-2">Selected Date-Time</h2>

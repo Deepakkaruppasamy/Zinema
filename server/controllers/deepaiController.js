@@ -3,11 +3,9 @@ import fetch from 'node-fetch'
 import Movie from '../models/Movie.js'
 import Show from '../models/Show.js'
 
-// Initialize Google Generative AI with error handling
 let GoogleGenerativeAI;
 let genAI;
 
-// Lazy load the Google Generative AI package
 async function getGenerativeAI() {
   if (!GoogleGenerativeAI) {
     try {
@@ -29,7 +27,6 @@ async function getGenerativeAI() {
   return genAI;
 }
 
-// Health check function
 export const checkAIServiceHealth = async () => {
   try {
     if (!process.env.GEMINI_API_KEY) {
@@ -40,11 +37,9 @@ export const checkAIServiceHealth = async () => {
       };
     }
     
-    // Test a simple request to verify the API key works
     const genAI = await getGenerativeAI();
     const model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || 'gemini-1.5-pro' });
     
-    // Test with a simple prompt
     const result = await model.generateContent('Ping');
     const response = await result.response;
     
@@ -63,7 +58,6 @@ export const checkAIServiceHealth = async () => {
   }
 };
 
-// Use a model alias that Google serves consistently on v1beta
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash'
 
 function buildPrompt(messages = [], userProfile = {}) {
@@ -106,7 +100,6 @@ function buildPrompt(messages = [], userProfile = {}) {
     ...messages.map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] })),
   ]
 
-  // Add user profile to history if available
   if (userProfile && (userProfile.name || userProfile.email)) {
     history.unshift({ 
       role: 'user', 
@@ -121,7 +114,6 @@ function buildPrompt(messages = [], userProfile = {}) {
 
 export async function deepaiChat(req, res) {
   try {
-    // Check if API key is configured
     if (!process.env.GEMINI_API_KEY) {
       console.error('GEMINI_API_KEY is not configured');
       return res.status(503).json({
@@ -132,7 +124,6 @@ export async function deepaiChat(req, res) {
       });
     }
 
-    // Validate request body
     const { messages = [], user = {} } = req.body || {};
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({
@@ -144,7 +135,6 @@ export async function deepaiChat(req, res) {
     }
 
     try {
-      // Initialize the Generative AI client
       const genAI = await getGenerativeAI();
       const model = genAI.getGenerativeModel({ 
         model: GEMINI_MODEL,
@@ -156,10 +146,8 @@ export async function deepaiChat(req, res) {
         },
       });
 
-      // Build the prompt
       const contents = buildPrompt(messages, user);
       
-      // Generate content
       const result = await model.generateContent({
         contents,
         safetySettings: [
@@ -182,7 +170,6 @@ export async function deepaiChat(req, res) {
         ],
       });
 
-      // Get the response text
       const response = await result.response;
       const text = response.text();
 
@@ -196,7 +183,6 @@ export async function deepaiChat(req, res) {
     } catch (error) {
       console.error('Error generating content with Gemini:', error);
       
-      // Handle specific Gemini API errors
       if (error.message.includes('API key not valid')) {
         return res.status(401).json({
           success: false,
@@ -225,7 +211,6 @@ export async function deepaiChat(req, res) {
         });
       }
 
-      // For other errors, return a generic error message
       return res.status(500).json({
         success: false,
         code: 'INTERNAL_SERVER_ERROR',
@@ -247,12 +232,9 @@ export async function deepaiChat(req, res) {
   }
 }
 
-// --- Helper functions for the 4 core functions ---
 
-// 1. Show available movies
 async function getAvailableMovies() {
   try {
-    // Get movies from local database that have upcoming shows
     const upcomingShows = await Show.find({ showDateTime: { $gte: new Date() } })
       .populate('movie')
       .sort({ showDateTime: 1 })
@@ -269,21 +251,20 @@ async function getAvailableMovies() {
       }
     })
     
-    return Array.from(uniqueMovies.values()).slice(0, 20) // Limit to 20 movies
+    return Array.from(uniqueMovies.values()).slice(0, 20)
   } catch (error) {
     console.error('Error fetching available movies:', error)
     return []
   }
 }
 
-// 2. Show available seats
 async function getSeatAvailability(showId) {
   try {
     const show = await Show.findById(showId).populate('movie').lean()
     if (!show) return { available: false, totalSeats: 0, availableSeats: 0, movie: null }
     
     const occupied = show.occupiedSeats || {}
-    const totalSeats = 100 // Assuming 100 seats per theater
+    const totalSeats = 100
     const occupiedCount = Object.keys(occupied).length
     const availableSeats = Math.max(0, totalSeats - occupiedCount)
     
@@ -302,7 +283,6 @@ async function getSeatAvailability(showId) {
   }
 }
 
-// 3. Suggest best movies from internet (Gemini-only, no external browsing)
 async function getInternetMovieRecommendations(genre = null) {
   try {
     const apiKey = process.env.GEMINI_API_KEY
@@ -340,7 +320,6 @@ Return ONLY a JSON array named movies. Each item must have:
   }
 }
 
-// 4. Compare movies (Gemini-only, no external browsing)
 async function compareMovies(movieTitles) {
   try {
     if (!movieTitles || movieTitles.length < 2) {
@@ -415,7 +394,6 @@ export async function deepaiAssistant(req, res) {
       const text = await resp.text().catch(() => '')
       console.error(`Gemini API Error in assistant (${resp.status}):`, text)
       
-      // Provide more specific error messages
       if (resp.status === 404) {
         return res.status(502).json({ 
           error: 'Gemini model not found', 
@@ -439,7 +417,6 @@ export async function deepaiAssistant(req, res) {
     const entities = parsedIntent?.entities || {}
     let payload = {}
 
-    // Handle intents
     if (intent === 'show_movies') {
       const movies = await getAvailableMovies()
       payload = { movies }
@@ -453,7 +430,6 @@ export async function deepaiAssistant(req, res) {
       const comparison = await compareMovies(entities.movieTitles)
       payload = { comparison }
     } else if (intent === 'opinions') {
-      // Gemini-only opinionated guidance
       const apiKey = process.env.GEMINI_API_KEY
       const topic = (messages?.slice(-1)?.[0]?.text || '').slice(0, 500)
       const prompt = `Give a brief opinionated recommendation with pros/cons and a final suggestion about: ${topic}. Return under 100 words.`
@@ -463,7 +439,6 @@ export async function deepaiAssistant(req, res) {
       const text2 = data2?.candidates?.[0]?.content?.parts?.[0]?.text || ''
       payload = { opinion: text2.trim() }
     } else if (intent === 'site_qna') {
-      // Lightweight site Q&A based on keywords
       const q = (entities.question || messages?.slice(-1)?.[0]?.text || '').toLowerCase()
       let answer = ''
       if (q.includes('booking') || q.includes('tickets')) answer = 'Go to Movies → pick a show → select seats → checkout.'
@@ -477,7 +452,6 @@ export async function deepaiAssistant(req, res) {
       const target = map[page] || '/'
       payload = { nav: { target } }
     } else if (intent === 'knowledge') {
-      // General movie knowledge via Gemini
       const apiKey = process.env.GEMINI_API_KEY
       const q = (messages?.slice(-1)?.[0]?.text || '').slice(0, 500)
       const prompt = `Answer briefly (<=100 words): ${q}`
@@ -487,7 +461,6 @@ export async function deepaiAssistant(req, res) {
       const text2 = data2?.candidates?.[0]?.content?.parts?.[0]?.text || ''
       payload = { answer: text2.trim() }
     } else if (intent === 'save_preferences') {
-      // Persist minimal preferences if model provides them (genres/languages)
       try {
         const UserPreferences = (await import('../models/UserPreferences.js')).default
         const userId = user?.id || req.auth?.()?.userId || 'anonymous'
@@ -507,7 +480,6 @@ export async function deepaiAssistant(req, res) {
         payload = { saved: false }
       }
     } else if (intent === 'notify_me') {
-      // Create a lightweight reminder if showId provided
       const minutes = Math.max(5, Number(entities.minutesBefore || 30))
       const showId = entities.showId
       if (!showId) {
@@ -536,7 +508,6 @@ export async function deepaiAssistant(req, res) {
         }
       }
     } else {
-      // Fallback: general Q&A via Gemini (act like Gemini)
       const apiKey = process.env.GEMINI_API_KEY
       const q = (messages?.slice(-1)?.[0]?.text || '').slice(0, 1000)
       const prompt = `Answer clearly and concisely (<=120 words): ${q}`

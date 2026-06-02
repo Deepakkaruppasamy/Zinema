@@ -9,7 +9,7 @@ const MyCollectionSection = () => {
     if (user) fetchFavoriteMovies();
   }, [user, fetchFavoriteMovies]);
 
-  if (!user) return null; // show only for signed-in users
+  if (!user) return null;
 
   return (
     <section className="px-6 md:px-16 lg:px-36 xl:px-44 mt-16">

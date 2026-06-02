@@ -15,7 +15,6 @@ const SmartSeatSelector = ({ showId, onSeatSelect, selectedSeats = [] }) => {
     preferences: []
   });
 
-  // Mock seat data - replace with actual API call
   useEffect(() => {
     const generateSeats = () => {
       const seatData = [];
@@ -36,7 +35,7 @@ const SmartSeatSelector = ({ showId, onSeatSelect, selectedSeats = [] }) => {
             y: rowIndex,
             price: price,
             available: Math.random() > 0.3,
-            accessibility: rowIndex === 0 || rowIndex === 9, // First and last rows
+            accessibility: rowIndex === 0 || rowIndex === 9,
             soundQuality: Math.max(0, 10 - distance),
             viewAngle: Math.max(0, 90 - (Math.abs(seatNum - 10) * 5)),
             groupFriendly: seatNum % 2 === 0
@@ -51,7 +50,6 @@ const SmartSeatSelector = ({ showId, onSeatSelect, selectedSeats = [] }) => {
     setLoading(false);
   }, [showId]);
 
-  // AI-powered seat recommendations
   const calculateRecommendations = useMemo(() => {
     if (!seats.length) return [];
 
@@ -60,27 +58,21 @@ const SmartSeatSelector = ({ showId, onSeatSelect, selectedSeats = [] }) => {
       .map(seat => {
         let score = 0;
         
-        // Price score (lower is better)
         const maxPrice = Math.max(...seats.map(s => s.price));
         score += (1 - seat.price / maxPrice) * 30;
         
-        // Sound quality score
         score += (seat.soundQuality / 10) * 25;
         
-        // View angle score
         score += (seat.viewAngle / 90) * 25;
         
-        // Accessibility score
         if (filters.accessibility && seat.accessibility) {
           score += 20;
         }
         
-        // Group-friendly score
         if (filters.groupSize > 1 && seat.groupFriendly) {
           score += 15;
         }
         
-        // Distance from center (optimal viewing distance)
         const optimalDistance = 5;
         const distanceScore = Math.max(0, 10 - Math.abs(seat.y - optimalDistance));
         score += distanceScore * 2;
@@ -130,7 +122,7 @@ const SmartSeatSelector = ({ showId, onSeatSelect, selectedSeats = [] }) => {
 
   return (
     <div className="space-y-6">
-      {/* AI Recommendations */}
+      {}
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl border border-blue-200">
         <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
           <Zap className="w-5 h-5 text-blue-600" />
@@ -169,7 +161,7 @@ const SmartSeatSelector = ({ showId, onSeatSelect, selectedSeats = [] }) => {
         </div>
       </div>
 
-      {/* Filters */}
+      {}
       <div className="bg-gray-50 p-4 rounded-lg">
         <h4 className="font-medium text-gray-800 mb-3">Smart Filters</h4>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -234,7 +226,7 @@ const SmartSeatSelector = ({ showId, onSeatSelect, selectedSeats = [] }) => {
         </div>
       </div>
 
-      {/* Seat Map */}
+      {}
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
         <div className="flex items-center justify-between mb-4">
           <h4 className="font-medium text-gray-800">Theater Layout</h4>
@@ -258,14 +250,14 @@ const SmartSeatSelector = ({ showId, onSeatSelect, selectedSeats = [] }) => {
           </div>
         </div>
 
-        {/* Screen */}
+        {}
         <div className="text-center mb-4">
           <div className="inline-block bg-gray-800 text-white px-8 py-2 rounded-lg">
             🎬 SCREEN 🎬
           </div>
         </div>
 
-        {/* Seats Grid */}
+        {}
         <div className="grid grid-cols-20 gap-1 max-w-4xl mx-auto">
           {seats.map((seat) => (
             <button
@@ -290,13 +282,13 @@ const SmartSeatSelector = ({ showId, onSeatSelect, selectedSeats = [] }) => {
           ))}
         </div>
 
-        {/* Legend */}
+        {}
         <div className="mt-4 text-xs text-gray-500 text-center">
           <p>♿ = Accessibility | 👥 = Group Friendly | 🔊 = Great Sound</p>
         </div>
       </div>
 
-      {/* AR Preview Modal */}
+      {}
       {showAR && selectedSeat && (
         <ARSeatPreview
           isOpen={showAR}

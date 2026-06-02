@@ -55,15 +55,12 @@ export default function DeepAI() {
     { label: 'Site Help', text: 'How do I find my bookings?' },
   ]), [])
 
-  // Lightweight local intent handling before calling backend
   const localIntent = (text) => {
     const q = text.toLowerCase()
     const genres = ['action','adventure','animation','biography','comedy','crime','documentary','drama','family','fantasy','history','horror','mystery','romance','sci-fi','sport','thriller','war','western']
     const matchedGenre = genres.find(g => q.includes(g) || q.includes(g.replace('-', ' ')))
 
-    // If user asks for available seats
     if (q.includes('available seat') || q.includes('show seat') || q.includes('check seat')) {
-      // try to find the most recent title mentioned in chat
       const lastUserMovie = [...messages].reverse().map(m => m.text.toLowerCase()).find(t => shows.some(s => (s.title||'').toLowerCase() && t.includes((s.title||'').toLowerCase())))
       const title = lastUserMovie ? (shows.find(s => lastUserMovie.includes((s.title||'').toLowerCase()))?.title) : null
       if (!title) {
@@ -77,7 +74,6 @@ export default function DeepAI() {
       return `Seats for ${title}: next showtimes ${times}. Open seat map? <nav target="/movies/${match._id}/${todayKey}">`
     }
 
-    // Genre-based discovery
     if (matchedGenre) {
       const list = shows.filter(s => (s.genre||'').toLowerCase().includes(matchedGenre)).slice(0,6)
       if (!list.length) return null
@@ -96,13 +92,11 @@ export default function DeepAI() {
         return
       }
       const history = messages.map(m => ({ role: m.from === 'user' ? 'user' : 'assistant', text: m.text })).slice(-10)
-      // Prefer structured assistant endpoint when available
       const payload = await api.post('/api/deepai/assistant', {
         messages: history.concat([{ role: 'user', text: userText }])
       })
       const data = payload?.data
       const text = data?.text || data?.data?.answer || data?.data?.opinion || 'Sorry, I could not find an answer.'
-      // Lightweight navigation tag support: <nav target="/favorite">
       const navMatch = text.match(/<nav\s+target="([^"]+)"\s*>/i)
       if (navMatch && navMatch[1]) {
         navigate(navMatch[1])
@@ -113,7 +107,6 @@ export default function DeepAI() {
       setShowBanner(true)
       let errorMessage = 'Assistant is temporarily unavailable. I will use local suggestions for now.'
       
-      // More specific error handling
       if (e?.response?.status === 500) {
         errorMessage = 'DeepAI service is not configured properly. Please contact support.'
       } else if (e?.response?.status === 502) {

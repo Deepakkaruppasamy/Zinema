@@ -53,7 +53,6 @@ const OneClickRebooking = ({ previousBooking, isOpen, onClose }) => {
           });
         });
         
-        // Filter shows based on preferences
         let filteredShows = allShows;
         
         if (rebookingOptions.sameTime) {
@@ -64,14 +63,11 @@ const OneClickRebooking = ({ previousBooking, isOpen, onClose }) => {
         }
         
         if (rebookingOptions.sameSeats) {
-          // Check if same seats are available
           filteredShows = filteredShows.filter(show => {
-            // This would check seat availability in a real implementation
             return true;
           });
         }
         
-        // Sort by date and time
         filteredShows.sort((a, b) => new Date(a.time) - new Date(b.time));
         
         setAvailableShows(filteredShows);
@@ -88,7 +84,6 @@ const OneClickRebooking = ({ previousBooking, isOpen, onClose }) => {
     if (!show) return;
     
     try {
-      // Navigate to seat selection with pre-selected seats
       const seatParams = rebookingOptions.sameSeats ? 
         previousBooking.bookedSeats.join(',') : '';
       
@@ -107,7 +102,6 @@ const OneClickRebooking = ({ previousBooking, isOpen, onClose }) => {
       return;
     }
     
-    // Find the best match
     const bestMatch = availableShows.find(show => {
       if (rebookingOptions.sameTime) {
         const originalTime = new Date(previousBooking.show.showDateTime).toTimeString();
@@ -146,7 +140,7 @@ const OneClickRebooking = ({ previousBooking, isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
       <div className="bg-gray-900 rounded-lg border border-white/10 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between p-6 border-b border-white/10">
           <div className="flex items-center gap-3">
             <RotateCcw className="w-6 h-6 text-blue-400" />
@@ -160,7 +154,7 @@ const OneClickRebooking = ({ previousBooking, isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Previous Booking Info */}
+        {}
         <div className="p-6 border-b border-white/10">
           <h4 className="text-lg font-medium text-white mb-4">Previous Booking</h4>
           <div className="bg-gray-800/50 p-4 rounded-lg space-y-2">
@@ -185,7 +179,7 @@ const OneClickRebooking = ({ previousBooking, isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Rebooking Options */}
+        {}
         <div className="p-6 border-b border-white/10">
           <h4 className="text-lg font-medium text-white mb-4">Rebooking Preferences</h4>
           <div className="space-y-3">
@@ -243,7 +237,7 @@ const OneClickRebooking = ({ previousBooking, isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Available Shows */}
+        {}
         <div className="p-6">
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-medium text-white">Available Shows</h4>
@@ -324,7 +318,7 @@ const OneClickRebooking = ({ previousBooking, isOpen, onClose }) => {
           )}
         </div>
 
-        {/* Quick Actions */}
+        {}
         <div className="p-6 border-t border-white/10">
           <div className="flex gap-3">
             <button

@@ -39,19 +39,15 @@ const app = express();
 const port = process.env.PORT || 5000;
 const __dirname = path.resolve();
 
-// Connect to database
 connectDB().catch(console.error);
 
-// Create public directory if it doesn't exist
 const publicDir = path.join(__dirname, 'public');
 if (!fs.existsSync(publicDir)) {
     fs.mkdirSync(publicDir, { recursive: true });
 }
 
-// Stripe webhooks (MUST be before express.json() middleware)
 app.use('/api/stripe', express.raw({type: 'application/json'}), stripeWebhooks);
 
-// Middleware
 app.use(express.json())
 const staticAllowed = new Set([
   'https://zinema-mu.vercel.app',
@@ -77,15 +73,12 @@ app.use(cors({
 }))
 app.use(clerkMiddleware())
 
-// Serve static files from public directory
 app.use(express.static(publicDir));
 
-// Favicon handler
 app.get('/favicon.ico', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'favicon.ico'));
 });
 
-// API Routes
 app.get('/', (req, res) => {
     console.log('Root route accessed');
     res.json({ 
@@ -95,7 +88,6 @@ app.get('/', (req, res) => {
     });
 });
 
-// Test endpoint
 app.get('/test', (req, res) => {
     res.json({ 
         message: 'Test endpoint working!', 
@@ -128,7 +120,6 @@ app.use('/api/feedback', feedbackRouter);
 app.use('/api/events', eventRouter);
 app.use('/api/event-registrations', eventRegistrationRouter);
 
-// Simple TMDB image proxy to avoid CORS and allow canvas operations
 app.get('/api/tmdb-image', async (req, res) => {
   try {
     const pathParam = req.query.path || '';
@@ -140,7 +131,6 @@ app.get('/api/tmdb-image', async (req, res) => {
     if (!upstreamRes.ok) {
       return res.status(upstreamRes.status).end();
     }
-    // Forward content-type; default to image/jpeg
     const contentType = upstreamRes.headers.get('content-type') || 'image/jpeg';
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', 'public, max-age=86400, immutable');
@@ -151,9 +141,7 @@ app.get('/api/tmdb-image', async (req, res) => {
   }
 });
 
-// Stripe webhooks moved to top of file (before express.json() middleware)
 
-// Catch-all handler for undefined routes
 app.use((req, res) => {
     res.status(404).json({ 
         error: 'Route not found',
@@ -176,21 +164,17 @@ app.use((req, res) => {
     });
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ error: 'Internal server error' });
 });
 
-// Start the server
 const server = app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
     
-    // Start pricing alert service
     startPricingAlertService();
 });
 
-// Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
     console.error('Unhandled Rejection:', err);
     server.close(() => {

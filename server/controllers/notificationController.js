@@ -1,7 +1,6 @@
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 
-// Get notifications for a user
 export const getUserNotifications = async (req, res) => {
   try {
     const userId = req.user?.userId || 'demo-user';
@@ -9,7 +8,6 @@ export const getUserNotifications = async (req, res) => {
     
     const query = { isActive: true };
     
-    // Add target audience filter
     query.$or = [
       { targetAudience: 'all' },
       { targetAudience: 'premium', 'readBy.userId': { $ne: userId } },
@@ -27,7 +25,6 @@ export const getUserNotifications = async (req, res) => {
       .populate('movieId', 'title poster_path')
       .lean();
     
-    // Mark which notifications are read by this user
     const notificationsWithReadStatus = notifications.map(notification => ({
       ...notification,
       isRead: notification.readBy.some(read => read.userId === userId),
@@ -48,7 +45,6 @@ export const getUserNotifications = async (req, res) => {
   } catch (error) {
     console.error('Error fetching notifications:', error);
     
-    // Return empty notifications on database timeout to prevent UI issues
     if (error.name === 'MongooseError' && error.message.includes('buffering timed out')) {
       return res.json({
         success: true,
@@ -65,7 +61,6 @@ export const getUserNotifications = async (req, res) => {
   }
 };
 
-// Mark notification as read
 export const markNotificationAsRead = async (req, res) => {
   try {
     const userId = req.user?.userId || 'demo-user';
@@ -76,7 +71,6 @@ export const markNotificationAsRead = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Notification not found' });
     }
     
-    // Check if already read
     const alreadyRead = notification.readBy.some(read => read.userId === userId);
     if (!alreadyRead) {
       notification.readBy.push({
@@ -93,7 +87,6 @@ export const markNotificationAsRead = async (req, res) => {
   }
 };
 
-// Mark all notifications as read
 export const markAllNotificationsAsRead = async (req, res) => {
   try {
     const userId = req.user?.userId || 'demo-user';
@@ -120,7 +113,6 @@ export const markAllNotificationsAsRead = async (req, res) => {
   }
 };
 
-// Create notification (Admin only)
 export const createNotification = async (req, res) => {
   try {
     const {
@@ -136,7 +128,6 @@ export const createNotification = async (req, res) => {
     
     const createdBy = req.user?.userId || 'admin';
     
-    // Only include movieId if it's a valid non-empty string
     const notificationData = {
       title,
       message,
@@ -148,7 +139,6 @@ export const createNotification = async (req, res) => {
       createdBy
     };
     
-    // Only add movieId if it's provided and not empty
     if (movieId && movieId.trim() !== '') {
       notificationData.movieId = movieId;
     }
@@ -165,7 +155,6 @@ export const createNotification = async (req, res) => {
   } catch (error) {
     console.error('Error creating notification:', error);
     
-    // Provide more specific error messages
     if (error.name === 'ValidationError') {
       return res.status(400).json({ 
         success: false, 
@@ -178,7 +167,6 @@ export const createNotification = async (req, res) => {
   }
 };
 
-// Get all notifications (Admin only)
 export const getAllNotifications = async (req, res) => {
   try {
     const { page = 1, limit = 20, type, priority, isActive } = req.query;
@@ -212,13 +200,11 @@ export const getAllNotifications = async (req, res) => {
   }
 };
 
-// Update notification (Admin only)
 export const updateNotification = async (req, res) => {
   try {
     const { notificationId } = req.params;
     const updateData = { ...req.body };
     
-    // Handle empty movieId - remove it from updateData if empty
     if (updateData.movieId !== undefined && (updateData.movieId === '' || updateData.movieId === null)) {
       updateData.$unset = { movieId: 1 };
       delete updateData.movieId;
@@ -245,7 +231,6 @@ export const updateNotification = async (req, res) => {
   }
 };
 
-// Delete notification (Admin only)
 export const deleteNotification = async (req, res) => {
   try {
     const { notificationId } = req.params;
@@ -262,7 +247,6 @@ export const deleteNotification = async (req, res) => {
   }
 };
 
-// Get notification stats (Admin only)
 export const getNotificationStats = async (req, res) => {
   try {
     const total = await Notification.countDocuments();

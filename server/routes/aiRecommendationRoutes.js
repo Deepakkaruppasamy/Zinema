@@ -9,7 +9,6 @@ import {
 
 const router = express.Router();
 
-// AI recommendation routes
 router.get('/ai-recommendations', protectAdmin, getAIRecommendations);
 router.get('/similar/:movieId', getSimilarMovies);
 router.get('/trending', getTrendingMovies);

@@ -17,7 +17,6 @@ const AISeatRecommendation = ({ showId, onSeatSelect, userPreferences = {} }) =>
   const fetchSeatRecommendations = async () => {
     setLoading(true);
     try {
-      // Simulate API call to get AI recommendations
       const mockRecommendations = [
         {
           id: 1,
@@ -73,7 +72,6 @@ const AISeatRecommendation = ({ showId, onSeatSelect, userPreferences = {} }) =>
         }
       ];
 
-      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       setRecommendations(mockRecommendations);
     } catch (error) {

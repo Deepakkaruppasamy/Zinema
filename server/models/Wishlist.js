@@ -31,7 +31,6 @@ const wishlistSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Compound index to ensure unique user-movie combinations
 wishlistSchema.index({ userId: 1, movieId: 1 }, { unique: true });
 
 export default mongoose.model('Wishlist', wishlistSchema);

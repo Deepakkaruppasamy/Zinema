@@ -2,7 +2,6 @@ import Wishlist from '../models/Wishlist.js';
 import Reminder from '../models/Reminder.js';
 import Movie from '../models/Movie.js';
 
-// Get user wishlist
 export const getWishlist = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -22,13 +21,11 @@ export const getWishlist = async (req, res) => {
   }
 };
 
-// Add to wishlist
 export const addToWishlist = async (req, res) => {
   try {
     const { userId } = req.user;
     const { movieId, movieTitle, moviePoster, genre, rating, priority, notes, tags } = req.body;
     
-    // Check if already in wishlist
     const existing = await Wishlist.findOne({ userId, movieId });
     if (existing) {
       return res.status(400).json({
@@ -65,7 +62,6 @@ export const addToWishlist = async (req, res) => {
   }
 };
 
-// Remove from wishlist
 export const removeFromWishlist = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -93,7 +89,6 @@ export const removeFromWishlist = async (req, res) => {
   }
 };
 
-// Update wishlist item
 export const updateWishlistItem = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -127,7 +122,6 @@ export const updateWishlistItem = async (req, res) => {
   }
 };
 
-// Get user reminders
 export const getReminders = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -147,7 +141,6 @@ export const getReminders = async (req, res) => {
   }
 };
 
-// Create reminder
 export const createReminder = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -180,7 +173,6 @@ export const createReminder = async (req, res) => {
   }
 };
 
-// Update reminder
 export const updateReminder = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -214,7 +206,6 @@ export const updateReminder = async (req, res) => {
   }
 };
 
-// Delete reminder
 export const deleteReminder = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -242,7 +233,6 @@ export const deleteReminder = async (req, res) => {
   }
 };
 
-// Get reminder statistics
 export const getReminderStats = async (req, res) => {
   try {
     const { userId } = req.user;

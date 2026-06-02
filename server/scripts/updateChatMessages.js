@@ -8,7 +8,6 @@ const updateChatMessages = async () => {
     await connectDB();
     console.log('Connected to database');
     
-    // Update existing messages to include email field
     const result = await ChatMessage.updateMany(
       { 'sender.email': { $exists: false } },
       { $set: { 'sender.email': 'demo@example.com' } }
@@ -16,7 +15,6 @@ const updateChatMessages = async () => {
     
     console.log('Updated', result.modifiedCount, 'messages with email field');
     
-    // Also update the sender name to be more descriptive
     await ChatMessage.updateMany(
       { 'sender.name': 'Demo User' },
       { $set: { 'sender.name': 'Demo User', 'sender.email': 'demo@example.com' } }
@@ -24,7 +22,6 @@ const updateChatMessages = async () => {
     
     console.log('Updated Demo User messages');
     
-    // Show current messages
     const messages = await ChatMessage.find({});
     console.log('Current messages:');
     messages.forEach(msg => {

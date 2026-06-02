@@ -55,23 +55,17 @@ export const stripeWebhooks = async (request, response)=>{
 
                 console.log(`Booking updated successfully: ${bookingId}`);
 
-                // Track green ticketing donation
                 if (booking.greenTicketingDonation > 0) {
                     console.log(`Green donation processed: ₹${booking.greenTicketingDonation} for booking ${bookingId}`);
-                    // Here you could add logic to track total environmental donations
-                    // The frontend will handle updating the green ticketing totals via localStorage
                 }
 
-                // Update gamification stats for payment completion
                 try {
-                    await updateBookingStats(booking.userId, booking.amount, booking.bookedSeats.length > 1, true); // true = payment completion
+                    await updateBookingStats(booking.userId, booking.amount, booking.bookedSeats.length > 1, true);
                     console.log("Gamification stats updated for payment");
                 } catch (error) {
                     console.error("Error updating gamification stats:", error);
-                    // Don't fail the webhook for gamification errors
                 }
 
-                // Send Confirmation Email
                 try {
                     console.log("📧 Sending Inngest event for booking:", bookingId);
                     const inngestResult = await inngest.send({
@@ -81,7 +75,6 @@ export const stripeWebhooks = async (request, response)=>{
                     console.log("✅ Confirmation email queued successfully:", inngestResult);
                 } catch (error) {
                     console.error("❌ Error sending confirmation email:", error);
-                    // Don't fail the webhook for email errors
                 }
                 
                 break;

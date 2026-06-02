@@ -69,7 +69,6 @@ const PersonalizedSuggestions = () => {
       }
     } catch (error) {
       console.error('Error loading suggestions:', error);
-      // Fallback to basic suggestions
       loadBasicSuggestions();
     } finally {
       setLoading(false);
@@ -81,7 +80,6 @@ const PersonalizedSuggestions = () => {
       const { data } = await axios.get('/api/show/all');
       const movies = data.shows || [];
       
-      // Basic categorization
       const now = new Date();
       const recentMovies = movies.filter(movie => {
         const releaseDate = new Date(movie.release_date);
@@ -110,7 +108,7 @@ const PersonalizedSuggestions = () => {
     try {
       await axios.post('/api/user/feedback', {
         movieId,
-        type, // 'like', 'dislike', 'view'
+        type,
         timestamp: new Date()
       }, {
         headers: { Authorization: `Bearer ${await getToken()}` }
@@ -119,7 +117,6 @@ const PersonalizedSuggestions = () => {
       setFeedback(prev => ({ ...prev, [movieId]: type }));
       toast.success('Feedback recorded!');
       
-      // Refresh suggestions based on feedback
       setTimeout(() => {
         loadPersonalizedSuggestions();
       }, 1000);
@@ -137,7 +134,6 @@ const PersonalizedSuggestions = () => {
       setUserPreferences(prev => ({ ...prev, ...newPreferences }));
       toast.success('Preferences updated!');
       
-      // Refresh suggestions
       loadPersonalizedSuggestions();
     } catch (error) {
       console.error('Error updating preferences:', error);
@@ -170,7 +166,7 @@ const PersonalizedSuggestions = () => {
           <div key={movie._id} className="relative group">
             <MovieCard movie={movie} />
             
-            {/* Feedback Buttons */}
+            {}
             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <div className="flex gap-1">
                 <button
@@ -211,7 +207,7 @@ const PersonalizedSuggestions = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Sparkles className="w-6 h-6 text-purple-400" />
@@ -227,7 +223,7 @@ const PersonalizedSuggestions = () => {
         </button>
       </div>
 
-      {/* Tabs */}
+      {}
       <div className="flex flex-wrap gap-2 border-b border-white/10">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -253,12 +249,12 @@ const PersonalizedSuggestions = () => {
         })}
       </div>
 
-      {/* Content */}
+      {}
       <div className="min-h-[400px]">
         {getTabContent()}
       </div>
 
-      {/* AI Insights */}
+      {}
       <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-lg border border-purple-500/30 p-6">
         <div className="flex items-center gap-3 mb-4">
           <Brain className="w-6 h-6 text-purple-400" />
@@ -280,7 +276,7 @@ const PersonalizedSuggestions = () => {
         </div>
       </div>
 
-      {/* Preferences Panel */}
+      {}
       <div className="bg-gray-800/50 rounded-lg border border-white/10 p-6">
         <div className="flex items-center gap-3 mb-4">
           <Filter className="w-5 h-5 text-blue-400" />

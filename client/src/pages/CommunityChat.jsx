@@ -11,15 +11,12 @@ import { useAuth } from '@clerk/clerk-react';
 
 const CommunityChat = () => {
   const { user } = useAppContext();
-  const { userId, getToken } = useAuth(); // Clerk user ID and token
+  const { userId, getToken } = useAuth();
   
-  // Get user display name (email or name)
   const getUserDisplayName = (sender) => {
     if (sender.userId === (userId || 'demo-user')) {
-      // For current user, show their actual email from Clerk
       return user?.emailAddresses?.[0]?.emailAddress || user?.primaryEmailAddress?.emailAddress || 'You';
     }
-    // For other users, show their email if available, otherwise fall back to name
     return sender.email || sender.name || 'Unknown User';
   };
   
@@ -36,7 +33,7 @@ const CommunityChat = () => {
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [chatStats, setChatStats] = useState({ totalMessages: 0, todayMessages: 0, activeUsers: 0 });
-  const [filterType, setFilterType] = useState('all'); // all, movie, spoiler, question
+  const [filterType, setFilterType] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [pinnedMessages, setPinnedMessages] = useState([]);
@@ -46,7 +43,6 @@ const CommunityChat = () => {
   useEffect(() => {
     fetchMessages();
     fetchChatStats();
-    // Poll for new messages every 3 seconds
     const interval = setInterval(() => {
       fetchMessages();
       fetchChatStats();
@@ -54,16 +50,6 @@ const CommunityChat = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Remove automatic scrolling completely
-  // useEffect(() => {
-  //   // Only scroll to bottom when new messages are added, not on initial load
-  //   if (messages.length > 0 && !isInitialLoad) {
-  //     scrollToBottom();
-  //   }
-  //   if (isInitialLoad && messages.length > 0) {
-  //     setIsInitialLoad(false);
-  //   }
-  // }, [messages.length, isInitialLoad]);
 
   const fetchMessages = async () => {
     try {
@@ -97,7 +83,6 @@ const CommunityChat = () => {
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
-      // Handle file upload logic here
       console.log('File selected:', file);
     }
   };
@@ -331,7 +316,7 @@ const CommunityChat = () => {
                 )}
               </div>
               
-              {/* Enhanced Message Actions */}
+              {}
               <div className="flex items-center space-x-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <button
                   onClick={() => likeMessage(message._id)}
@@ -384,7 +369,7 @@ const CommunityChat = () => {
                 </button>
               </div>
               
-              {/* Enhanced Replies */}
+              {}
               {message.replies.length > 0 && (
                 <div className="mt-4 ml-6 space-y-3 border-l-2 border-gray-100 pl-4">
                   {message.replies.map((reply, replyIndex) => (
@@ -426,7 +411,7 @@ const CommunityChat = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100">
-      {/* Enhanced Header */}
+      {}
       <div className="bg-white/80 backdrop-blur-sm shadow-lg border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -437,7 +422,7 @@ const CommunityChat = () => {
               <p className="text-gray-600 mt-1">Connect with fellow movie lovers and share your thoughts</p>
             </div>
             
-            {/* Chat Stats */}
+            {}
             <div className="hidden md:flex items-center space-x-6">
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">{chatStats.totalMessages}</div>
@@ -458,9 +443,9 @@ const CommunityChat = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar */}
+          {}
           <div className="lg:col-span-1 space-y-4">
-            {/* Search and Filters */}
+            {}
             <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4">
               <div className="flex items-center space-x-2 mb-4">
                 <div className="relative flex-1">
@@ -499,7 +484,7 @@ const CommunityChat = () => {
               </div>
             </div>
 
-            {/* Online Users */}
+            {}
             <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4">
               <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
                 <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
@@ -521,7 +506,7 @@ const CommunityChat = () => {
               </div>
             </div>
 
-            {/* Pinned Messages */}
+            {}
             {pinnedMessages.length > 0 && (
               <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4">
                 <h3 className="font-semibold text-gray-700 mb-3 flex items-center">
@@ -540,10 +525,10 @@ const CommunityChat = () => {
             )}
           </div>
 
-          {/* Main Chat Area */}
+          {}
           <div className="lg:col-span-3">
             <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden">
-              {/* Messages Header */}
+              {}
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -567,9 +552,9 @@ const CommunityChat = () => {
                 </div>
               </div>
 
-                  {/* Messages */}
+                  {}
                   <div className="h-96 overflow-y-auto p-4 space-y-4 relative">
-                    {/* Scroll to bottom button */}
+                    {}
                     {messages.length > 5 && (
                       <button
                         onClick={scrollToBottom}
@@ -593,7 +578,7 @@ const CommunityChat = () => {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Enhanced Message Input */}
+              {}
               <div className="border-t border-gray-200 p-4 bg-gray-50/50">
                 {replyingTo && (
                   <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -663,7 +648,7 @@ const CommunityChat = () => {
                         </div>
                       </div>
                       
-                      {/* Emoji Picker */}
+                      {}
                       {showEmojiPicker && (
                         <div className="absolute bottom-16 right-0 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-10">
                           <div className="grid grid-cols-6 gap-2">
@@ -680,7 +665,7 @@ const CommunityChat = () => {
                         </div>
                       )}
 
-                      {/* Attachment Menu */}
+                      {}
                       {showAttachmentMenu && (
                         <div className="absolute bottom-16 right-0 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-10">
                           <div className="space-y-2">

@@ -10,7 +10,6 @@ const NotificationBell = () => {
 
   useEffect(() => {
     fetchNotifications();
-    // Poll for new notifications every 30 seconds
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -81,7 +80,7 @@ const NotificationBell = () => {
 
   return (
     <div className="relative">
-      {/* Notification Bell */}
+      {}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors"
@@ -94,10 +93,10 @@ const NotificationBell = () => {
         )}
       </button>
 
-      {/* Notification Dropdown */}
+      {}
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-          {/* Header */}
+          {}
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
@@ -120,7 +119,7 @@ const NotificationBell = () => {
             </div>
           </div>
 
-          {/* Notifications List */}
+          {}
           <div className="max-h-96 overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="p-4 text-center text-gray-500">
@@ -169,7 +168,7 @@ const NotificationBell = () => {
             )}
           </div>
 
-          {/* Footer */}
+          {}
           {notifications.length > 0 && (
             <div className="p-4 border-t border-gray-200">
               <button className="w-full text-center text-sm text-blue-600 hover:text-blue-800">

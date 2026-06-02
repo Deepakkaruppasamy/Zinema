@@ -20,7 +20,6 @@ const AdminNotifications = () => {
   const [movies, setMovies] = useState([]);
   const [stats, setStats] = useState({});
   
-  // Dynamic features state
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     type: '',
@@ -42,23 +41,20 @@ const AdminNotifications = () => {
     fetchStats();
   }, []);
 
-  // Auto-refresh effect
   useEffect(() => {
     let interval;
     if (autoRefresh) {
       interval = setInterval(() => {
         fetchNotifications();
         fetchStats();
-      }, 30000); // Refresh every 30 seconds
+      }, 30000);
     }
     return () => clearInterval(interval);
   }, [autoRefresh]);
 
-  // Filter and search functionality
   const filteredNotifications = useMemo(() => {
     let filtered = [...notifications];
 
-    // Search filter
     if (searchTerm) {
       filtered = filtered.filter(notification =>
         notification.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -66,29 +62,24 @@ const AdminNotifications = () => {
       );
     }
 
-    // Type filter
     if (filters.type) {
       filtered = filtered.filter(notification => notification.type === filters.type);
     }
 
-    // Priority filter
     if (filters.priority) {
       filtered = filtered.filter(notification => notification.priority === filters.priority);
     }
 
-    // Status filter
     if (filters.status) {
       filtered = filtered.filter(notification => 
         filters.status === 'active' ? notification.isActive : !notification.isActive
       );
     }
 
-    // Target audience filter
     if (filters.targetAudience) {
       filtered = filtered.filter(notification => notification.targetAudience === filters.targetAudience);
     }
 
-    // Sorting
     filtered.sort((a, b) => {
       let aValue = a[sortBy];
       let bValue = b[sortBy];
@@ -108,14 +99,12 @@ const AdminNotifications = () => {
     return filtered;
   }, [notifications, searchTerm, filters, sortBy, sortOrder]);
 
-  // Pagination
   const paginatedNotifications = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     return filteredNotifications.slice(startIndex, endIndex);
   }, [filteredNotifications, currentPage, itemsPerPage]);
 
-  // Update total pages when filtered results change
   useEffect(() => {
     setTotalPages(Math.ceil(filteredNotifications.length / itemsPerPage));
     if (currentPage > Math.ceil(filteredNotifications.length / itemsPerPage)) {
@@ -169,7 +158,6 @@ const AdminNotifications = () => {
         expiresAt: formData.expiresAt || null
       };
       
-      // Remove movieId if it's empty to avoid validation errors
       if (!notificationData.movieId || notificationData.movieId.trim() === '') {
         delete notificationData.movieId;
       }
@@ -258,7 +246,6 @@ const AdminNotifications = () => {
     return new Date(date).toLocaleString();
   };
 
-  // Dynamic control functions
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
@@ -318,7 +305,7 @@ const AdminNotifications = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
@@ -338,12 +325,12 @@ const AdminNotifications = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Dynamic Controls Bar */}
+        {}
         <div className="bg-white rounded-lg shadow mb-6 p-4">
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-            {/* Search and Filters */}
+            {}
             <div className="flex flex-col sm:flex-row gap-4 flex-1">
-              {/* Search */}
+              {}
               <div className="relative">
                 <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
@@ -355,7 +342,7 @@ const AdminNotifications = () => {
                 />
               </div>
 
-              {/* Filters */}
+              {}
               <div className="flex flex-wrap gap-2">
                 <select
                   value={filters.type}
@@ -404,7 +391,7 @@ const AdminNotifications = () => {
               </div>
             </div>
 
-            {/* Controls */}
+            {}
             <div className="flex items-center gap-2">
               <button
                 onClick={clearFilters}
@@ -449,7 +436,7 @@ const AdminNotifications = () => {
             </div>
           </div>
 
-          {/* Results Summary */}
+          {}
           <div className="mt-4 text-sm text-gray-600">
             Showing {paginatedNotifications.length} of {filteredNotifications.length} notifications
             {filteredNotifications.length !== notifications.length && (
@@ -458,7 +445,7 @@ const AdminNotifications = () => {
           </div>
         </div>
 
-        {/* Stats */}
+        {}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="flex items-center">
@@ -513,7 +500,7 @@ const AdminNotifications = () => {
           </div>
         </div>
 
-        {/* Notifications List */}
+        {}
         <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
@@ -685,7 +672,7 @@ const AdminNotifications = () => {
             </table>
           </div>
 
-          {/* Pagination */}
+          {}
           {totalPages > 1 && (
             <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
               <div className="flex-1 flex justify-between sm:hidden">
@@ -731,7 +718,7 @@ const AdminNotifications = () => {
                       </svg>
                     </button>
                     
-                    {/* Page numbers */}
+                    {}
                     {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                       const startPage = Math.max(1, currentPage - 2);
                       const pageNum = startPage + i;
@@ -769,7 +756,7 @@ const AdminNotifications = () => {
           )}
         </div>
 
-        {/* Create/Edit Form Modal */}
+        {}
         {showForm && (
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
             <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">

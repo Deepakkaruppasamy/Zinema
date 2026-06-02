@@ -3,10 +3,6 @@ import { Brain, TrendingUp, ThumbsUp, ThumbsDown, Flag, Sparkles, BarChart3, Hea
 import { useAppContext } from '../../context/AppContext';
 import toast from 'react-hot-toast';
 
-/**
- * AI-Powered Review Intelligence Component
- * Shows sentiment analysis, personalized summaries, and quality indicators
- */
 const ReviewIntelligence = ({ movieId }) => {
   const [summary, setSummary] = useState(null);
   const [analytics, setAnalytics] = useState(null);
@@ -17,7 +13,7 @@ const ReviewIntelligence = ({ movieId }) => {
   useEffect(() => {
     if (movieId) {
       fetchReviewSummary();
-      if (user) fetchAnalytics(); // Only fetch analytics if user is logged in
+      if (user) fetchAnalytics();
     }
   }, [movieId, user]);
 
@@ -102,7 +98,7 @@ const ReviewIntelligence = ({ movieId }) => {
 
   return (
     <div className="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
-      {/* Header */}
+      {}
       <div className="p-6 border-b border-gray-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -121,7 +117,7 @@ const ReviewIntelligence = ({ movieId }) => {
         </div>
       </div>
 
-      {/* Navigation Tabs */}
+      {}
       <div className="flex border-b border-gray-800">
         <button
           onClick={() => setActiveTab('summary')}
@@ -153,11 +149,11 @@ const ReviewIntelligence = ({ movieId }) => {
         )}
       </div>
 
-      {/* Content */}
+      {}
       <div className="p-6">
         {activeTab === 'summary' && (
           <div className="space-y-6">
-            {/* AI Summary */}
+            {}
             <div>
               <h4 className="text-white font-medium mb-3 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-primary" />
@@ -169,7 +165,7 @@ const ReviewIntelligence = ({ movieId }) => {
               <p className="text-gray-300 leading-relaxed">{summary.summary}</p>
             </div>
 
-            {/* Highlights */}
+            {}
             {summary.highlights?.length > 0 && (
               <div>
                 <h5 className="text-white font-medium mb-3 flex items-center gap-2">
@@ -187,7 +183,7 @@ const ReviewIntelligence = ({ movieId }) => {
               </div>
             )}
 
-            {/* Concerns */}
+            {}
             {summary.concerns?.length > 0 && (
               <div>
                 <h5 className="text-white font-medium mb-3 flex items-center gap-2">
@@ -205,7 +201,7 @@ const ReviewIntelligence = ({ movieId }) => {
               </div>
             )}
 
-            {/* Personalized Insights */}
+            {}
             {summary.personalizedInsights?.length > 0 && (
               <div>
                 <h5 className="text-white font-medium mb-3 flex items-center gap-2">
@@ -227,7 +223,7 @@ const ReviewIntelligence = ({ movieId }) => {
 
         {activeTab === 'analytics' && analytics && (
           <div className="space-y-6">
-            {/* Overview Stats */}
+            {}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-gray-800 rounded-lg p-4">
                 <div className="text-2xl font-bold text-white">{analytics.totalReviews}</div>
@@ -249,7 +245,7 @@ const ReviewIntelligence = ({ movieId }) => {
               </div>
             </div>
 
-            {/* Quality Indicators */}
+            {}
             <div>
               <h5 className="text-white font-medium mb-3 flex items-center gap-2">
                 <Shield className="w-4 h-4 text-blue-400" />
@@ -277,7 +273,7 @@ const ReviewIntelligence = ({ movieId }) => {
               </div>
             </div>
 
-            {/* Top Emotions */}
+            {}
             {analytics.topEmotions?.length > 0 && (
               <div>
                 <h5 className="text-white font-medium mb-3">Top Emotions</h5>
@@ -302,7 +298,7 @@ const ReviewIntelligence = ({ movieId }) => {
               </div>
             )}
 
-            {/* Top Themes */}
+            {}
             {analytics.topThemes?.length > 0 && (
               <div>
                 <h5 className="text-white font-medium mb-3">Most Discussed Topics</h5>

@@ -5,7 +5,6 @@ const TrailerModal = ({ open, onClose, title }) => {
   if (!open) return null;
   const q = encodeURIComponent(`${title} official trailer`);
   const origin = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
-  // Include origin param to avoid postMessage origin mismatch warnings from YouTube widget
   const src = `https://www.youtube-nocookie.com/embed?listType=search&list=${q}&autoplay=1&modestbranding=1&rel=0&playsinline=1&origin=${encodeURIComponent(origin)}`;
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">

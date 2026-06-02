@@ -3,7 +3,6 @@ import Booking from "../models/Booking.js";
 import Movie from "../models/Movie.js";
 import Follow from "../models/Follow.js";
 
-// API Controller Function to Get User Bookings
 export const getUserBookings = async (req, res)=>{
     try {
         const user = req.auth().userId;
@@ -19,7 +18,6 @@ export const getUserBookings = async (req, res)=>{
     }
 }
 
-// API Controller Function to update Favorite Movie in Clerk User Metadata
 export const updateFavorite = async (req, res)=>{
     try {
         const { movieId } = req.body;
@@ -51,7 +49,6 @@ export const getFavorites = async (req, res) =>{
         const user = await clerkClient.users.getUser(req.auth().userId)
         const favorites = user.privateMetadata.favorites;
 
-        // Getting movies from database
         const movies = await Movie.find({_id: {$in: favorites}})
 
         res.json({success: true, movies})
@@ -61,7 +58,6 @@ export const getFavorites = async (req, res) =>{
     }
 }
 
-// Follow a user
 export const followUser = async (req, res) => {
     try {
         const follower = req.auth().userId;
@@ -71,14 +67,13 @@ export const followUser = async (req, res) => {
         res.json({ success: true });
     } catch (error) {
         if (error.code === 11000) {
-            return res.json({ success: true }); // already following
+            return res.json({ success: true });
         }
         console.error(error.message);
         res.json({ success: false, message: error.message });
     }
 }
 
-// Unfollow a user
 export const unfollowUser = async (req, res) => {
     try {
         const follower = req.auth().userId;
@@ -91,7 +86,6 @@ export const unfollowUser = async (req, res) => {
     }
 }
 
-// Get list of user IDs the current user follows
 export const getFollowing = async (req, res) => {
     try {
         const follower = req.auth().userId;

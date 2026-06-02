@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from "react";
 import { api } from "../lib/api.js";
 import { retryApi, safeApiCall } from "../lib/retryApi.js";
@@ -7,7 +6,6 @@ import { useAuth, useUser } from "@clerk/clerk-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-// API base URL is configured in lib/api.js
 
 export const AppContext = createContext()
 
@@ -17,7 +15,6 @@ export const AppProvider = ({ children })=>{
     const [shows, setShows] = useState([])
     const [favoriteMovies, setFavoriteMovies] = useState([])
 
-    // Route TMDB images through our proxy to avoid CORS and allow canvas usage
     const image_base_url = import.meta.env.VITE_TMDB_IMAGE_BASE_URL || '/api/tmdb-image?path=';
 
     const {user} = useUser()
@@ -106,7 +103,6 @@ export const AppProvider = ({ children })=>{
 
     useEffect(()=>{
         if(user){
-            // Record login timestamp for this session if not already set
             if (!sessionStorage.getItem('loginAt')) {
                 try { sessionStorage.setItem('loginAt', String(Date.now())) } catch {}
             }
@@ -117,7 +113,7 @@ export const AppProvider = ({ children })=>{
 
     const value = {
         api,
-        axios: api, // Alias for backward compatibility
+        axios: api,
         fetchIsAdmin,
         user, getToken, navigate, isAdmin, shows, 
         favoriteMovies, fetchFavoriteMovies, image_base_url

@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { PlayCircle } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
-const TRAILER_THUMB_PATH = '/original/74xTEgt7R36Fpooo50r9T25onhq.jpg'; // The Batman
-const TRAILER_URL = 'https://www.youtube-nocookie.com/embed/mqqft2x_Aa4?autoplay=1&modestbranding=1&rel=0&playsinline=1'; // The Batman Official Trailer
+const TRAILER_THUMB_PATH = '/original/74xTEgt7R36Fpooo50r9T25onhq.jpg';
+const TRAILER_URL = 'https://www.youtube-nocookie.com/embed/mqqft2x_Aa4?autoplay=1&modestbranding=1&rel=0&playsinline=1';
 
 const FeaturedTrailerSection = () => {
   const [open, setOpen] = useState(false);

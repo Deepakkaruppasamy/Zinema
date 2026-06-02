@@ -54,12 +54,9 @@ const MovieDetails = () => {
     getShow()
   },[id])
 
-  // Extract dominant color once show is loaded
   useEffect(() => {
     const run = async () => {
       try {
-        // Use server-side proxy to avoid CORS issues for canvas pixel sampling.
-        // Visible images still use `image_base_url + poster_path`, but sampling uses `/api/tmdb-image?path=`.
         const posterPath = show?.movie?.poster_path
         if (!posterPath) return setAccent(null)
         const proxyUrl = `/api/tmdb-image?path=${encodeURIComponent(posterPath)}`
@@ -78,7 +75,7 @@ const MovieDetails = () => {
       className='px-6 md:px-16 lg:px-40 pt-30 md:pt-50 relative'
       style={accent ? { ['--accent'.toString()]: `rgb(${accent.r}, ${accent.g}, ${accent.b})` } : undefined}
     >
-      {/* Backdrop hero */}
+      {}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div
           className="absolute inset-0 opacity-20"

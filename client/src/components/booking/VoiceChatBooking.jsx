@@ -42,7 +42,6 @@ const VoiceChatBooking = ({ isOpen, onClose, onBookingComplete }) => {
   const recognitionRef = useRef(null);
   const synthesisRef = useRef(null);
 
-  // Initialize speech recognition
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -68,7 +67,6 @@ const VoiceChatBooking = ({ isOpen, onClose, onBookingComplete }) => {
       };
     }
 
-    // Initialize speech synthesis
     if ('speechSynthesis' in window) {
       synthesisRef.current = window.speechSynthesis;
     }
@@ -132,7 +130,6 @@ const VoiceChatBooking = ({ isOpen, onClose, onBookingComplete }) => {
   const handleSendMessage = async (message = inputText) => {
     if (!message.trim()) return;
     
-    // Add user message
     addMessage(message, 'user');
     setInputText('');
     setIsProcessing(true);
@@ -151,27 +148,22 @@ const VoiceChatBooking = ({ isOpen, onClose, onBookingComplete }) => {
   const processBookingRequest = async (message) => {
     const lowerMessage = message.toLowerCase();
     
-    // Movie search
     if (bookingContext.step === 'movie_selection' || lowerMessage.includes('movie') || lowerMessage.includes('watch') || lowerMessage.includes('available') || lowerMessage.includes('show me')) {
       return await handleMovieSearch(message);
     }
     
-    // Showtime selection
     if (bookingContext.step === 'showtime_selection' || lowerMessage.includes('time') || lowerMessage.includes('showtime')) {
       return await handleShowtimeSelection(message);
     }
     
-    // Seat selection
     if (bookingContext.step === 'seat_selection' || lowerMessage.includes('seat') || lowerMessage.includes('sit')) {
       return await handleSeatSelection(message);
     }
     
-    // Payment
     if (bookingContext.step === 'payment' || lowerMessage.includes('pay') || lowerMessage.includes('payment')) {
       return await handlePayment(message);
     }
     
-    // General help
     if (lowerMessage.includes('help') || lowerMessage.includes('what can you do')) {
       return {
         content: "I can help you with:\n• Finding movies\n• Selecting showtimes\n• Choosing seats\n• Processing payments\n• Answering questions\n\nWhat would you like to do?",
@@ -190,10 +182,8 @@ const VoiceChatBooking = ({ isOpen, onClose, onBookingComplete }) => {
       const { data } = await axios.get('/api/show/all');
       const movies = data.shows || [];
       
-      // Enhanced movie matching with genre support
       const lowerMessage = message.toLowerCase();
       
-      // Special case: show all available movies
       if (lowerMessage.includes('available') || lowerMessage.includes('show me') || lowerMessage.includes('what movies') || lowerMessage.includes('all movies')) {
         const availableMovies = movies.slice(0, 10).map(movie => {
           const genres = movie.genres?.map(g => g.name).join(', ') || 'Unknown genre';
@@ -217,12 +207,10 @@ const VoiceChatBooking = ({ isOpen, onClose, onBookingComplete }) => {
         const overview = movie.overview?.toLowerCase() || '';
         const genres = movie.genres?.map(g => g.name?.toLowerCase()).join(' ') || '';
         
-        // Direct title/overview match
         if (title.includes(lowerMessage) || overview.includes(lowerMessage)) {
           return true;
         }
         
-        // Genre-based matching
         const genreKeywords = {
           'comedy': ['comedy', 'funny', 'humor', 'laugh'],
           'action': ['action', 'adventure', 'thriller', 'fight'],
@@ -244,7 +232,6 @@ const VoiceChatBooking = ({ isOpen, onClose, onBookingComplete }) => {
       });
       
       if (matchedMovies.length === 0) {
-        // Show available movies with genres
         const availableMovies = movies.slice(0, 5).map(movie => {
           const genres = movie.genres?.map(g => g.name).join(', ') || 'Unknown genre';
           return {
@@ -364,7 +351,6 @@ const VoiceChatBooking = ({ isOpen, onClose, onBookingComplete }) => {
   };
 
   const findBestSeats = async (count) => {
-    // This would integrate with the AI seat recommendation system
     const recommendedSeats = ['E5', 'E6', 'E7'].slice(0, count);
     setBookingContext(prev => ({ ...prev, seats: recommendedSeats, step: 'payment' }));
     
@@ -387,7 +373,6 @@ const VoiceChatBooking = ({ isOpen, onClose, onBookingComplete }) => {
         showActions: true,
         actions: [
           { text: "Open Seat Map", action: () => {
-            // This would trigger the seat selection modal
             toast.success("Opening seat map...");
           }}
         ]
@@ -397,7 +382,6 @@ const VoiceChatBooking = ({ isOpen, onClose, onBookingComplete }) => {
 
   const processPayment = async () => {
     try {
-      // Check if green ticketing is enabled
       const greenTicketingEnabled = localStorage.getItem('green_ticketing_enabled') === 'true';
       
       const { data } = await axios.post('/api/booking/create', {
@@ -425,14 +409,12 @@ const VoiceChatBooking = ({ isOpen, onClose, onBookingComplete }) => {
   };
 
   const handleSeatSelection = async (message) => {
-    // Handle seat selection logic
     return {
       content: "I understand you want to select seats. Let me help you with that."
     };
   };
 
   const handlePayment = async (message) => {
-    // Handle payment logic
     return {
       content: "I'll help you process the payment for your booking."
     };
@@ -443,7 +425,7 @@ const VoiceChatBooking = ({ isOpen, onClose, onBookingComplete }) => {
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
       <div className="bg-gray-900 rounded-lg border border-white/10 w-full max-w-2xl h-[600px] flex flex-col">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between p-4 border-b border-white/10">
           <div className="flex items-center gap-3">
             <Brain className="w-6 h-6 text-purple-400" />
@@ -461,7 +443,7 @@ const VoiceChatBooking = ({ isOpen, onClose, onBookingComplete }) => {
           </button>
         </div>
 
-        {/* Messages */}
+        {}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.map((message) => (
             <div
@@ -505,7 +487,7 @@ const VoiceChatBooking = ({ isOpen, onClose, onBookingComplete }) => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input */}
+        {}
         <div className="p-4 border-t border-white/10">
           <div className="flex items-center gap-2">
             <input

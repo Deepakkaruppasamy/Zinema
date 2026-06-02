@@ -1,5 +1,3 @@
-// Simple dominant color extractor using canvas sampling
-// Returns { r, g, b } or null on failure
 export default async function extractDominantColor(imgUrl, { sample = 10 } = {}) {
   return new Promise((resolve) => {
     try {
@@ -26,8 +24,7 @@ export default async function extractDominantColor(imgUrl, { sample = 10 } = {})
             const gg = data[i + 1];
             const bb = data[i + 2];
             const alpha = data[i + 3];
-            if (alpha < 200) continue; // skip transparent
-            // Skip near-white/near-black extremes to get a nicer accent
+            if (alpha < 200) continue;
             const max = Math.max(rr, gg, bb), min = Math.min(rr, gg, bb);
             if (max > 245 || min < 10) continue;
             r += rr; g += gg; b += bb; count++;
@@ -40,7 +37,6 @@ export default async function extractDominantColor(imgUrl, { sample = 10 } = {})
         }
       };
       img.onerror = () => {
-        // If the source was a TMDB image and we haven't tried the proxy, retry via server proxy.
         try {
           const tmdbPrefix = 'https://image.tmdb.org/t/p';
           if (!triedProxy && typeof imgUrl === 'string' && imgUrl.startsWith(tmdbPrefix)) {

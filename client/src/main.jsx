@@ -26,7 +26,6 @@ createRoot(document.getElementById('root')).render(
   </ClerkProvider>,
 )
 
-// PWA service worker: enable only in production.
 if ('serviceWorker' in navigator) {
   if (import.meta.env.PROD) {
     window.addEventListener('load', () => {
@@ -35,7 +34,6 @@ if ('serviceWorker' in navigator) {
       })
     })
   } else {
-    // In development, unregister any existing service workers to prevent caching/HMR issues
     navigator.serviceWorker.getRegistrations?.().then((regs) => {
       regs.forEach((r) => r.unregister())
     }).catch(() => {})

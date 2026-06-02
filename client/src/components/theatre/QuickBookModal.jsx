@@ -35,7 +35,7 @@ const QuickBookModal = ({ open, onClose, theatreName, showtime, onConfirm, showI
       });
       const data = await res.json();
       if (data?.success && data?.url) {
-        window.location.href = data.url; // Stripe Checkout
+        window.location.href = data.url;
       } else {
         alert(data?.message || 'Failed to start payment.');
       }

@@ -26,7 +26,6 @@ import ZineBot from './components/ZineBot';
 import SupportBot from './components/SupportBot';
 import DeepAI from './components/DeepAI';
 import Theatre from './pages/Theatre'
-// ThemeToggle moved into Navbar
 import PWAInstallPrompt from './components/PWAInstallPrompt'
 import PWAUtils from './components/PWAUtils'
 import MobileOptimizations from './components/MobileOptimizations'
@@ -87,7 +86,7 @@ const App = () => {
        {!isAdminRoute && <Footer />}
        {!isAdminRoute && <ZineBot />}
        {!isAdminRoute && <SupportBot />}
-       {/** Theme toggle now in Navbar */}
+       {}
        {!isAdminRoute && <PWAInstallPrompt />}
        {!isAdminRoute && <PWAUtils />}
        {!isAdminRoute && <MobileOptimizations />}

@@ -12,7 +12,7 @@ const InteractiveSeatMap = ({
 }) => {
   const [seats, setSeats] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [viewMode, setViewMode] = useState('2d'); // 2d, 3d, view
+  const [viewMode, setViewMode] = useState('2d');
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [showLegend, setShowLegend] = useState(true);
@@ -32,24 +32,22 @@ const InteractiveSeatMap = ({
   const generateSeatMap = async () => {
     setLoading(true);
     try {
-      // Generate a realistic seat map
       const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
       const seatsPerRow = 20;
-      const aislePositions = [5, 6, 13, 14]; // Aisles after seats 5, 6, 13, 14
+      const aislePositions = [5, 6, 13, 14];
       
       const generatedSeats = [];
       
       rows.forEach((row, rowIndex) => {
         for (let seatNum = 1; seatNum <= seatsPerRow; seatNum++) {
-          if (aislePositions.includes(seatNum)) continue; // Skip aisle positions
+          if (aislePositions.includes(seatNum)) continue;
           
           const seatId = `${row}${seatNum}`;
           const isAisle = aislePositions.includes(seatNum);
-          const isWheelchair = row === 'L' && seatNum <= 4; // Last row, first 4 seats
-          const isPremium = row === 'A' || row === 'B'; // First two rows
-          const isVIP = row === 'A' && seatNum >= 8 && seatNum <= 13; // Center of first row
+          const isWheelchair = row === 'L' && seatNum <= 4;
+          const isPremium = row === 'A' || row === 'B';
+          const isVIP = row === 'A' && seatNum >= 8 && seatNum <= 13;
           
-          // Random availability (80% available)
           const isAvailable = Math.random() > 0.2;
           const isBooked = !isAvailable && Math.random() > 0.5;
           
@@ -70,7 +68,6 @@ const InteractiveSeatMap = ({
         }
       });
 
-      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       setSeats(generatedSeats);
     } catch (error) {
@@ -82,8 +79,8 @@ const InteractiveSeatMap = ({
 
   const calculateViewQuality = (rowIndex, seatNum, totalSeats) => {
     const centerDistance = Math.abs(seatNum - (totalSeats / 2));
-    const rowScore = Math.max(0, 10 - rowIndex * 0.5); // Closer rows = better score
-    const centerScore = Math.max(0, 10 - centerDistance * 0.3); // Center seats = better score
+    const rowScore = Math.max(0, 10 - rowIndex * 0.5);
+    const centerScore = Math.max(0, 10 - centerDistance * 0.3);
     
     return Math.min(10, (rowScore + centerScore) / 2);
   };
@@ -107,11 +104,9 @@ const InteractiveSeatMap = ({
     if (!seat.isAvailable || seat.isBooked) return;
     
     if (groupMode && selectedSeats.length < maxSeats) {
-      // Group booking - select multiple seats
       const newSelectedSeats = [...selectedSeats, seat.id];
       onSeatsChange(newSelectedSeats);
     } else if (!groupMode) {
-      // Single seat selection
       onSeatsChange([seat.id]);
     }
   };
@@ -170,7 +165,7 @@ const InteractiveSeatMap = ({
 
   return (
     <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/20 rounded-lg">
@@ -211,7 +206,7 @@ const InteractiveSeatMap = ({
         </div>
       </div>
 
-      {/* Controls */}
+      {}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
@@ -264,7 +259,7 @@ const InteractiveSeatMap = ({
         </button>
       </div>
 
-      {/* Seat Map */}
+      {}
       <div 
         ref={mapRef}
         className="relative bg-gray-800/30 rounded-xl p-6 overflow-hidden"
@@ -273,14 +268,14 @@ const InteractiveSeatMap = ({
           transformOrigin: 'center'
         }}
       >
-        {/* Screen */}
+        {}
         <div className="text-center mb-8">
           <div className="inline-block bg-gradient-to-r from-gray-700 to-gray-600 text-white px-8 py-3 rounded-lg font-bold text-lg">
             🎬 SCREEN 🎬
           </div>
         </div>
 
-        {/* Seats Grid */}
+        {}
         <div className="grid grid-cols-20 gap-1 justify-center">
           {seats.map((seat) => (
             <motion.div
@@ -298,12 +293,12 @@ const InteractiveSeatMap = ({
           ))}
         </div>
 
-        {/* Aisles */}
+        {}
         <div className="absolute top-20 left-1/2 transform -translate-x-1/2 w-2 h-32 bg-gray-600 rounded"></div>
         <div className="absolute top-20 left-1/2 transform -translate-x-1/2 w-2 h-32 bg-gray-600 rounded ml-16"></div>
       </div>
 
-      {/* Legend */}
+      {}
       <AnimatePresence>
         {showLegend && (
           <motion.div
@@ -355,7 +350,7 @@ const InteractiveSeatMap = ({
         )}
       </AnimatePresence>
 
-      {/* Seat Details */}
+      {}
       <AnimatePresence>
         {seatDetails && (
           <motion.div
@@ -410,7 +405,7 @@ const InteractiveSeatMap = ({
         )}
       </AnimatePresence>
 
-      {/* Selected Seats Summary */}
+      {}
       {selectedSeats.length > 0 && (
         <div className="mt-6 p-4 bg-primary/10 rounded-xl border border-primary/30">
           <h4 className="text-lg font-semibold text-white mb-3">Selected Seats</h4>

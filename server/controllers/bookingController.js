@@ -9,7 +9,6 @@ import stripe from 'stripe'
 import { buildICS } from '../utils/ics.js'
 
 
-// Function to check availability of selected seats for a movie
 const checkSeatsAvailability = async (showId, selectedSeats)=>{
     try {
         const showData = await Show.findById(showId)
@@ -32,17 +31,14 @@ export const createBooking = async (req, res)=>{
         const {showId, selectedSeats, couponCode, greenTicketingDonation = false} = req.body;
         const { origin } = req.headers;
 
-        // Check if the seat is available for the selected show
         const isAvailable = await checkSeatsAvailability(showId, selectedSeats)
 
         if(!isAvailable){
             return res.json({success: false, message: "Selected Seats are not available."})
         }
 
-        // Get the show details
         const showData = await Show.findById(showId).populate('movie');
 
-        // Apply loyalty tier discount
         const userDoc = await User.findById(userId).lean();
         const tier = userDoc?.tier || 'BRONZE';
         const discounts = { BRONZE: 0, SILVER: 0.05, GOLD: 0.1, PLATINUM: 0.15 };
@@ -50,7 +46,6 @@ export const createBooking = async (req, res)=>{
         const loyaltyDiscountPct = discounts[tier] || 0;
         let provisionalAmount = Math.max(0, baseAmount - baseAmount * loyaltyDiscountPct);
 
-        // Optional coupon
         let appliedCouponCode = null
         let couponDiscountAmount = 0
         if (couponCode) {
@@ -65,11 +60,9 @@ export const createBooking = async (req, res)=>{
             }
         }
         
-        // Add green ticketing donation
-        const greenDonationAmount = greenTicketingDonation ? selectedSeats.length : 0; // ₹1 per ticket
+        const greenDonationAmount = greenTicketingDonation ? selectedSeats.length : 0;
         const finalAmount = Math.max(0, provisionalAmount - couponDiscountAmount + greenDonationAmount);
 
-        // Create a new booking
         const booking = await Booking.create({
             user: userId,
             show: showId,
@@ -88,19 +81,15 @@ export const createBooking = async (req, res)=>{
 
         await showData.save();
 
-        // Update gamification stats immediately when booking is created
         try {
             const { updateBookingStats } = await import('./gamificationController.js');
-            await updateBookingStats(userId, finalAmount, selectedSeats.length > 1, false); // false = initial booking
+            await updateBookingStats(userId, finalAmount, selectedSeats.length > 1, false);
             console.log('Gamification stats updated for booking:', booking._id);
         } catch (error) {
             console.error('Error updating gamification stats:', error);
-            // Don't fail the booking for gamification errors
         }
 
-        // Update admin analytics immediately
         try {
-            // Log booking creation for admin tracking
             console.log('Booking created for admin tracking:', {
                 bookingId: booking._id,
                 userId: userId,
@@ -111,17 +100,12 @@ export const createBooking = async (req, res)=>{
                 isPaid: false
             });
             
-            // The admin dashboard will automatically pick up this data when it refreshes
-            // No additional action needed as the booking is already in the database
         } catch (error) {
             console.error('Error updating admin data:', error);
-            // Don't fail the booking for admin errors
         }
 
-         // Stripe Gateway Initialize
          const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY)
 
-         // Creating line items for Stripe
          const line_items = [{
             price_data: {
                 currency: 'usd',
@@ -133,7 +117,6 @@ export const createBooking = async (req, res)=>{
             quantity: 1
          }]
 
-         // Add green donation as separate line item if enabled
          if (greenDonationAmount > 0) {
             line_items.push({
                 price_data: {
@@ -155,13 +138,12 @@ export const createBooking = async (req, res)=>{
             metadata: {
                 bookingId: booking._id.toString()
             },
-            expires_at: Math.floor(Date.now() / 1000) + 30 * 60, // Expires in 30 minutes
+            expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
          })
 
          booking.paymentLink = session.url
          await booking.save()
 
-         // Run Inngest Sheduler Function to check payment status after 10 minutes
          await inngest.send({
             name: "app/checkpayment",
             data: {
@@ -193,7 +175,6 @@ export const getOccupiedSeats = async (req, res)=>{
     }
 }
 
-// GET /api/booking/:id/ics
 export const getBookingIcs = async (req, res) => {
     try {
         const bookingId = req.params.id

@@ -11,7 +11,6 @@ import {
 
 const router = express.Router();
 
-// Pricing alert routes
 router.get('/pricing-alerts', protectAdmin, getPricingAlerts);
 router.post('/pricing-alerts', protectAdmin, createPricingAlert);
 router.put('/pricing-alerts/:alertId', protectAdmin, updatePricingAlert);

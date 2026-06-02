@@ -5,7 +5,6 @@ import AdminBulkMovieShowSection from '../components/admin/AdminBulkMovieShowSec
 import AdminUserManagementSection from '../components/admin/AdminUserManagementSection';
 import AdminPromotionsSection from '../components/admin/AdminPromotionsSection';
 import AdminNotificationsSection from '../components/admin/AdminNotificationsSection';
-// Placeholder imports for upcoming sections
 
 const AdminDashboard = () => {
   return (
@@ -18,7 +17,7 @@ const AdminDashboard = () => {
         <AdminUserManagementSection />
         <AdminPromotionsSection />
         <AdminNotificationsSection />
-        {/* Other admin features will be added here, each as a separate section */}
+        {}
       </div>
     </div>
   );

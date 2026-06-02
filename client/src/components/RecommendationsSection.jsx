@@ -5,7 +5,6 @@ import MovieCard from './MovieCard';
 const RecommendationsSection = () => {
   const { shows } = useAppContext();
 
-  // For demo, pick 4 random movies as recommendations
   const recommendations = shows.slice(0, 4);
 
   if (!recommendations.length) return null;

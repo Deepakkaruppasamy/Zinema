@@ -29,7 +29,6 @@ const RiskManagement = () => {
 
   useEffect(() => {
     fetchRiskData();
-    // Refresh every 5 minutes
     const interval = setInterval(fetchRiskData, 300000);
     return () => clearInterval(interval);
   }, []);
@@ -75,7 +74,7 @@ const RiskManagement = () => {
 
   return (
     <div className="space-y-6">
-      {/* Risk Score Overview */}
+      {}
       <div className={`p-6 rounded-xl border ${riskLevel.bgColor} border-current`}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -102,7 +101,7 @@ const RiskManagement = () => {
         </div>
       </div>
 
-      {/* Risk Indicators */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-gray-800/50 p-4 rounded-lg border border-white/10">
           <div className="flex items-center gap-2 mb-2">
@@ -157,9 +156,9 @@ const RiskManagement = () => {
         </div>
       </div>
 
-      {/* Detailed Risk Items */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Heavy Users */}
+        {}
         {riskData.heavyUsers && riskData.heavyUsers.length > 0 ? (
           <div className="bg-gray-800/50 p-4 rounded-lg border border-white/10">
             <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
@@ -190,7 +189,7 @@ const RiskManagement = () => {
           </div>
         )}
 
-        {/* Zero Amount Bookings */}
+        {}
         {riskData.zeroPaid && riskData.zeroPaid.length > 0 ? (
           <div className="bg-gray-800/50 p-4 rounded-lg border border-white/10">
             <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
@@ -226,7 +225,7 @@ const RiskManagement = () => {
           </div>
         )}
 
-        {/* Revenue Anomalies */}
+        {}
         {riskData.revenueAnomalies && riskData.revenueAnomalies.length > 0 ? (
           <div className="bg-gray-800/50 p-4 rounded-lg border border-white/10 lg:col-span-2">
             <h4 className="text-lg font-semibold mb-3 flex items-center gap-2">
@@ -258,7 +257,7 @@ const RiskManagement = () => {
         )}
       </div>
 
-      {/* Action Buttons */}
+      {}
       <div className="flex gap-3 pt-4">
         <button
           onClick={fetchRiskData}

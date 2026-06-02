@@ -14,7 +14,7 @@ const Favorite = () => {
       <BlurCircle top="150px" left="0px"/>
       <BlurCircle bottom="50px" right="50px"/>
 
-      {/* Header with Tabs */}
+      {}
       <div className='flex justify-between items-center mb-6'>
         <h1 className='text-2xl font-semibold'>My Collection</h1>
         <div className="flex gap-2">
@@ -45,7 +45,7 @@ const Favorite = () => {
         </div>
       </div>
 
-      {/* Favorites Tab */}
+      {}
       {activeTab === 'favorites' && (
         <>
           {favoriteMovies.length > 0 ? (
@@ -64,7 +64,7 @@ const Favorite = () => {
         </>
       )}
 
-      {/* Wishlist & Reminders Tab */}
+      {}
       {activeTab === 'wishlist' && user && (
         <WishlistReminders />
       )}

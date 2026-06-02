@@ -6,18 +6,16 @@ import Follow from "../models/Follow.js";
 import Review from "../models/Review.js";
 import TrendingConfig from "../models/TrendingConfig.js";
 
-// Dynamic Trending Algorithm
 class DynamicTrendingEngine {
   constructor() {
     this.weights = {
-      recentBookings: 0.4,    // Last 24 hours
-      weeklyBookings: 0.3,    // Last 7 days
-      socialEngagement: 0.2,  // Reviews, wishlists
-      velocity: 0.1           // Booking growth rate
+      recentBookings: 0.4,
+      weeklyBookings: 0.3,
+      socialEngagement: 0.2,
+      velocity: 0.1
     };
   }
 
-  // Calculate dynamic trending scores
   async calculateTrendingScores() {
     try {
       const now = new Date();
@@ -25,7 +23,6 @@ class DynamicTrendingEngine {
       const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const last14Days = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
-      // Get all movies with shows
       const movies = await Movie.find({});
       const trendingScores = [];
 
@@ -46,7 +43,6 @@ class DynamicTrendingEngine {
         }
       }
 
-      // Sort by trending score
       return trendingScores.sort((a, b) => b.score - a.score);
     } catch (error) {
       console.error('Error calculating trending scores:', error);
@@ -54,11 +50,9 @@ class DynamicTrendingEngine {
     }
   }
 
-  // Calculate trending score for a specific movie
   async calculateMovieTrendingScore(movie, timeRanges) {
     const { last24Hours, last7Days, last14Days } = timeRanges;
 
-    // Get bookings for this movie
     const [recentBookings, weeklyBookings, biweeklyBookings] = await Promise.all([
       Booking.find({
         createdAt: { $gte: last24Hours },
@@ -74,7 +68,6 @@ class DynamicTrendingEngine {
       }).populate('show')
     ]);
 
-    // Filter bookings for this movie
     const movieRecentBookings = recentBookings.filter(b => 
       b.show.movie._id.toString() === movie._id.toString()
     );
@@ -85,20 +78,17 @@ class DynamicTrendingEngine {
       b.show.movie._id.toString() === movie._id.toString()
     );
 
-    // Calculate individual scores
     const recentScore = this.calculateRecentBookingScore(movieRecentBookings);
     const weeklyScore = this.calculateWeeklyBookingScore(movieWeeklyBookings);
     const socialScore = await this.calculateSocialEngagementScore(movie);
     const velocityScore = this.calculateVelocityScore(movieWeeklyBookings, movieBiweeklyBookings);
 
-    // Calculate total score
     const totalScore = 
       recentScore * this.weights.recentBookings +
       weeklyScore * this.weights.weeklyBookings +
       socialScore * this.weights.socialEngagement +
       velocityScore * this.weights.velocity;
 
-    // Determine trend direction
     const trend = this.determineTrend(movieRecentBookings, movieWeeklyBookings);
 
     return {
@@ -113,35 +103,28 @@ class DynamicTrendingEngine {
     };
   }
 
-  // Calculate recent booking score (last 24 hours)
   calculateRecentBookingScore(bookings) {
     const count = bookings.length;
-    // Exponential scoring for recent activity
-    return Math.min(count * 2, 10); // Cap at 10
+    return Math.min(count * 2, 10);
   }
 
-  // Calculate weekly booking score
   calculateWeeklyBookingScore(bookings) {
     const count = bookings.length;
-    // Linear scoring for weekly activity
-    return Math.min(count, 20); // Cap at 20
+    return Math.min(count, 20);
   }
 
-  // Calculate social engagement score
   async calculateSocialEngagementScore(movie) {
     const [reviews, wishlists] = await Promise.all([
       Review.find({ movie: movie._id }).countDocuments(),
       Wishlist.find({ movie: movie._id }).countDocuments()
     ]);
 
-    // Weighted social engagement
     const reviewScore = Math.min(reviews * 0.5, 5);
     const wishlistScore = Math.min(wishlists * 1, 10);
     
     return reviewScore + wishlistScore;
   }
 
-  // Calculate velocity score (growth rate)
   calculateVelocityScore(weeklyBookings, biweeklyBookings) {
     const weeklyCount = weeklyBookings.length;
     const biweeklyCount = biweeklyBookings.length;
@@ -150,10 +133,9 @@ class DynamicTrendingEngine {
     if (previousWeekCount === 0) return weeklyCount > 0 ? 5 : 0;
     
     const growthRate = (weeklyCount - previousWeekCount) / previousWeekCount;
-    return Math.max(0, growthRate * 10); // Cap at 10
+    return Math.max(0, growthRate * 10);
   }
 
-  // Determine trend direction
   determineTrend(recentBookings, weeklyBookings) {
     const recentCount = recentBookings.length;
     const weeklyCount = weeklyBookings.length;
@@ -166,12 +148,9 @@ class DynamicTrendingEngine {
   }
 }
 
-// const trendingEngine = new DynamicTrendingEngine(); // Disabled for now
 
-// GET /api/discovery/trending - Dynamic trending algorithm
 export const getTrending = async (req, res) => {
   try {
-    // 1) Check for admin-curated trending first
     const curated = await TrendingConfig.findById("curated");
     const curatedShowIds = (curated?.showIds || []).map(String);
     
@@ -209,7 +188,6 @@ export const getTrending = async (req, res) => {
       });
     }
 
-    // 2) Fallback to simple trending by rating
     const movies = await Movie.find({})
       .sort({ vote_average: -1, popularity: -1 })
       .limit(20);
@@ -231,7 +209,6 @@ export const getTrending = async (req, res) => {
   }
 };
 
-// GET /api/discovery/feed - movies surfaced from people you follow
 export const getFeed = async (req, res) => {
   try {
     const userId = req.auth()?.userId;
@@ -244,13 +221,11 @@ export const getFeed = async (req, res) => {
     const following = followingRows.map((r) => r.following);
     if (following.length === 0) return res.json({ success: true, movies: [] });
 
-    // Recent reviews by followed users
     const recentReviews = await Review.find({ user: { $in: following }, createdAt: { $gte: since } })
       .sort({ createdAt: -1 })
       .limit(200);
     const reviewedMovieIds = recentReviews.map((r) => r.movie);
 
-    // Recent bookings by followed users -> map to movie ids
     const recentBookings = await Booking.aggregate([
       { $match: { user: { $in: following }, isPaid: true, createdAt: { $gte: since } } },
       { $lookup: { from: "shows", localField: "show", foreignField: "_id", as: "showDoc" } },
@@ -266,7 +241,6 @@ export const getFeed = async (req, res) => {
     if (combined.length === 0) return res.json({ success: true, movies: [] });
 
     const movies = await Movie.find({ _id: { $in: combined } }).limit(40);
-    // Sort by simple heuristic: presence in reviews first (more signal)
     const score = new Map();
     reviewedMovieIds.forEach((id) => score.set(String(id), (score.get(String(id)) || 0) + 2));
     bookedMovieIds.forEach((id) => score.set(String(id), (score.get(String(id)) || 0) + 1));
@@ -279,7 +253,6 @@ export const getFeed = async (req, res) => {
   }
 };
 
-// GET /api/discovery/for-you - personalized by favorite genres
 export const getForYou = async (req, res) => {
   try {
     const userId = req.auth()?.userId;
@@ -288,13 +261,11 @@ export const getForYou = async (req, res) => {
     const user = await clerkClient.users.getUser(userId);
     const favorites = (user.privateMetadata?.favorites || []);
 
-    // Fetch favorite movies to derive genre set
     const favMovies = await Movie.find({ _id: { $in: favorites } });
     const favGenres = new Set();
     favMovies.forEach((m) => (m.genres || []).forEach((g) => favGenres.add(g)));
 
     if (favGenres.size === 0) {
-      // fallback to top rated overall
       const fallback = await Movie.find({}).sort({ vote_average: -1 }).limit(20);
       return res.json({ success: true, movies: fallback });
     }
@@ -313,7 +284,6 @@ export const getForYou = async (req, res) => {
   }
 };
 
-// GET /api/discovery/similar - similar movies based on genre
 export const getSimilar = async (req, res) => {
   try {
     const { movieId } = req.query;
@@ -322,7 +292,6 @@ export const getSimilar = async (req, res) => {
       return res.json({ success: false, message: 'Movie ID is required' });
     }
 
-    // Find the movie to get its genres
     const movie = await Movie.findById(movieId);
     if (!movie) {
       return res.json({ success: false, message: 'Movie not found' });
@@ -331,7 +300,6 @@ export const getSimilar = async (req, res) => {
     const movieGenres = movie.genres || [];
     const genreIds = movieGenres.map(genre => genre.id);
 
-    // Find similar movies based on genre overlap
     const similarMovies = await Movie.find({
       _id: { $ne: movieId },
       'genres.id': { $in: genreIds }
@@ -349,7 +317,6 @@ export const getSimilar = async (req, res) => {
   }
 };
 
-// GET /api/discovery/new-releases - recently released movies
 export const getNewReleases = async (req, res) => {
   try {
     const sixMonthsAgo = new Date();
@@ -371,7 +338,6 @@ export const getNewReleases = async (req, res) => {
   }
 };
 
-// GET /api/discovery/ai-recommendations - AI-powered recommendations
 export const getAIRecommendations = async (req, res) => {
   try {
     const userId = req.auth()?.userId;
@@ -380,8 +346,6 @@ export const getAIRecommendations = async (req, res) => {
       return res.json({ success: false, message: 'User not authenticated' });
     }
 
-    // For now, return trending movies as AI recommendations
-    // In a real implementation, this would use ML models
     const aiRecommendations = await Movie.find({})
       .sort({ vote_average: -1, popularity: -1 })
       .limit(10);

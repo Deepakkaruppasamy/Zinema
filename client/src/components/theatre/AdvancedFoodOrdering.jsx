@@ -28,7 +28,6 @@ const AdvancedFoodOrdering = ({ onOrderUpdate, onClose, isEmbedded = false }) =>
 
   useEffect(() => {
     fetchFoodItems();
-    // Load cart from localStorage
     const savedCart = localStorage.getItem('theatre_food_cart');
     if (savedCart) {
       try {
@@ -39,10 +38,8 @@ const AdvancedFoodOrdering = ({ onOrderUpdate, onClose, isEmbedded = false }) =>
     }
   }, []);
 
-  // Save cart to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('theatre_food_cart', JSON.stringify(cart));
-    // Notify parent component of cart changes
     if (onOrderUpdate) {
       onOrderUpdate(cart);
     }
@@ -51,7 +48,6 @@ const AdvancedFoodOrdering = ({ onOrderUpdate, onClose, isEmbedded = false }) =>
   const fetchFoodItems = async () => {
     setLoading(true);
     try {
-      // Try API first; fallback to mock data if unavailable
       const { fetchConcessionItems } = await import('../../lib/concessions')
       let apiItems = []
       try {
@@ -186,7 +182,6 @@ const AdvancedFoodOrdering = ({ onOrderUpdate, onClose, isEmbedded = false }) =>
         }
       ];
 
-      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       const normalized = (apiItems || []).map((it) => ({
         id: it._id,
@@ -330,7 +325,7 @@ const AdvancedFoodOrdering = ({ onOrderUpdate, onClose, isEmbedded = false }) =>
         exit={isEmbedded ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
         className={containerClass}
       >
-        {/* Header */}
+        {}
         <div className="p-6 border-b border-white/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -365,9 +360,9 @@ const AdvancedFoodOrdering = ({ onOrderUpdate, onClose, isEmbedded = false }) =>
         </div>
 
         <div className="flex-1 flex overflow-hidden">
-          {/* Sidebar */}
+          {}
           <div className="w-80 bg-gray-800/30 p-6 border-r border-white/10 overflow-y-auto">
-            {/* Search */}
+            {}
             <div className="mb-6">
               <div className="relative">
                 <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -381,7 +376,7 @@ const AdvancedFoodOrdering = ({ onOrderUpdate, onClose, isEmbedded = false }) =>
               </div>
             </div>
 
-            {/* Categories */}
+            {}
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-white mb-3">Categories</h3>
               <div className="space-y-2">
@@ -402,7 +397,7 @@ const AdvancedFoodOrdering = ({ onOrderUpdate, onClose, isEmbedded = false }) =>
               </div>
             </div>
 
-            {/* Dietary Preferences */}
+            {}
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-white mb-3">Dietary Preferences</h3>
               <div className="space-y-2">
@@ -423,7 +418,7 @@ const AdvancedFoodOrdering = ({ onOrderUpdate, onClose, isEmbedded = false }) =>
               </div>
             </div>
 
-            {/* Price Range */}
+            {}
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-white mb-3">Price Range</h3>
               <div className="space-y-3">
@@ -442,7 +437,7 @@ const AdvancedFoodOrdering = ({ onOrderUpdate, onClose, isEmbedded = false }) =>
               </div>
             </div>
 
-            {/* Rating Filter */}
+            {}
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-white mb-3">Minimum Rating</h3>
               <div className="flex items-center gap-2">
@@ -463,7 +458,7 @@ const AdvancedFoodOrdering = ({ onOrderUpdate, onClose, isEmbedded = false }) =>
             </div>
           </div>
 
-          {/* Main Content */}
+          {}
           <div className="flex-1 p-6 overflow-y-auto">
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -560,7 +555,7 @@ const AdvancedFoodOrdering = ({ onOrderUpdate, onClose, isEmbedded = false }) =>
           </div>
         </div>
 
-        {/* Cart Sidebar */}
+        {}
         <AnimatePresence>
           {showCart && (
             <motion.div

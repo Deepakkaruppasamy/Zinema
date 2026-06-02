@@ -1,8 +1,6 @@
 import sendEmail from '../configs/nodeMailer.js';
 import SupportTicket from '../models/SupportTicket.js';
 
-// POST /api/support/ticket
-// body: { name, email, subject, message }
 export const createTicket = async (req, res) => {
   try {
     console.log('📧 Creating support ticket with data:', req.body);
@@ -19,9 +17,7 @@ export const createTicket = async (req, res) => {
       console.warn('⚠️ Support email not configured - ticket will be created but no email notification will be sent');
     }
 
-    // Persist ticket first
     console.log('💾 Creating ticket in database...');
-    // Get user ID safely
     let userId = undefined;
     try {
       if (req.auth && typeof req.auth === 'function') {
@@ -68,20 +64,17 @@ export const createTicket = async (req, res) => {
       </div>
     `;
 
-    // Try to send email to support team (non-blocking)
     if (supportTo) {
       try {
     await sendEmail({ to: supportTo, subject: `[Zinema Support] ${subject}`, body: html });
         console.log('✅ Support email sent successfully');
       } catch (emailError) {
         console.error('❌ Failed to send support email:', emailError.message);
-        // Don't fail the ticket creation if email fails
       }
     } else {
       console.log('📧 Support email not configured - ticket created without email notification');
     }
 
-    // Acknowledgment to user (non-blocking)
     if (email) {
       const ackHtml = `
         <div>
@@ -98,7 +91,6 @@ export const createTicket = async (req, res) => {
         console.log('✅ User acknowledgment email sent');
       } catch (ackError) {
         console.error('❌ Failed to send acknowledgment email:', ackError.message);
-        // Don't fail the ticket creation if acknowledgment email fails
       }
     }
 
@@ -106,7 +98,6 @@ export const createTicket = async (req, res) => {
   } catch (error) {
     console.error('createTicket error', error);
     
-    // Provide more specific error messages
     if (error.name === 'ValidationError') {
       return res.status(400).json({ success: false, message: 'Invalid ticket data: ' + error.message });
     }
@@ -122,7 +113,6 @@ export const createTicket = async (req, res) => {
   }
 };
 
-// GET /api/support/faqs (public)
 export const getFaqs = async (_req, res) => {
   const faqs = [
     { q: 'How do I cancel my booking?', a: 'Go to My Bookings > select booking > Cancel (if within policy window). Refunds go to original payment method.' },
@@ -132,7 +122,6 @@ export const getFaqs = async (_req, res) => {
   res.json({ success: true, faqs })
 }
 
-// GET /api/support/my (auth)
 export const listMyTickets = async (req, res) => {
   try {
     const { userId } = req.auth()
@@ -141,7 +130,6 @@ export const listMyTickets = async (req, res) => {
   } catch (e) { res.json({ success: false, message: e.message }) }
 }
 
-// GET /api/support/:id (auth or admin)
 export const getTicket = async (req, res) => {
   try {
     const { userId, sessionClaims } = req.auth()
@@ -153,7 +141,6 @@ export const getTicket = async (req, res) => {
   } catch (e) { res.json({ success: false, message: e.message }) }
 }
 
-// PATCH /api/support/:id (admin)
 export const adminUpdateTicket = async (req, res) => {
   try {
     const { status, adminNotes } = req.body
@@ -163,7 +150,6 @@ export const adminUpdateTicket = async (req, res) => {
   } catch (e) { res.json({ success: false, message: e.message }) }
 }
 
-// GET /api/support (admin) - list all tickets with pagination
 export const adminListTickets = async (req, res) => {
   try {
     const page = Math.max(parseInt(req.query.page) || 1, 1)

@@ -80,7 +80,6 @@ const chatMessageSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Index for efficient queries
 chatMessageSchema.index({ createdAt: -1 });
 chatMessageSchema.index({ 'sender.userId': 1 });
 chatMessageSchema.index({ movieId: 1 });

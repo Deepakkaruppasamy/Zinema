@@ -3,11 +3,9 @@ import cors from 'cors';
 
 const app = express();
 
-// Middleware
 app.use(express.json());
 app.use(cors());
 
-// Debug route
 app.get('/', (req, res) => {
     res.json({ 
         message: 'Debug API is working!', 
@@ -19,7 +17,6 @@ app.get('/', (req, res) => {
     });
 });
 
-// Test route
 app.get('/test', (req, res) => {
     res.json({ 
         message: 'Debug test endpoint working!', 

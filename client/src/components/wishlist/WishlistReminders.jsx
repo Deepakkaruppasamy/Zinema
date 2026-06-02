@@ -108,7 +108,7 @@ const WishlistReminders = () => {
     try {
       const { data } = await axios.post('/api/user/reminders', {
         movieId,
-        reminderType, // 'release', 'booking', 'showtime'
+        reminderType,
         reminderTime,
         enabled: true
       }, {
@@ -210,7 +210,7 @@ const WishlistReminders = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Heart className="w-6 h-6 text-red-400" />
@@ -218,7 +218,7 @@ const WishlistReminders = () => {
         </div>
       </div>
 
-      {/* Tabs */}
+      {}
       <div className="flex gap-2 border-b border-white/10">
         <button
           onClick={() => setActiveTab('wishlist')}
@@ -242,10 +242,10 @@ const WishlistReminders = () => {
         </button>
       </div>
 
-      {/* Wishlist Tab */}
+      {}
       {activeTab === 'wishlist' && (
         <div className="space-y-4">
-          {/* Filters */}
+          {}
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -284,7 +284,7 @@ const WishlistReminders = () => {
             </select>
           </div>
 
-          {/* Wishlist Items */}
+          {}
           {sortedWishlist.length === 0 ? (
             <div className="text-center py-12">
               <HeartOff className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -299,7 +299,7 @@ const WishlistReminders = () => {
                 <div key={item.id} className="relative group">
                   <MovieCard movie={item} />
                   
-                  {/* Actions */}
+                  {}
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="flex gap-1">
                       <button
@@ -325,7 +325,7 @@ const WishlistReminders = () => {
         </div>
       )}
 
-      {/* Reminders Tab */}
+      {}
       {activeTab === 'reminders' && (
         <div className="space-y-4">
           {reminders.length === 0 ? (
@@ -413,7 +413,7 @@ const WishlistReminders = () => {
         </div>
       )}
 
-      {/* Quick Actions */}
+      {}
       <div className="bg-gradient-to-r from-red-500/20 to-pink-500/20 rounded-lg border border-red-500/30 p-6">
         <div className="flex items-center gap-3 mb-4">
           <Zap className="w-6 h-6 text-red-400" />

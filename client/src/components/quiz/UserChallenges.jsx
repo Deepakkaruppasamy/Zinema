@@ -26,7 +26,6 @@ const UserChallenges = () => {
     maxParticipants: 50
   });
 
-  // Sample challenges
   const sampleChallenges = [
     {
       id: 1,
@@ -98,7 +97,6 @@ const UserChallenges = () => {
     }
   ];
 
-  // User's active challenges
   const sampleUserChallenges = [
     {
       id: 5,
@@ -187,7 +185,7 @@ const UserChallenges = () => {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">🎯 User Challenges</h2>
@@ -202,7 +200,7 @@ const UserChallenges = () => {
         </button>
       </div>
 
-      {/* User's Active Challenges */}
+      {}
       <div>
         <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <Target className="w-5 h-5 text-blue-400" />
@@ -262,7 +260,7 @@ const UserChallenges = () => {
         </div>
       </div>
 
-      {/* Community Challenges */}
+      {}
       <div>
         <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <Users className="w-5 h-5 text-purple-400" />
@@ -341,7 +339,7 @@ const UserChallenges = () => {
         </div>
       </div>
 
-      {/* Create Challenge Modal */}
+      {}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <motion.div

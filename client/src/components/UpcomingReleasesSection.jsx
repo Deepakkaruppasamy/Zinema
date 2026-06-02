@@ -4,7 +4,6 @@ import { CalendarDays, ChevronLeft, ChevronRight, Bell } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAppContext } from '../context/AppContext';
 
-// Mock upcoming releases data
 const upcomingMovies = [
   {
     id: 1,
@@ -80,7 +79,6 @@ const UpcomingReleasesSection = () => {
   const { image_base_url } = useAppContext();
 
   useEffect(() => {
-    // Simulate async fetch when using mock data so we can show skeletons
     const t = setTimeout(() => {
       setMovies(upcomingMovies);
       setLoading(false);
@@ -94,12 +92,12 @@ const UpcomingReleasesSection = () => {
 
   return (
     <section className="relative mt-20 px-6 md:px-16 lg:px-24 xl:px-36">
-      {/* Soft gradient background */}
+      {}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -top-24 left-1/2 -translate-x-1/2 h-72 w-[80%] rounded-full blur-3xl opacity-30 bg-gradient-to-r from-primary/30 via-fuchsia-500/20 to-sky-500/20" />
       </div>
 
-      {/* Section header */}
+      {}
       <div className="mb-8 flex items-end justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] text-primary/80">Don’t miss what’s next</p>
@@ -130,15 +128,15 @@ const UpcomingReleasesSection = () => {
                       e.currentTarget.src = 'https://placehold.co/300x450?text=No+Poster';
                     }}
                   />
-                  {/* Overlay gradient */}
+                  {}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90" />
 
-                  {/* Badge */}
+                  {}
                   <span className="absolute left-3 top-3 rounded-full bg-primary/20 text-primary border border-primary/30 px-3 py-1 text-[11px] font-semibold tracking-wide">
                     Coming Soon
                   </span>
 
-                  {/* Bottom content */}
+                  {}
                   <div className="absolute inset-x-0 bottom-0 p-4">
                     <h3 className="font-bold text-white text-lg line-clamp-2 drop-shadow">{movie.title}</h3>
                     <div className="mt-2 flex items-center justify-between">

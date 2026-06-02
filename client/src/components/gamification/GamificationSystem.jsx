@@ -56,7 +56,6 @@ const GamificationSystem = () => {
       });
       
       if (data.success) {
-        // Handle both response structures: data.stats or data.gamification
         const stats = data.stats || data.gamification || {};
         setUserStats({
           level: stats.level || 1,
@@ -72,7 +71,6 @@ const GamificationSystem = () => {
       }
     } catch (error) {
       console.error('Error loading user stats:', error);
-      // Keep default values on error
     } finally {
       setLoading(false);
     }
@@ -183,7 +181,7 @@ const GamificationSystem = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Trophy className="w-6 h-6 text-yellow-400" />
@@ -200,7 +198,7 @@ const GamificationSystem = () => {
         </div>
       </div>
 
-      {/* Tabs */}
+      {}
       <div className="flex gap-2 border-b border-white/10">
         <button
           onClick={() => setActiveTab('overview')}
@@ -244,10 +242,10 @@ const GamificationSystem = () => {
         </button>
       </div>
 
-      {/* Overview Tab */}
+      {}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          {/* Level Progress */}
+          {}
           <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg border border-blue-500/30 p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">Level Progress</h3>
@@ -265,7 +263,7 @@ const GamificationSystem = () => {
             </div>
           </div>
 
-          {/* Stats Grid */}
+          {}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-gray-800/50 p-4 rounded-lg border border-white/10">
               <div className="flex items-center gap-2 mb-2">
@@ -302,7 +300,7 @@ const GamificationSystem = () => {
             </div>
           </div>
 
-          {/* Recent Badges */}
+          {}
           <div className="bg-gray-800/50 rounded-lg border border-white/10 p-6">
             <h3 className="text-lg font-semibold text-white mb-4">Recent Badges</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -326,7 +324,7 @@ const GamificationSystem = () => {
         </div>
       )}
 
-      {/* Badges Tab */}
+      {}
       {activeTab === 'badges' && (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-white">All Badges</h3>
@@ -359,7 +357,7 @@ const GamificationSystem = () => {
         </div>
       )}
 
-      {/* Leaderboard Tab */}
+      {}
       {activeTab === 'leaderboard' && (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-white">Leaderboard</h3>
@@ -402,7 +400,7 @@ const GamificationSystem = () => {
         </div>
       )}
 
-      {/* Rewards Tab */}
+      {}
       {activeTab === 'rewards' && (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-white">Available Rewards</h3>

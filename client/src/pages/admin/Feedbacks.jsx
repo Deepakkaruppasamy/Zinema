@@ -20,7 +20,6 @@ const Feedbacks = () => {
         setPage(data.page || p)
       }
     } catch (e) {
-      // silent
     } finally {
       setLoading(false)
     }

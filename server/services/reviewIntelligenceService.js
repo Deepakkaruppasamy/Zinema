@@ -1,9 +1,5 @@
 import fetch from 'node-fetch';
 
-/**
- * AI-Powered Review Intelligence Service
- * Provides sentiment analysis, quality detection, and content analysis for movie reviews
- */
 class ReviewIntelligenceService {
   constructor() {
     this.geminiApiKey = process.env.GEMINI_API_KEY;
@@ -11,9 +7,6 @@ class ReviewIntelligenceService {
     this.geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${this.geminiModel}:generateContent`;
   }
 
-  /**
-   * Analyze review text for sentiment, emotions, themes, and quality
-   */
   async analyzeReview(reviewText, rating, userContext = {}) {
     try {
       const analysisPrompt = this.buildAnalysisPrompt(reviewText, rating, userContext);
@@ -46,9 +39,6 @@ class ReviewIntelligenceService {
     }
   }
 
-  /**
-   * Build analysis prompt for Gemini AI
-   */
   buildAnalysisPrompt(reviewText, rating, userContext) {
     return `Analyze this movie review and return a JSON response with the following structure:
 
@@ -88,12 +78,8 @@ Analysis Guidelines:
 Respond with only the JSON object, no additional text.`;
   }
 
-  /**
-   * Parse Gemini AI response into structured data
-   */
   parseAnalysisResponse(analysisText, reviewText, rating) {
     try {
-      // Extract JSON from response (Gemini sometimes adds extra text)
       const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No JSON found in response');
@@ -101,7 +87,6 @@ Respond with only the JSON object, no additional text.`;
 
       const analysis = JSON.parse(jsonMatch[0]);
       
-      // Validate and sanitize response
       return {
         sentimentScore: this.clamp(analysis.sentimentScore || 0, -1, 1),
         confidenceScore: this.clamp(analysis.confidenceScore || 0.5, 0, 1),
@@ -123,34 +108,27 @@ Respond with only the JSON object, no additional text.`;
     }
   }
 
-  /**
-   * Generate fallback analysis when AI fails
-   */
   getFallbackAnalysis(reviewText, rating) {
-    // Simple rule-based fallback
     const wordCount = reviewText.split(/\s+/).length;
-    const sentimentScore = (rating - 3) / 2; // Convert 1-5 rating to -1 to 1 sentiment
+    const sentimentScore = (rating - 3) / 2;
     
     return {
       sentimentScore,
-      confidenceScore: 0.3, // Low confidence for fallback
+      confidenceScore: 0.3,
       emotions: this.detectBasicEmotions(reviewText, rating),
       themes: this.detectBasicThemes(reviewText),
       qualityFlags: {
         isSpam: this.detectSpam(reviewText),
-        isFake: false, // Conservative fallback
-        isHelpful: wordCount > 10, // Longer reviews are generally more helpful
+        isFake: false,
+        isHelpful: wordCount > 10,
         toxicityScore: this.detectToxicity(reviewText)
       },
       language: 'en',
-      readabilityScore: Math.max(20, Math.min(80, wordCount * 2)), // Rough estimate
-      helpfulnessScore: Math.min(1, wordCount / 50) // Based on length
+      readabilityScore: Math.max(20, Math.min(80, wordCount * 2)),
+      helpfulnessScore: Math.min(1, wordCount / 50)
     };
   }
 
-  /**
-   * Generate personalized review summary for a user
-   */
   async generatePersonalizedSummary(reviews, userPreferences = {}) {
     try {
       if (!reviews || reviews.length === 0) {
@@ -192,9 +170,6 @@ Respond with only the JSON object, no additional text.`;
     }
   }
 
-  /**
-   * Build summary prompt for personalized review analysis
-   */
   buildSummaryPrompt(reviews, userPreferences) {
     const reviewTexts = reviews.map(r => `Rating: ${r.rating}/5 - "${r.text}"`).join('\n\n');
     const avgRating = (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1);
@@ -222,9 +197,6 @@ Focus on aspects that matter to this user based on their preferences. If they lo
 Respond with only the JSON object.`;
   }
 
-  /**
-   * Parse summary response from AI
-   */
   parseSummaryResponse(summaryText) {
     try {
       const jsonMatch = summaryText.match(/\{[\s\S]*\}/);
@@ -248,9 +220,6 @@ Respond with only the JSON object.`;
     }
   }
 
-  /**
-   * Utility methods
-   */
   clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
   }
@@ -263,14 +232,14 @@ Respond with only the JSON object.`;
         emotion: e.emotion,
         intensity: this.clamp(e.intensity || 0, 0, 1)
       }))
-      .slice(0, 3); // Limit to top 3 emotions
+      .slice(0, 3);
   }
 
   validateThemes(themes) {
     const validThemes = ['acting', 'plot', 'visuals', 'soundtrack', 'directing', 'cinematography', 'dialogue'];
     return themes
       .filter(theme => validThemes.includes(theme))
-      .slice(0, 5); // Limit to top 5 themes
+      .slice(0, 5);
   }
 
   detectBasicEmotions(text, rating) {
@@ -303,7 +272,7 @@ Respond with only the JSON object.`;
       text.length < 10,
       /^(good|bad|nice|ok|great)\.?$/i.test(text.trim()),
       text.includes('http') || text.includes('www'),
-      /(.)\1{4,}/.test(text) // Repeated characters
+      /(.)\1{4,}/.test(text)
     ];
     
     return spamIndicators.filter(Boolean).length >= 2;

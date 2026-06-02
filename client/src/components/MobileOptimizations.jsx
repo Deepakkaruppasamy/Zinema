@@ -22,7 +22,6 @@ const MobileOptimizations = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Swipe gestures for mobile navigation
   useEffect(() => {
     const handleTouchStart = (e) => {
       setTouchEnd(null);
@@ -60,7 +59,6 @@ const MobileOptimizations = () => {
     };
   }, [touchStart, touchEnd, isMobile, location.pathname, navigate]);
 
-  // Prevent zoom on double tap
   useEffect(() => {
     if (isMobile) {
       let lastTouchEnd = 0;
@@ -77,7 +75,6 @@ const MobileOptimizations = () => {
     }
   }, [isMobile]);
 
-  // Add mobile-specific viewport meta tag
   useEffect(() => {
     if (isMobile) {
       const viewport = document.querySelector('meta[name="viewport"]');
@@ -99,7 +96,7 @@ const MobileOptimizations = () => {
 
   return (
     <>
-      {/* Mobile Bottom Navigation */}
+      {}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-gray-900 border-t border-white/10 md:hidden">
         <div className="flex items-center justify-around py-2">
           {mobileNavItems.map((item, index) => {
@@ -127,7 +124,7 @@ const MobileOptimizations = () => {
         </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
+      {}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 md:hidden">
           <div className="absolute right-0 top-0 h-full w-80 bg-gray-900 border-l border-white/10">
@@ -171,7 +168,7 @@ const MobileOptimizations = () => {
         </div>
       )}
 
-      {/* Mobile Header */}
+      {}
       <div className="fixed top-0 left-0 right-0 z-40 bg-gray-900/95 backdrop-blur border-b border-white/10 md:hidden">
         <div className="flex items-center justify-between px-4 py-3">
           <button
@@ -189,7 +186,7 @@ const MobileOptimizations = () => {
         </div>
       </div>
 
-      {/* Mobile-specific styles */}
+      {}
       <style jsx>{`
         @media (max-width: 768px) {
           body {

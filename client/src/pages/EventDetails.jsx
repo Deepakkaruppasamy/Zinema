@@ -75,7 +75,6 @@ const EventDetails = () => {
       const data = await res.json()
       if (data.success) {
         toast.success('Successfully registered for the event!')
-        // Optionally redirect to a confirmation page or show success message
       } else {
         toast.error(data.message || 'Registration failed')
       }

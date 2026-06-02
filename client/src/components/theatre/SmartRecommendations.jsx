@@ -26,7 +26,6 @@ const SmartRecommendations = ({ userId, onRecommendationSelect, onTheatreSelect 
   const fetchRecommendations = async () => {
     setLoading(true);
     try {
-      // Simulate API calls for different recommendation types
       await Promise.all([
         fetchMovieRecommendations(),
         fetchTheatreRecommendations(),
@@ -204,7 +203,7 @@ const SmartRecommendations = ({ userId, onRecommendationSelect, onTheatreSelect 
 
   return (
     <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/20 rounded-lg">
@@ -225,7 +224,7 @@ const SmartRecommendations = ({ userId, onRecommendationSelect, onTheatreSelect 
         </button>
       </div>
 
-      {/* Tabs */}
+      {}
       <div className="flex space-x-1 mb-6 bg-gray-800/30 rounded-lg p-1">
         {tabs.map(tab => (
           <button
@@ -243,7 +242,7 @@ const SmartRecommendations = ({ userId, onRecommendationSelect, onTheatreSelect 
         ))}
       </div>
 
-      {/* Filters */}
+      {}
       <div className="flex flex-wrap gap-2 mb-6">
         <select
           value={filters.mood}
@@ -281,7 +280,7 @@ const SmartRecommendations = ({ userId, onRecommendationSelect, onTheatreSelect 
         </select>
       </div>
 
-      {/* Recommendations */}
+      {}
       {loading ? (
         <div className="space-y-4">
           {[1, 2, 3].map(i => (
@@ -568,7 +567,7 @@ const SmartRecommendations = ({ userId, onRecommendationSelect, onTheatreSelect 
         </div>
       )}
 
-      {/* AI Insights */}
+      {}
       <div className="mt-6 p-4 bg-gray-800/30 rounded-xl border border-white/10">
         <div className="flex items-center gap-2 mb-2">
           <FaBrain className="text-primary" />

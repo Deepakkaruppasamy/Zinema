@@ -12,12 +12,10 @@ import {
 
 const notificationRouter = express.Router();
 
-// User routes
 notificationRouter.get('/', getUserNotifications);
 notificationRouter.put('/:notificationId/read', markNotificationAsRead);
 notificationRouter.put('/read-all', markAllNotificationsAsRead);
 
-// Admin routes
 notificationRouter.post('/', createNotification);
 notificationRouter.get('/admin/all', getAllNotifications);
 notificationRouter.put('/admin/:notificationId', updateNotification);

@@ -15,10 +15,8 @@ export const ThemeProvider = ({ children }) => {
     document.body.classList.add(theme);
     localStorage.setItem('zinema_theme', theme);
 
-    // Dynamically update the browser UI theme color (PWA address bar, mobile status bar)
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
-      // Match the CSS body backgrounds in index.css
       const color = theme === 'dark' ? '#09090B' : theme === 'cinema' ? '#0b0b10' : '#f7f7f8';
       meta.setAttribute('content', color);
     }

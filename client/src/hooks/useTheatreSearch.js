@@ -67,13 +67,11 @@ export default function useTheatreSearch() {
         setSortBy(obj.sortBy || sortBy);
       } catch {}
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const theatres = useMemo(() => {
     let list = [...mockTheatres];
     if (format !== 'Any') list = list.filter(t => t.amenities.some(a => a.label === format));
-    // language is a placeholder for future integration
     if (sortBy === 'distance') list.sort((a, b) => a.distance - b.distance);
     if (sortBy === 'rating') list.sort((a, b) => b.rating - a.rating);
     return list;

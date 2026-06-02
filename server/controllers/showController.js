@@ -3,7 +3,6 @@ import Movie from "../models/Movie.js";
 import Show from "../models/Show.js";
 import { inngest } from "../inngest/index.js";
 
-// Helper function to make API calls with retry
 const makeApiCallWithRetry = async (url, retries = 5, delay = 2000) => {
     for (let i = 0; i < retries; i++) {
         try {
@@ -13,10 +12,10 @@ const makeApiCallWithRetry = async (url, retries = 5, delay = 2000) => {
                     'User-Agent': 'Zinema-App/1.0',
                     'Accept': 'application/json'
                 },
-                timeout: 30000, // 30 second timeout
+                timeout: 30000,
                 maxRedirects: 5,
                 validateStatus: function (status) {
-                    return status >= 200 && status < 300; // default
+                    return status >= 200 && status < 300;
                 }
             });
             console.log(`✅ Successfully fetched: ${url}`);
@@ -41,7 +40,6 @@ const makeApiCallWithRetry = async (url, retries = 5, delay = 2000) => {
                 throw error;
             }
 
-            // Exponential backoff with jitter
             const backoffDelay = delay * Math.pow(2, i) + Math.random() * 1000;
             console.log(`⏳ Waiting ${Math.round(backoffDelay)}ms before retry...`);
             await new Promise(resolve => setTimeout(resolve, backoffDelay));
@@ -49,7 +47,6 @@ const makeApiCallWithRetry = async (url, retries = 5, delay = 2000) => {
     }
 };
 
-// API to get now playing movies from TMDB API
 export const getNowPlayingMovies = async (req, res)=>{
     try {
         const response = await makeApiCallWithRetry('https://api.themoviedb.org/3/movie/now_playing');
@@ -61,7 +58,6 @@ export const getNowPlayingMovies = async (req, res)=>{
     }
 }
 
-// API to add a new show to the database
 export const addShow = async (req, res) =>{
     try {
         const {movieId, showsInput, showPrice} = req.body
@@ -69,7 +65,6 @@ export const addShow = async (req, res) =>{
         let movie = await Movie.findById(movieId)
 
         if(!movie) {
-            // Fetch movie details and credits from TMDB API with retry logic
             const [movieDetailsResponse, movieCreditsResponse] = await Promise.all([
                 makeApiCallWithRetry(`https://api.themoviedb.org/3/movie/${movieId}`),
                 makeApiCallWithRetry(`https://api.themoviedb.org/3/movie/${movieId}/credits`)
@@ -93,7 +88,6 @@ export const addShow = async (req, res) =>{
                 runtime: movieApiData.runtime,
              }
 
-             // Add movie to the database
              movie = await Movie.create(movieDetails);
         }
 
@@ -115,9 +109,7 @@ export const addShow = async (req, res) =>{
             await Show.insertMany(showsToCreate);
         }
 
-         //  Trigger Inngest event (with fallback)
          try {
-            // Check if Inngest is properly configured
             if (!process.env.INNGEST_EVENT_KEY && !process.env.INNGEST_DEV) {
                 throw new Error('Inngest not configured - using fallback');
             }
@@ -131,7 +123,6 @@ export const addShow = async (req, res) =>{
         } catch (error) {
             console.log('⚠️ Inngest event failed, using fallback notification system:', error.message);
             
-            // Fallback: Send notifications directly if Inngest fails
             try {
                 const User = (await import('../models/User.js')).default;
                 const sendEmail = (await import('../configs/nodeMailer.js')).default;
@@ -170,24 +161,19 @@ export const addShow = async (req, res) =>{
     }
 }
 
-// API to get all shows from the database
 export const getShows = async (req, res) =>{
     try {
-        // First try to get future shows
         let shows = await Show.find({showDateTime: {$gte: new Date()}}).populate('movie').sort({ showDateTime: 1 });
 
-        // If no future shows, get all shows
         if (shows.length === 0) {
             shows = await Show.find({}).populate('movie').sort({ showDateTime: -1 });
         }
 
-        // If still no shows, get all movies as fallback
         if (shows.length === 0) {
             const movies = await Movie.find({}).limit(20);
             return res.json({success: true, shows: movies});
         }
 
-        // filter unique shows
         const uniqueShows = new Set(shows.map(show => show.movie).filter(movie => movie !== null));
 
         res.json({success: true, shows: Array.from(uniqueShows)})
@@ -197,11 +183,9 @@ export const getShows = async (req, res) =>{
     }
 }
 
-// API to get a single show from the database
 export const getShow = async (req, res) =>{
     try {
         const {movieId} = req.params;
-        // get all upcoming shows for the movie
         const shows = await Show.find({movie: movieId, showDateTime: { $gte: new Date() }})
 
         const movie = await Movie.findById(movieId);

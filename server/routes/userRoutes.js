@@ -12,10 +12,8 @@ userRouter.delete('/follow/:userId', unfollowUser)
 userRouter.get('/following', getFollowing)
 userRouter.get('/gamification', getUserStats)
 
-// Pricing alerts endpoints
 userRouter.get('/pricing-alerts', async (req, res) => {
   try {
-    // Mock response for now
     res.json({
       success: true,
       alerts: []
@@ -27,7 +25,6 @@ userRouter.get('/pricing-alerts', async (req, res) => {
 
 userRouter.post('/pricing-alerts', async (req, res) => {
   try {
-    // Mock response for now
     res.json({
       success: true,
       alert: { id: Date.now(), ...req.body }
@@ -39,7 +36,6 @@ userRouter.post('/pricing-alerts', async (req, res) => {
 
 userRouter.put('/pricing-alerts/:alertId', async (req, res) => {
   try {
-    // Mock response for now
     res.json({
       success: true,
       message: 'Alert updated'
@@ -51,7 +47,6 @@ userRouter.put('/pricing-alerts/:alertId', async (req, res) => {
 
 userRouter.delete('/pricing-alerts/:alertId', async (req, res) => {
   try {
-    // Mock response for now
     res.json({
       success: true,
       message: 'Alert deleted'
@@ -63,7 +58,6 @@ userRouter.delete('/pricing-alerts/:alertId', async (req, res) => {
 
 userRouter.post('/alert-settings', async (req, res) => {
   try {
-    // Mock response for now
     res.json({
       success: true,
       message: 'Settings updated'

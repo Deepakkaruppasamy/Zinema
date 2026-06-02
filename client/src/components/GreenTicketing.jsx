@@ -3,25 +3,22 @@ import { Leaf, X, Heart, TreePine } from 'lucide-react';
 
 const GreenTicketing = () => {
   const [isVisible, setIsVisible] = useState(() => {
-    // Check if user has permanently disabled it
     const permanentlyDisabled = localStorage.getItem('green_ticketing_permanently_disabled');
     if (permanentlyDisabled === 'true') {
       return false;
     }
     
-    // Check if temporarily dismissed
     const dismissedUntil = localStorage.getItem('green_ticketing_dismissed_until');
     if (dismissedUntil) {
       const dismissalTime = parseInt(dismissedUntil);
       if (Date.now() < dismissalTime) {
         return false;
       } else {
-        // Dismissal expired, remove it
         localStorage.removeItem('green_ticketing_dismissed_until');
       }
     }
     
-    return true; // Default to visible
+    return true;
   });
   const [isExpanded, setIsExpanded] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 20 });
@@ -33,7 +30,6 @@ const GreenTicketing = () => {
     return parseInt(localStorage.getItem('green_ticketing_total') || '0');
   });
 
-  // Listen for booking completions to update total donations
   useEffect(() => {
     const handleBookingComplete = (event) => {
       const { greenDonation } = event.detail || {};
@@ -48,27 +44,24 @@ const GreenTicketing = () => {
 
     const handleShowGreenTicketing = () => {
       setIsVisible(true);
-      setIsExpanded(true); // Auto-expand when manually shown
+      setIsExpanded(true);
     };
 
-    // Periodic reminder - show every 30 minutes if not permanently disabled
     const checkPeriodicReminder = () => {
       const permanentlyDisabled = localStorage.getItem('green_ticketing_permanently_disabled');
       const lastReminder = localStorage.getItem('green_ticketing_last_reminder');
       const now = Date.now();
       
       if (permanentlyDisabled !== 'true') {
-        if (!lastReminder || (now - parseInt(lastReminder)) > (30 * 60 * 1000)) { // 30 minutes
+        if (!lastReminder || (now - parseInt(lastReminder)) > (30 * 60 * 1000)) {
           setIsVisible(true);
           localStorage.setItem('green_ticketing_last_reminder', now.toString());
         }
       }
     };
 
-    // Check reminder every 5 minutes
     const reminderInterval = setInterval(checkPeriodicReminder, 5 * 60 * 1000);
     
-    // Initial check
     checkPeriodicReminder();
 
     window.addEventListener('greenTicketingDonation', handleBookingComplete);
@@ -81,7 +74,6 @@ const GreenTicketing = () => {
     };
   }, []);
 
-  // Floating animation
   useEffect(() => {
     if (!isVisible || isExpanded) return;
 
@@ -96,7 +88,6 @@ const GreenTicketing = () => {
         let newDirectionX = direction.x;
         let newDirectionY = direction.y;
 
-        // Bounce off edges
         if (newX <= 20 || newX >= maxX) {
           newDirectionX = -direction.x;
           newX = Math.max(20, Math.min(maxX, newX));
@@ -118,7 +109,6 @@ const GreenTicketing = () => {
     return () => clearInterval(interval);
   }, [isVisible, isExpanded, direction]);
 
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => {
       setPosition(prev => ({
@@ -143,26 +133,22 @@ const GreenTicketing = () => {
 
   const handleClose = () => {
     setIsVisible(false);
-    // Set a temporary dismissal that expires after 1 hour
-    const dismissalTime = Date.now() + (60 * 60 * 1000); // 1 hour from now
+    const dismissalTime = Date.now() + (60 * 60 * 1000);
     localStorage.setItem('green_ticketing_dismissed_until', dismissalTime.toString());
   };
 
-  // Check if user dismissed it temporarily
   useEffect(() => {
     const dismissedUntil = localStorage.getItem('green_ticketing_dismissed_until');
     if (dismissedUntil) {
       const dismissalTime = parseInt(dismissedUntil);
       if (Date.now() < dismissalTime) {
         setIsVisible(false);
-        // Set a timer to make it visible again when dismissal expires
         const timeUntilVisible = dismissalTime - Date.now();
         setTimeout(() => {
           setIsVisible(true);
           localStorage.removeItem('green_ticketing_dismissed_until');
         }, timeUntilVisible);
       } else {
-        // Dismissal has expired, remove it and show the component
         localStorage.removeItem('green_ticketing_dismissed_until');
         setIsVisible(true);
       }
@@ -180,7 +166,7 @@ const GreenTicketing = () => {
         transform: isExpanded ? 'scale(1)' : 'scale(1)',
       }}
     >
-      {/* Floating Icon */}
+      {}
       {!isExpanded && (
         <div
           onClick={handleExpand}
@@ -190,13 +176,13 @@ const GreenTicketing = () => {
         >
           <Leaf className="w-8 h-8 text-white group-hover:rotate-12 transition-transform duration-300" />
           
-          {/* Floating particles effect */}
+          {}
           <div className="absolute inset-0 rounded-full">
             <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-300 rounded-full animate-ping opacity-75"></div>
             <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-emerald-300 rounded-full animate-ping opacity-50" style={{ animationDelay: '0.5s' }}></div>
           </div>
 
-          {/* Donation count badge */}
+          {}
           {totalDonations > 0 && (
             <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
               {totalDonations}
@@ -205,10 +191,10 @@ const GreenTicketing = () => {
         </div>
       )}
 
-      {/* Expanded Panel */}
+      {}
       {isExpanded && (
         <div className="bg-white dark:bg-gray-800 cinema:bg-gray-900/90 cinema:backdrop-blur-sm rounded-xl shadow-2xl p-6 w-80 border border-gray-200 dark:border-gray-700 cinema:border-green-500/30">
-          {/* Header */}
+          {}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
@@ -227,7 +213,7 @@ const GreenTicketing = () => {
             </button>
           </div>
 
-          {/* Content */}
+          {}
           <div className="space-y-4">
             <div className="text-sm text-gray-700 dark:text-gray-300 cinema:text-green-200">
               <p className="mb-2">Make your movie experience carbon neutral!</p>
@@ -236,7 +222,7 @@ const GreenTicketing = () => {
               </p>
             </div>
 
-            {/* Toggle Switch */}
+            {}
             <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 cinema:bg-green-900/30 rounded-lg">
               <div className="flex items-center space-x-2">
                 <TreePine className="w-4 h-4 text-green-600 dark:text-green-400 cinema:text-green-300" />
@@ -260,7 +246,7 @@ const GreenTicketing = () => {
               </button>
             </div>
 
-            {/* Stats */}
+            {}
             <div className="grid grid-cols-2 gap-3">
               <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 cinema:bg-green-900/40 rounded-lg">
                 <div className="text-lg font-bold text-green-600 dark:text-green-400 cinema:text-green-300">
@@ -281,7 +267,7 @@ const GreenTicketing = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {}
             <div className="flex space-x-2">
               <button
                 onClick={() => setIsExpanded(false)}
@@ -291,7 +277,6 @@ const GreenTicketing = () => {
               </button>
               <button
                 onClick={() => {
-                  // This would typically open a modal with more details
                   alert('🌱 Green Ticketing Program\n\nOur carbon offset program partners with verified environmental organizations to:\n\n• Plant trees in deforested areas\n• Support renewable energy projects\n• Fund clean water initiatives\n• Reduce carbon emissions\n\nEvery ₹1 donation helps offset approximately 1kg of CO₂ emissions from your cinema visit.\n\nTogether, we can make entertainment more sustainable!');
                 }}
                 className="flex-1 px-4 py-2 text-sm bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors cinema:bg-green-500 cinema:hover:bg-green-600"
@@ -300,7 +285,7 @@ const GreenTicketing = () => {
               </button>
             </div>
 
-            {/* Settings */}
+            {}
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 cinema:border-green-500/30">
               <button
                 onClick={() => {

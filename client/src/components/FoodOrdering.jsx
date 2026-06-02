@@ -103,11 +103,11 @@ const FoodOrdering = ({ showId, onClose }) => {
   };
 
   const getTax = () => {
-    return Math.round(getSubtotal() * 0.18); // 18% GST
+    return Math.round(getSubtotal() * 0.18);
   };
 
   const getServiceCharge = () => {
-    return Math.round(getSubtotal() * 0.05); // 5% service charge
+    return Math.round(getSubtotal() * 0.05);
   };
 
   const getTotalAmount = () => {
@@ -135,7 +135,7 @@ const FoodOrdering = ({ showId, onClose }) => {
 
     try {
       const response = await api.post('/api/food/order', {
-        theaterId: showId, // Using showId as theaterId
+        theaterId: showId,
         showId: showId,
         items: cart,
         deliveryMethod: deliveryMethod,
@@ -144,7 +144,6 @@ const FoodOrdering = ({ showId, onClose }) => {
       });
 
       if (response.data.success) {
-        // Initialize Stripe payment
         const stripe = window.Stripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
         const { error } = await stripe.confirmPayment({
           clientSecret: response.data.order.clientSecret,
@@ -156,7 +155,6 @@ const FoodOrdering = ({ showId, onClose }) => {
         if (error) {
           setError(error.message);
         } else {
-          // Order successful, close modal
           onClose();
         }
       }
@@ -205,7 +203,7 @@ const FoodOrdering = ({ showId, onClose }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden">
-        {/* Header */}
+        {}
         <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -229,7 +227,7 @@ const FoodOrdering = ({ showId, onClose }) => {
         </div>
 
         <div className="flex h-[calc(90vh-120px)]">
-          {/* Food Menu */}
+          {}
           <div className="flex-1 overflow-y-auto p-6">
             {Object.keys(foodItems).length === 0 ? (
               <div className="text-center py-12">

@@ -7,10 +7,8 @@ import { buildICS } from "../utils/ics.js";
 import PaymentLink from "../models/PaymentLink.js";
 import { set } from "mongoose";
 
-// Create a client to send and receive events
 export const inngest = new Inngest({ id: "movie-ticket-booking" });
 
-// Inngest Function to save user data to a database
 const syncUserCreation = inngest.createFunction(
     {id: 'sync-user-from-clerk'},
     { event: 'clerk/user.created' },
@@ -26,7 +24,6 @@ const syncUserCreation = inngest.createFunction(
     }
 )
 
-// Inngest Function to delete user from database
 const syncUserDeletion = inngest.createFunction(
     {id: 'delete-user-with-clerk'},
     { event: 'clerk/user.deleted' },
@@ -37,7 +34,6 @@ const syncUserDeletion = inngest.createFunction(
     }
 )
 
-// Inngest Function to update user data in database 
 const syncUserUpdation = inngest.createFunction(
     {id: 'update-user-from-clerk'},
     { event: 'clerk/user.updated' },
@@ -53,7 +49,6 @@ const syncUserUpdation = inngest.createFunction(
     }
 )
 
-// Inngest Function to cancel booking and release seats of show after 10 minutes of booking created if payment is not made
 const releaseSeatsAndDeleteBooking = inngest.createFunction(
     {id: 'release-seats-delete-booking'},
     {event: "app/checkpayment"},
@@ -65,7 +60,6 @@ const releaseSeatsAndDeleteBooking = inngest.createFunction(
             const bookingId = event.data.bookingId;
             const booking = await Booking.findById(bookingId)
 
-            // If payment is not made, release seats and delete booking
             if(!booking.isPaid){
                 const show = await Show.findById(booking.show);
                 booking.bookedSeats.forEach((seat)=>{
@@ -79,7 +73,6 @@ const releaseSeatsAndDeleteBooking = inngest.createFunction(
     }
 )
 
-// Inngest Function to send email when user books a show
 const sendBookingConfirmationEmail = inngest.createFunction(
     {id: "send-booking-confirmation-email"},
     {event: "app/show.booked"},
@@ -104,7 +97,6 @@ const sendBookingConfirmationEmail = inngest.createFunction(
             title: booking.show.movie.title,
             description: `Your movie booking at Zinema by Dstudio. Seats: ${booking.bookedSeats.join(", ")}`,
             start,
-            // 2 hours default duration
             end: new Date(start.getTime() + 2 * 60 * 60 * 1000),
             location: "Cinema",
             organizer: process.env.SENDER_EMAIL,
@@ -138,17 +130,15 @@ const sendBookingConfirmationEmail = inngest.createFunction(
 )
 
 
-// Inngest Function to send reminders
 const sendShowReminders = inngest.createFunction(
     {id: "send-show-reminders"},
-    { cron: "0 */8 * * *" }, // Every 8 hours
+    { cron: "0 */8 * * *" },
     async ({ step })=>{
         console.log("⏰ Show reminder function triggered");
         const now = new Date();
         const in8Hours = new Date(now.getTime() + 8 * 60 * 60 * 1000);
         const windowStart = new Date(in8Hours.getTime() - 10 * 60 * 1000);
 
-        // Prepare reminder tasks
         const reminderTasks =  await step.run("prepare-reminder-tasks", async ()=>{
             const shows = await Show.find({
                 showDateTime: { $gte: windowStart, $lte: in8Hours },
@@ -183,7 +173,6 @@ const sendShowReminders = inngest.createFunction(
             return {sent: 0, message: "No reminders to send."}
         }
 
-         // Send reminder emails
          const results = await step.run('send-all-reminders', async ()=>{
             return await Promise.allSettled(
                 reminderTasks.map(task => sendEmail({
@@ -216,7 +205,6 @@ const sendShowReminders = inngest.createFunction(
     }
 )
 
-// Dynamic Notification System
 class DynamicNotificationEngine {
   constructor() {
     this.notificationTypes = {
@@ -227,7 +215,6 @@ class DynamicNotificationEngine {
     };
   }
 
-  // Send dynamic notifications based on user preferences
   async sendDynamicNotifications(eventType, data) {
     try {
       const users = await User.find({});
@@ -256,16 +243,12 @@ class DynamicNotificationEngine {
     }
   }
 
-  // Determine if notification should be sent to user
   async shouldSendNotification(user, eventType, data) {
-    // Get user preferences
     const preferences = await UserPreferences.findOne({ userId: user._id });
     
-    // Check notification frequency limits
-    const recentNotifications = await this.getRecentNotifications(user._id, 24); // Last 24 hours
-    if (recentNotifications.length >= 3) return false; // Max 3 notifications per day
+    const recentNotifications = await this.getRecentNotifications(user._id, 24);
+    if (recentNotifications.length >= 3) return false;
 
-    // Check user's notification preferences
     if (preferences && preferences.notificationSettings) {
       const settings = preferences.notificationSettings;
       
@@ -283,29 +266,24 @@ class DynamicNotificationEngine {
       }
     }
 
-    // Check user engagement level
     const engagementLevel = await this.calculateEngagementLevel(user._id);
     if (engagementLevel === 'low' && eventType === 'recommendation') return false;
 
     return true;
   }
 
-  // Send personalized notification
   async sendPersonalizedNotification(user, eventType, data) {
     const notification = await this.createPersonalizedNotification(user, eventType, data);
     
-    // Send via email (primary channel)
     await sendEmail({
       to: user.email,
       subject: notification.subject,
       body: notification.body
     });
 
-    // Log notification
     await this.logNotification(user._id, eventType, notification);
   }
 
-  // Create personalized notification content
   async createPersonalizedNotification(user, eventType, data) {
     const userProfile = await this.createUserProfile(user._id);
     
@@ -323,11 +301,9 @@ class DynamicNotificationEngine {
     }
   }
 
-  // Create new show notification
   createNewShowNotification(user, data, userProfile) {
     const { movieTitle, movie } = data;
     
-    // Personalize based on user's genre preferences
     const genreMatch = this.checkGenreMatch(movie, userProfile);
     const personalizedMessage = genreMatch 
       ? `We've added "${movieTitle}" - a ${movie.genres?.[0]?.name || 'great'} movie that matches your taste!`
@@ -373,7 +349,6 @@ class DynamicNotificationEngine {
     };
   }
 
-  // Create price drop notification
   createPriceDropNotification(user, data, userProfile) {
     const { movieTitle, oldPrice, newPrice, discount } = data;
     
@@ -393,7 +368,6 @@ class DynamicNotificationEngine {
     };
   }
 
-  // Create reminder notification
   createReminderNotification(user, data, userProfile) {
     const { movieTitle, showTime, seats } = data;
     
@@ -410,7 +384,6 @@ class DynamicNotificationEngine {
     };
   }
 
-  // Create recommendation notification
   createRecommendationNotification(user, data, userProfile) {
     const { movies } = data;
     
@@ -431,7 +404,6 @@ class DynamicNotificationEngine {
     };
   }
 
-  // Helper methods
   async createUserProfile(userId) {
     const bookings = await Booking.find({ userId, isPaid: true })
       .populate('show')
@@ -456,8 +428,6 @@ class DynamicNotificationEngine {
   }
 
   async getRecentNotifications(userId, hours) {
-    // This would query a notifications log table
-    // For now, return empty array
     return [];
   }
 
@@ -473,14 +443,12 @@ class DynamicNotificationEngine {
   }
 
   async logNotification(userId, eventType, notification) {
-    // This would log to a notifications table
     console.log(`Notification sent to user ${userId}: ${eventType}`);
   }
 }
 
 const notificationEngine = new DynamicNotificationEngine();
 
-// Inngest Function to send dynamic notifications when a new show is added
 const sendNewShowNotifications = inngest.createFunction(
     {id: "send-new-show-notifications"},
     { event: "app/show.added" },
@@ -500,16 +468,14 @@ const sendNewShowNotifications = inngest.createFunction(
     }
 )
 
-// Inngest Function to expire payment links and release seats
 const expirePaymentLinks = inngest.createFunction(
   { id: "expire-payment-links" },
-  { cron: "*/2 * * * *" }, // every 2 minutes
+  { cron: "*/2 * * * *" },
   async () => {
     try {
       const now = new Date();
       console.log('Running expire-payment-links function at:', now);
       
-      // Find links that are active and expired
       const links = await PaymentLink.find({ status: "active", expiresAt: { $lte: now } });
       if (!links.length) {
         console.log('No expired payment links found');

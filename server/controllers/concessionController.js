@@ -3,7 +3,6 @@ import ConcessionOrder from '../models/ConcessionOrder.js';
 import Coupon from '../models/Coupon.js';
 import sendEmail from '../configs/nodeMailer.js';
 
-// ITEMS
 export const listItems = async (req, res) => {
   try {
     const { q } = req.query;
@@ -55,7 +54,6 @@ export const deleteItem = async (req, res) => {
   }
 };
 
-// ORDERS
 export const createOrder = async (req, res) => {
   try {
     const { items, pickupTime, pickupLocation, notes, couponCode } = req.body;
@@ -86,10 +84,9 @@ export const createOrder = async (req, res) => {
     });
 
     const subtotal = orderItems.reduce((s, li) => s + li.lineTotal, 0);
-    const taxTotal = 0; // Placeholder; compute via tax rules
+    const taxTotal = 0;
     let discountTotal = 0;
 
-    // Apply coupon if provided and valid
     if (couponCode) {
       const code = String(couponCode).trim().toUpperCase();
       const coupon = await Coupon.findOne({ code, active: true });
@@ -104,7 +101,6 @@ export const createOrder = async (req, res) => {
       }
     }
 
-    // Bundle pricing: 10% off each popcorn+drink pair
     try {
       const perUnitByCategory = { popcorn: [], drink: [] };
       for (const itemInput of items) {
@@ -124,7 +120,7 @@ export const createOrder = async (req, res) => {
       let bundleDiscount = 0;
       for (let i = 0; i < pairCount; i++) {
         const pairSum = perUnitByCategory.popcorn[i] + perUnitByCategory.drink[i];
-        bundleDiscount += pairSum * 0.10; // 10% off each pair
+        bundleDiscount += pairSum * 0.10;
       }
       if (bundleDiscount > 0) discountTotal += bundleDiscount;
     } catch (_) {}
@@ -144,7 +140,6 @@ export const createOrder = async (req, res) => {
       notes: notes || '',
     });
 
-    // Fire-and-forget email confirmation; ignore failures
     try {
       const to = req.auth?.claims?.email || process.env.SMTP_USER;
       await sendEmail({
@@ -155,7 +150,6 @@ export const createOrder = async (req, res) => {
       });
     } catch (_) {}
 
-    // Schedule a basic near-term reminder by immediate send if within 10 min
     try {
       const to = req.auth?.claims?.email || process.env.SMTP_USER;
       const now = Date.now();

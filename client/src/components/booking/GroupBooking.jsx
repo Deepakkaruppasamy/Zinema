@@ -22,19 +22,18 @@ const GroupBooking = ({ showId, selectedSeats, onComplete, onClose }) => {
   const [groupMembers, setGroupMembers] = useState([
     { id: 1, name: user?.firstName || 'You', email: user?.primaryEmailAddress?.emailAddress || '', phone: '', isHost: true, seatId: selectedSeats[0] || null }
   ]);
-  const [paymentMethod, setPaymentMethod] = useState('split'); // 'host', 'split', 'individual'
+  const [paymentMethod, setPaymentMethod] = useState('split');
   const [splitDetails, setSplitDetails] = useState({});
   const [inviteLink, setInviteLink] = useState('');
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
 
-  const seatPrice = 12; // Base price per seat
+  const seatPrice = 12;
   const totalAmount = selectedSeats.length * seatPrice;
 
   useEffect(() => {
     if (selectedSeats.length > 1) {
-      // Auto-add members based on seat count
       const newMembers = selectedSeats.slice(1).map((seatId, index) => ({
         id: index + 2,
         name: `Guest ${index + 1}`,
@@ -79,7 +78,6 @@ const GroupBooking = ({ showId, selectedSeats, onComplete, onClose }) => {
   const generateInviteLink = async () => {
     setIsGeneratingLink(true);
     try {
-      // In a real app, this would create a shareable booking session
       const bookingSessionId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const link = `${window.location.origin}/group-booking/${bookingSessionId}`;
       setInviteLink(link);
@@ -114,7 +112,6 @@ const GroupBooking = ({ showId, selectedSeats, onComplete, onClose }) => {
       const splitAmounts = calculateSplitAmounts();
       
       if (paymentMethod === 'host') {
-        // Host pays for everyone
         const { data } = await axios.post('/api/booking/create', {
           showId,
           selectedSeats,
@@ -133,7 +130,6 @@ const GroupBooking = ({ showId, selectedSeats, onComplete, onClose }) => {
           onComplete(data);
         }
       } else if (paymentMethod === 'split') {
-        // Each member pays for their own seat
         const bookingPromises = groupMembers
           .filter(member => member.seatId)
           .map(member => 
@@ -176,14 +172,13 @@ const GroupBooking = ({ showId, selectedSeats, onComplete, onClose }) => {
       return;
     }
     
-    // In a real app, this would send actual invites
     toast.success(`Invites sent to ${membersToInvite.length} members!`);
     setShowInviteModal(false);
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Users className="w-6 h-6 text-blue-400" />
@@ -197,7 +192,7 @@ const GroupBooking = ({ showId, selectedSeats, onComplete, onClose }) => {
         </button>
       </div>
 
-      {/* Group Members */}
+      {}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h4 className="text-lg font-medium text-white">Group Members</h4>
@@ -268,7 +263,7 @@ const GroupBooking = ({ showId, selectedSeats, onComplete, onClose }) => {
         </div>
       </div>
 
-      {/* Payment Method */}
+      {}
       <div className="space-y-4">
         <h4 className="text-lg font-medium text-white">Payment Method</h4>
         <div className="space-y-3">
@@ -306,7 +301,7 @@ const GroupBooking = ({ showId, selectedSeats, onComplete, onClose }) => {
         </div>
       </div>
 
-      {/* Invite Members */}
+      {}
       <div className="space-y-4">
         <h4 className="text-lg font-medium text-white">Invite Members</h4>
         <div className="flex gap-3">
@@ -321,7 +316,7 @@ const GroupBooking = ({ showId, selectedSeats, onComplete, onClose }) => {
         </div>
       </div>
 
-      {/* Summary */}
+      {}
       <div className="bg-gray-800/50 p-4 rounded-lg border border-white/10">
         <h4 className="text-lg font-medium text-white mb-3">Booking Summary</h4>
         <div className="space-y-2">
@@ -344,7 +339,7 @@ const GroupBooking = ({ showId, selectedSeats, onComplete, onClose }) => {
         </div>
       </div>
 
-      {/* Actions */}
+      {}
       <div className="flex gap-3">
         <button
           onClick={handlePayment}
@@ -361,7 +356,7 @@ const GroupBooking = ({ showId, selectedSeats, onComplete, onClose }) => {
         </button>
       </div>
 
-      {/* Invite Modal */}
+      {}
       {showInviteModal && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-gray-900 rounded-lg border border-white/10 p-6 max-w-md w-full">

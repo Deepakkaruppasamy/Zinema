@@ -56,7 +56,6 @@ const Navbar = () => {
           aria-label="Toggle Green Ticketing"
           title="Toggle Green Ticketing"
           onClick={() => {
-            // Remove all dismissals and dispatch event to show green ticketing
             localStorage.removeItem('green_ticketing_dismissed_until');
             localStorage.removeItem('green_ticketing_permanently_disabled');
             window.dispatchEvent(new CustomEvent('showGreenTicketing'));

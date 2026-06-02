@@ -20,10 +20,10 @@ const DynamicPricingAlerts = () => {
   const [alerts, setAlerts] = useState([]);
   const [priceHistory, setPriceHistory] = useState({});
   const [alertSettings, setAlertSettings] = useState({
-    priceIncreaseThreshold: 10, // percentage
+    priceIncreaseThreshold: 10,
     priceDecreaseThreshold: 15,
-    seatAvailabilityThreshold: 20, // percentage
-    timeBeforeShow: 24, // hours
+    seatAvailabilityThreshold: 20,
+    timeBeforeShow: 24,
     enabled: true
   });
   const [loading, setLoading] = useState(true);
@@ -70,7 +70,7 @@ const DynamicPricingAlerts = () => {
         movieId,
         showId,
         targetPrice,
-        alertType, // 'increase', 'decrease', 'availability'
+        alertType,
         threshold: alertSettings.priceIncreaseThreshold,
         enabled: true
       }, {
@@ -189,7 +189,7 @@ const DynamicPricingAlerts = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Bell className="w-6 h-6 text-yellow-400" />
@@ -206,7 +206,7 @@ const DynamicPricingAlerts = () => {
         </div>
       </div>
 
-      {/* Settings Panel */}
+      {}
       {showSettings && (
         <div className="bg-gray-800/50 rounded-lg border border-white/10 p-6">
           <h3 className="text-lg font-semibold text-white mb-4">Alert Settings</h3>
@@ -304,7 +304,7 @@ const DynamicPricingAlerts = () => {
         </div>
       )}
 
-      {/* Alerts List */}
+      {}
       <div className="space-y-4">
         {alerts.length === 0 ? (
           <div className="text-center py-12">
@@ -389,7 +389,7 @@ const DynamicPricingAlerts = () => {
         )}
       </div>
 
-      {/* Price Trends */}
+      {}
       <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg border border-blue-500/30 p-6">
         <div className="flex items-center gap-3 mb-4">
           <TrendingUp className="w-6 h-6 text-blue-400" />

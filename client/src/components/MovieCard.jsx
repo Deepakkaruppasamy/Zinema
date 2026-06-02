@@ -20,7 +20,6 @@ const MovieCard = ({movie}) => {
       movie.backdrop_path ? (image_base_url + movie.backdrop_path) : 'https://placehold.co/500x300?text=No+Image'
     ), [movie?.backdrop_path, image_base_url])
 
-    // Proxy URL for canvas sampling to avoid CORS issues
     const posterProxyUrl = useMemo(() => (
       movie.backdrop_path ? (`/api/tmdb-image?path=${encodeURIComponent(movie.backdrop_path)}`) : null
     ), [movie?.backdrop_path])
@@ -69,7 +68,7 @@ const MovieCard = ({movie}) => {
           className='rounded-lg h-52 w-full object-cover object-right-bottom cursor-pointer transition-all duration-300 group-hover:brightness-105'
           onError={handleImageError}
         />
-        {/* Inline trailer preview on hover (muted autoplay). Render only when hovered to avoid many contexts */}
+        {}
         {hover && (
           <div className='absolute inset-0 rounded-lg overflow-hidden pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300'>
             <iframe
@@ -87,7 +86,7 @@ const MovieCard = ({movie}) => {
             />
           </div>
         )}
-        {/* Trailer hover overlay */}
+        {}
         <button
           onClick={() => setTrailerOpen(true)}
           className='absolute inset-0 flex items-center justify-center rounded-lg bg-black/0 group-hover:bg-black/35 opacity-0 group-hover:opacity-100 transition'
@@ -115,7 +114,7 @@ const MovieCard = ({movie}) => {
         </p>
        </div>
 
-      {/* Trailer modal reusing YouTube search */}
+      {}
       <TrailerModal open={trailerOpen} onClose={() => setTrailerOpen(false)} title={movie.title} />
     </div>
   )

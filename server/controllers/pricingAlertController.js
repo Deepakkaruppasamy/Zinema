@@ -2,7 +2,6 @@ import PricingAlert from '../models/PricingAlert.js';
 import Show from '../models/Show.js';
 import Booking from '../models/Booking.js';
 
-// Get user pricing alerts
 export const getPricingAlerts = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -22,13 +21,11 @@ export const getPricingAlerts = async (req, res) => {
   }
 };
 
-// Create pricing alert
 export const createPricingAlert = async (req, res) => {
   try {
     const { userId } = req.user;
     const { movieId, movieTitle, showId, showDateTime, alertType, targetPrice, threshold } = req.body;
     
-    // Get current price from show
     const show = await Show.findById(showId);
     if (!show) {
       return res.status(404).json({
@@ -37,7 +34,7 @@ export const createPricingAlert = async (req, res) => {
       });
     }
     
-    const currentPrice = show.price || 10; // Default price if not set
+    const currentPrice = show.price || 10;
     
     const alert = new PricingAlert({
       userId,
@@ -67,7 +64,6 @@ export const createPricingAlert = async (req, res) => {
   }
 };
 
-// Update pricing alert
 export const updatePricingAlert = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -101,7 +97,6 @@ export const updatePricingAlert = async (req, res) => {
   }
 };
 
-// Delete pricing alert
 export const deletePricingAlert = async (req, res) => {
   try {
     const { userId } = req.user;
@@ -129,13 +124,10 @@ export const deletePricingAlert = async (req, res) => {
   }
 };
 
-// Get price history
 export const getPriceHistory = async (req, res) => {
   try {
     const { movieId, showId } = req.query;
     
-    // This would typically come from a price history collection
-    // For now, we'll simulate some data
     const history = [
       { date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), price: 12, trend: 'stable' },
       { date: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), price: 11, trend: 'decreasing' },
@@ -160,19 +152,17 @@ export const getPriceHistory = async (req, res) => {
   }
 };
 
-// Check and trigger alerts (internal function)
 export const checkAndTriggerAlerts = async () => {
   try {
     const activeAlerts = await PricingAlert.find({ 
       enabled: true, 
       triggered: false,
       showDateTime: { $gte: new Date() }
-    }).maxTimeMS(5000); // Add timeout
+    }).maxTimeMS(5000);
     
     const triggeredAlerts = [];
     
     for (const alert of activeAlerts) {
-      // Get current show data
       const show = await Show.findById(alert.showId);
       if (!show) continue;
       
@@ -189,9 +179,8 @@ export const checkAndTriggerAlerts = async () => {
           shouldTrigger = priceChange <= -alert.threshold;
           break;
         case 'availability':
-          // Check seat availability
           const bookings = await Booking.find({ showId: alert.showId, isPaid: true });
-          const totalSeats = 120; // Assuming 120 seats per show
+          const totalSeats = 120;
           const occupancyRate = (bookings.length / totalSeats) * 100;
           shouldTrigger = occupancyRate >= alert.threshold;
           break;
@@ -209,10 +198,7 @@ export const checkAndTriggerAlerts = async () => {
         
         triggeredAlerts.push(alert);
         
-        // Here you would send notifications to the user
-        // await sendPricingAlertNotification(alert);
       } else {
-        // Update current price
         alert.currentPrice = currentPrice;
         alert.lastChecked = new Date();
         await alert.save();
@@ -221,7 +207,6 @@ export const checkAndTriggerAlerts = async () => {
     
     return triggeredAlerts;
   } catch (error) {
-    // Only log timeout errors, not all errors
     if (error.name === 'MongooseError' && error.message.includes('buffering timed out')) {
       console.log('Pricing alerts check skipped due to database timeout');
     } else {
@@ -231,7 +216,6 @@ export const checkAndTriggerAlerts = async () => {
   }
 };
 
-// Get alert statistics
 export const getAlertStats = async (req, res) => {
   try {
     const { userId } = req.user;

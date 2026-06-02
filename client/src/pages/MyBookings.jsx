@@ -53,7 +53,6 @@ const MyBookings = () => {
       });
       
       if (data.success) {
-        // Handle both response structures: data.stats or data.gamification
         const stats = data.stats || data.gamification || {};
         setUserStats({
           level: stats.level || 1,
@@ -69,22 +68,19 @@ const MyBookings = () => {
       }
     } catch (error) {
       console.error('Error loading user stats:', error);
-      // Keep default values on error
     }
   }
 
-  // Auto-refresh every 30 seconds to catch webhook updates
   useEffect(() => {
     if (!user) return;
     
     const interval = setInterval(() => {
       getMyBookings();
-    }, 30000); // Refresh every 30 seconds
+    }, 30000);
     
     return () => clearInterval(interval);
   }, [user]);
 
-  // Refresh when user returns to tab (from Stripe payment)
   useEffect(() => {
     const handleFocus = () => {
       if (user) {
@@ -112,7 +108,7 @@ const MyBookings = () => {
         <BlurCircle bottom="0px" left="600px"/>
       </div>
       
-      {/* Header with Tabs */}
+      {}
       <div className='flex justify-between items-center mb-6'>
         <div className="flex items-center gap-4">
           <h1 className='text-2xl font-semibold'>My Account</h1>
@@ -139,7 +135,7 @@ const MyBookings = () => {
         </button>
       </div>
 
-      {/* Tabs */}
+      {}
       <div className="flex gap-2 border-b border-white/10 mb-6">
         <button
           onClick={() => setActiveTab('bookings')}
@@ -179,7 +175,7 @@ const MyBookings = () => {
         </button>
       </div>
 
-      {/* Bookings Tab */}
+      {}
       {activeTab === 'bookings' && (
         <div>
           {bookings.map((item,index)=>(
@@ -246,12 +242,12 @@ const MyBookings = () => {
         </div>
       )}
 
-      {/* Gamification Tab */}
+      {}
       {activeTab === 'gamification' && (
         <GamificationSystem />
       )}
 
-      {/* Pricing Alerts Tab */}
+      {}
       {activeTab === 'pricing' && (
         <DynamicPricingAlerts />
       )}

@@ -7,10 +7,9 @@ import Review from '../models/Review.js';
     await connectDB();
     console.log('Connected. Backfilling movieId for reviews...');
 
-    // Set movieId = movie where movieId is missing/null/empty
     const res = await Review.updateMany(
       { $or: [ { movieId: { $exists: false } }, { movieId: null }, { movieId: '' } ] },
-      [ { $set: { movieId: '$movie' } } ] // aggregation pipeline update (MongoDB 4.2+)
+      [ { $set: { movieId: '$movie' } } ]
     );
 
     console.log('Matched:', res.matchedCount ?? res.n);
@@ -20,7 +19,6 @@ import Review from '../models/Review.js';
     console.error('Backfill failed:', err);
     process.exitCode = 1;
   } finally {
-    // Exit regardless; mongoose connection will close with process end
     process.exit();
   }
 })();

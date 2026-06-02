@@ -20,12 +20,10 @@ const PersonalAnalytics = ({ userId }) => {
   const [timeRange, setTimeRange] = useState('6months');
   const [loading, setLoading] = useState(true);
 
-  // Mock analytics data - replace with actual API call
   useEffect(() => {
     const fetchAnalytics = async () => {
       setLoading(true);
       
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       const mockData = {
@@ -34,8 +32,8 @@ const PersonalAnalytics = ({ userId }) => {
           totalSpent: 342.50,
           averageRating: 7.8,
           favoriteGenre: 'Sci-Fi',
-          watchTime: 94.5, // hours
-          streak: 12, // days
+          watchTime: 94.5,
+          streak: 12,
           badges: 8
         },
         monthlyStats: [
@@ -133,7 +131,7 @@ const PersonalAnalytics = ({ userId }) => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Your Movie Analytics</h2>
@@ -151,7 +149,7 @@ const PersonalAnalytics = ({ userId }) => {
         </select>
       </div>
 
-      {/* Overview Stats */}
+      {}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Movies Watched"
@@ -183,9 +181,9 @@ const PersonalAnalytics = ({ userId }) => {
         />
       </div>
 
-      {/* Charts Row */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Monthly Trends */}
+        {}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-blue-600" />
@@ -212,7 +210,7 @@ const PersonalAnalytics = ({ userId }) => {
           </div>
         </div>
 
-        {/* Genre Breakdown */}
+        {}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-green-600" />
@@ -240,9 +238,9 @@ const PersonalAnalytics = ({ userId }) => {
         </div>
       </div>
 
-      {/* Top Movies & Achievements */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Rated Movies */}
+        {}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <Award className="w-5 h-5 text-yellow-600" />
@@ -269,7 +267,7 @@ const PersonalAnalytics = ({ userId }) => {
           </div>
         </div>
 
-        {/* Achievements */}
+        {}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <Target className="w-5 h-5 text-purple-600" />
@@ -310,9 +308,9 @@ const PersonalAnalytics = ({ userId }) => {
         </div>
       </div>
 
-      {/* Spending Analysis & Recommendations */}
+      {}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Spending Analysis */}
+        {}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <DollarSign className="w-5 h-5 text-green-600" />
@@ -342,7 +340,7 @@ const PersonalAnalytics = ({ userId }) => {
           </div>
         </div>
 
-        {/* Recommendations */}
+        {}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <Eye className="w-5 h-5 text-blue-600" />
@@ -365,7 +363,7 @@ const PersonalAnalytics = ({ userId }) => {
         </div>
       </div>
 
-      {/* Streak & Social Stats */}
+      {}
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-xl border border-blue-200">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
           <Heart className="w-5 h-5 text-red-600" />

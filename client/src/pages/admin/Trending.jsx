@@ -10,7 +10,6 @@ const Trending = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Fetch active shows (admin endpoint returns upcoming shows with movie populated)
   useEffect(() => {
     const load = async () => {
       try {

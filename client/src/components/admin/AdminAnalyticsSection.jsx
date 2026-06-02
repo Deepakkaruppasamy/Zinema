@@ -30,7 +30,7 @@ const AdminAnalyticsSection = () => {
           </div>
         ))}
       </div>
-      {/* Simple chart mockup */}
+      {}
       <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
         <h3 className="text-lg font-semibold mb-4">Monthly Trends</h3>
         <div className="flex items-end gap-4 h-40">

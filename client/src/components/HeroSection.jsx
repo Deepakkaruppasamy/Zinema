@@ -21,9 +21,9 @@ const movies = [
     year: '2024',
     duration: '2h 5m',
     description: 'The Fantastic Four unite for the first time to battle a cosmic threat and discover their powers.',
-    image: ffBg, // Fantastic Four background
-    bg: ffBg, // Fantastic Four background
-    logo: assets.marvelLogo, // Marvel Studios logo
+    image: ffBg,
+    bg: ffBg,
+    logo: assets.marvelLogo,
   },
   {
     title: 'Superman 2025',
@@ -31,9 +31,9 @@ const movies = [
     year: '2025',
     duration: '2h 15m',
     description: 'Superman returns to face a new threat that puts humanity at risk in the year 2025.',
-    image: supermanBg, // Superman background
-    bg: supermanBg, // Superman background
-    logo: supermanLogo, // Superman logo
+    image: supermanBg,
+    bg: supermanBg,
+    logo: supermanLogo,
   },
   {
     title: 'Fantastic Four: First Steps',
@@ -41,9 +41,9 @@ const movies = [
     year: '2024',
     duration: '2h 5m',
     description: 'The Fantastic Four unite for the first time to battle a cosmic threat and discover their powers.',
-    image: ffBg, // Fantastic Four background
-    bg: ffBg, // Fantastic Four background
-    logo: assets.marvelLogo, // Marvel Studios logo
+    image: ffBg,
+    bg: ffBg,
+    logo: assets.marvelLogo,
   },
   {
     title: 'Guardians of the Galaxy',
@@ -51,9 +51,9 @@ const movies = [
     year: '2014',
     duration: '2h 1m',
     description: 'A group of intergalactic criminals must pull together to stop a fanatical warrior with plans to purge the universe.',
-    image: guardianPoster, // Guardians poster
-    bg: guardianPoster, // Guardians background
-    logo: assets.marvelLogo, // Marvel Studios logo
+    image: guardianPoster,
+    bg: guardianPoster,
+    logo: assets.marvelLogo,
   },
   {
     title: 'Cooli (Tamil Movie)',
@@ -61,9 +61,9 @@ const movies = [
     year: '2023',
     duration: '2h 10m',
     description: 'A hilarious journey of a coolie who dreams big and faces the odds in Chennai.',
-    image: cooliBg, // Cooli background
-    bg: cooliBg, // Cooli background
-    logo: cooliLogo, // Cooli logo
+    image: cooliBg,
+    bg: cooliBg,
+    logo: cooliLogo,
   }
 ];
 

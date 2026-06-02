@@ -1,6 +1,5 @@
 import Feedback from '../models/Feedback.js'
 
-// POST /api/feedback
 export const createFeedback = async (req, res) => {
   try {
     const { name = 'Guest', email = '', subject = 'Quick Feedback', message = '', rating = 0, meta = {} } = req.body || {}
@@ -24,7 +23,6 @@ export const createFeedback = async (req, res) => {
   }
 }
 
-// GET /api/feedback (admin)
 export const listFeedback = async (req, res) => {
   try {
     const page = Math.max(1, Number(req.query.page) || 1)

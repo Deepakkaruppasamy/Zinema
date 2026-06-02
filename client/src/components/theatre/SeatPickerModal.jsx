@@ -51,7 +51,7 @@ export default function SeatPickerModal({ open, onClose, theatreName, showtime, 
     setSelected((prev) => {
       const exists = prev.includes(id);
       if (exists) return prev.filter((s) => s !== id);
-      if (prev.length >= 6) return prev; // limit 6
+      if (prev.length >= 6) return prev;
       return [...prev, id];
     });
   };

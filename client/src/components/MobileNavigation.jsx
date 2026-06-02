@@ -37,12 +37,12 @@ const MobileNavigation = () => {
 
   return (
     <>
-      {/* Mobile Header */}
+      {}
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled ? 'bg-white/95 backdrop-blur-md shadow-lg' : 'bg-transparent'
       }`}>
         <div className="flex items-center justify-between px-4 py-3">
-          {/* Logo */}
+          {}
           <Link to="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-red-500 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">Z</span>
@@ -50,7 +50,7 @@ const MobileNavigation = () => {
             <span className="font-bold text-lg text-gray-900">Zinema</span>
           </Link>
 
-          {/* Right side actions */}
+          {}
           <div className="flex items-center space-x-3">
             <button className="p-2 text-gray-600 hover:text-gray-900">
               <FaSearch className="w-5 h-5" />
@@ -72,7 +72,7 @@ const MobileNavigation = () => {
         </div>
       </header>
 
-      {/* Mobile Menu Overlay */}
+      {}
       {isMenuOpen && (
         <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}>
           <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-xl transform transition-transform duration-300">
@@ -131,7 +131,7 @@ const MobileNavigation = () => {
         </div>
       )}
 
-      {/* Bottom Navigation */}
+      {}
       <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 safe-area-pb">
         <div className="flex items-center justify-around py-2">
           {navigationItems.map((item) => {
@@ -157,9 +157,9 @@ const MobileNavigation = () => {
         </div>
       </nav>
 
-      {/* Spacer for fixed header */}
+      {}
       <div className="h-16"></div>
-      {/* Spacer for bottom navigation */}
+      {}
       <div className="h-20"></div>
     </>
   );

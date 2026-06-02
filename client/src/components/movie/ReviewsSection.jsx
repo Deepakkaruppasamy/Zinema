@@ -43,7 +43,6 @@ const ReviewsSection = ({ movieId, user, axios, getToken, initialReviews = [] })
 
   useEffect(() => {
     fetchReviews();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [movieId]);
 
   const handleSubmit = async (e) => {
@@ -55,7 +54,6 @@ const ReviewsSection = ({ movieId, user, axios, getToken, initialReviews = [] })
       const payload = { movieId, text, rating };
       const { data } = await axios.post('/api/review', payload, { headers: { Authorization: `Bearer ${await getToken()}` } });
       if (data.success) {
-        // Refresh from server to avoid duplicates and keep ordering
         await fetchReviews();
         setText('');
         setRating(0);
@@ -104,7 +102,6 @@ const ReviewsSection = ({ movieId, user, axios, getToken, initialReviews = [] })
     try {
       const { data } = await axios.post(`/api/review/${reviewId}/helpful`, { helpful });
       if (data.success) {
-        // Update the review in local state
         setReviews(reviews.map(r => r._id === reviewId ? data.review : r));
         toast.success(helpful ? 'Marked as helpful' : 'Marked as unhelpful');
       }
@@ -119,7 +116,6 @@ const ReviewsSection = ({ movieId, user, axios, getToken, initialReviews = [] })
       const { data } = await axios.post(`/api/review/${reviewId}/report`, { reason });
       if (data.success) {
         toast.success('Review reported for moderation');
-        // Optionally hide the review from UI
         setReviews(reviews.filter(r => r._id !== reviewId));
       }
     } catch (err) {
@@ -145,7 +141,6 @@ const ReviewsSection = ({ movieId, user, axios, getToken, initialReviews = [] })
     }
   };
 
-  // Enhanced review component with AI insights
   const ReviewItem = ({ review }) => {
     const isOwnReview = user && review.user === user.id;
     const aiAnalysis = review.aiAnalysis || {};
@@ -187,10 +182,10 @@ const ReviewsSection = ({ movieId, user, axios, getToken, initialReviews = [] })
           )}
         </div>
 
-        {/* Review Text */}
+        {}
         <p className="text-gray-300 mb-4 leading-relaxed">{review.text}</p>
 
-        {/* AI Insights */}
+        {}
         {aiAnalysis.emotions?.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
             {aiAnalysis.emotions.slice(0, 3).map((emotion, index) => (
@@ -204,7 +199,7 @@ const ReviewsSection = ({ movieId, user, axios, getToken, initialReviews = [] })
           </div>
         )}
 
-        {/* Themes */}
+        {}
         {aiAnalysis.themes?.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
             {aiAnalysis.themes.slice(0, 3).map((theme, index) => (
@@ -218,7 +213,7 @@ const ReviewsSection = ({ movieId, user, axios, getToken, initialReviews = [] })
           </div>
         )}
 
-        {/* Quality Indicators */}
+        {}
         {aiAnalysis.qualityFlags && (
           <div className="flex items-center gap-4 mb-4">
             {aiAnalysis.helpfulnessScore > 0.7 && (
@@ -236,7 +231,7 @@ const ReviewsSection = ({ movieId, user, axios, getToken, initialReviews = [] })
           </div>
         )}
 
-        {/* User Interactions */}
+        {}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button 
@@ -269,13 +264,11 @@ const ReviewsSection = ({ movieId, user, axios, getToken, initialReviews = [] })
     );
   };
 
-  // Derive current user's review, if any
   const myReview = useMemo(() => {
     if (!user) return null;
     return reviews.find(r => r.user === user.id) || null;
   }, [reviews, user]);
 
-  // Rating distribution 1..5
   const dist = useMemo(() => {
     const d = {1:0,2:0,3:0,4:0,5:0};
     reviews.forEach(r => { const k = String(r.rating); if (d[k] !== undefined) d[k]++; });
@@ -298,7 +291,7 @@ const ReviewsSection = ({ movieId, user, axios, getToken, initialReviews = [] })
         </div>
       </div>
 
-      {/* AI Review Intelligence */}
+      {}
       {showAIInsights && (
         <ReviewIntelligence movieId={movieId} />
       )}
@@ -326,7 +319,7 @@ const ReviewsSection = ({ movieId, user, axios, getToken, initialReviews = [] })
         </div>
       )}
 
-      {/* Rating distribution */}
+      {}
       {reviews.length > 0 && (
         <div className="mt-4 space-y-1">
           {[5,4,3,2,1].map(star => {

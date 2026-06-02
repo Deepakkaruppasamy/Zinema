@@ -16,8 +16,8 @@ const Movies = () => {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
-  const [minRating, setMinRating] = useState(0); // 0 - 10
-  const [maxDuration, setMaxDuration] = useState(240); // minutes
+  const [minRating, setMinRating] = useState(0);
+  const [maxDuration, setMaxDuration] = useState(240);
   const [onlyUpcoming, setOnlyUpcoming] = useState(false);
   const [nowPlaying, setNowPlaying] = useState(false);
   const years = useMemo(() => {
@@ -36,13 +36,11 @@ const Movies = () => {
   }, [shows]);
   const [selectedLangs, setSelectedLangs] = useState([]);
 
-  // debounce search to avoid jitter
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchTerm), 250);
     return () => clearTimeout(t);
   }, [searchTerm]);
 
-  // Load filters from URL or localStorage on mount
   useEffect(() => {
     try {
       const url = new URL(window.location.href);
@@ -74,16 +72,13 @@ const Movies = () => {
       setOnlyUpcoming(up === '1' || up === true || up === 'true');
       setNowPlaying(np === '1' || np === true || np === 'true');
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Clamp year range when show years computed or external set
   useEffect(() => {
     setYearFrom(prev => Math.max(years.min, Math.min(prev, yearTo)));
     setYearTo(prev => Math.min(years.max, Math.max(prev, yearFrom)));
   }, [years.min, years.max]);
 
-  // Sync filters to URL and localStorage
   useEffect(() => {
     const params = new URLSearchParams();
     if (selectedGenre !== 'All') params.set('genre', selectedGenre);
@@ -115,14 +110,12 @@ const Movies = () => {
     }));
   }, [selectedGenre, searchTerm, sortBy, yearFrom, yearTo, minRating, maxDuration, selectedLangs, onlyUpcoming, nowPlaying, years.min, years.max]);
 
-  // Get all unique genres from shows
   const genres = useMemo(() => {
     const set = new Set();
     shows.forEach(movie => movie.genres.forEach(g => set.add(g.name)));
     return ['All', ...Array.from(set).sort()];
   }, [shows]);
 
-  // Filtered movies by genre and search
   const filteredMovies = useMemo(() => {
     return shows.filter(movie => {
       const matchesGenre = selectedGenre === 'All' || movie.genres.some(g => g.name === selectedGenre);
@@ -149,13 +142,11 @@ const Movies = () => {
     return arr;
   }, [filteredMovies, sortBy]);
 
-  // Suggestions for search
   const suggestions = useMemo(() => {
     if (!searchTerm) return [];
     return shows.filter(m => m.title.toLowerCase().includes(searchTerm.toLowerCase())).slice(0, 5);
   }, [shows, searchTerm]);
 
-  // Handlers
   const handleGenreClick = (genre) => {
     setSelectedGenre(genre);
     setSearchTerm('');
@@ -182,10 +173,10 @@ const Movies = () => {
       <BlurCircle top="150px" left="0px"/>
       <BlurCircle bottom="50px" right="50px"/>
 
-      {/* Sticky glass filter bar */}
+      {}
       <div className="sticky top-20 z-20 bg-gray-900/70 backdrop-blur border border-white/10 rounded-2xl p-4 flex flex-col gap-4 shadow-lg mb-8">
         <div className="flex flex-col md:flex-row md:items-center gap-4">
-          {/* Search */}
+          {}
           <div className="relative w-full md:w-1/2">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
               <Search className="w-4 h-4" />
@@ -212,7 +203,7 @@ const Movies = () => {
             >
               <Sparkles className="w-4 h-4" />
             </button>
-            {/* Suggestions Dropdown */}
+            {}
             {showSuggestions && suggestions.length > 0 && (
               <ul className="absolute left-0 right-0 bg-gray-800/95 border border-white/10 rounded-xl mt-2 z-10 max-h-56 overflow-y-auto backdrop-blur">
                 {suggestions.map((movie, idx) => (
@@ -227,7 +218,7 @@ const Movies = () => {
               </ul>
             )}
           </div>
-          {/* Sort */}
+          {}
           <div className="flex items-center gap-2 md:ml-auto">
             <span className="inline-flex items-center gap-2 text-sm text-gray-300"><Filter className="w-4 h-4"/> Sort by</span>
             <select id="sort" value={sortBy} onChange={(e)=>setSortBy(e.target.value)} className="bg-gray-900/60 border border-white/10 text-gray-200 text-sm rounded-xl px-3 py-2">
@@ -238,7 +229,7 @@ const Movies = () => {
           </div>
         </div>
 
-        {/* Selected filters chips row */}
+        {}
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-2 text-xs text-gray-300"><Sparkles className="w-3.5 h-3.5"/> Filters</span>
@@ -275,7 +266,7 @@ const Movies = () => {
           </div>
         </div>
 
-        {/* Presets */}
+        {}
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-2 text-xs text-gray-300"><Sparkles className="w-3.5 h-3.5"/> Presets</span>
           <button onClick={() => { setMinRating(7.5); }} className="px-3 py-1 rounded-full border text-xs bg-white/5 text-gray-200 border-white/10 hover:bg-primary/10">Top Rated</button>
@@ -288,7 +279,7 @@ const Movies = () => {
           <button onClick={() => { setNowPlaying(true); setOnlyUpcoming(false); }} className="px-3 py-1 rounded-full border text-xs bg-white/5 text-gray-200 border-white/10 hover:bg-primary/10">Now Playing</button>
         </div>
 
-        {/* Year quick pills */}
+        {}
         <div className="overflow-x-auto no-scrollbar -mx-2 px-2 mt-2">
           <div className="flex items-center gap-2 w-max">
             {[
@@ -306,10 +297,10 @@ const Movies = () => {
           </div>
         </div>
 
-        {/* Advanced filters panel */}
+        {}
         {showAdvanced && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-900/40 border border-white/10 rounded-xl p-4">
-            {/* Year Range */}
+            {}
             <div>
               <div className="text-xs text-gray-300 mb-2">Year Range</div>
               <div className="flex items-center gap-3">
@@ -319,19 +310,19 @@ const Movies = () => {
               </div>
             </div>
 
-            {/* Minimum Rating */}
+            {}
             <div>
               <div className="text-xs text-gray-300 mb-2">Minimum Rating: <span className="text-primary font-semibold">{minRating}</span></div>
               <input type="range" min={0} max={10} step={0.5} value={minRating} onChange={(e)=> setMinRating(Number(e.target.value))} className="w-full" />
             </div>
 
-            {/* Max Duration */}
+            {}
             <div>
               <div className="text-xs text-gray-300 mb-2 inline-flex items-center gap-2"><Clock className="w-3.5 h-3.5"/> Max Duration: <span className="text-primary font-semibold">{maxDuration}m</span></div>
               <input type="range" min={60} max={240} step={10} value={maxDuration} onChange={(e)=> setMaxDuration(Number(e.target.value))} className="w-full" />
             </div>
 
-            {/* Languages */}
+            {}
             {languages.length > 0 && (
               <div className="md:col-span-3">
                 <div className="text-xs text-gray-300 mb-2 inline-flex items-center gap-2"><Languages className="w-3.5 h-3.5"/> Languages</div>
@@ -350,7 +341,7 @@ const Movies = () => {
           </div>
         )}
 
-        {/* Genres scroller */}
+        {}
         <div className="overflow-x-auto no-scrollbar -mx-2 px-2">
           <div className="flex items-center gap-2 w-max">
             {genres.map(genre => (
@@ -366,7 +357,7 @@ const Movies = () => {
         </div>
       </div>
 
-      {/* Advanced Search Component */}
+      {}
       {showAdvancedSearch && (
         <div className="mb-8">
           <AdvancedSearch

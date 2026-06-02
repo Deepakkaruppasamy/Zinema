@@ -34,7 +34,6 @@ export const createPaymentLink = async (req, res) => {
     });
 
     const show = result.show;
-    // Lock seats under placeholder owner id
     for (const s of seats) show.occupiedSeats[s] = `link:${link._id.toString()}`;
     show.markModified("occupiedSeats");
     await show.save();
@@ -63,14 +62,12 @@ export const checkoutPaymentLink = async (req, res) => {
     const show = await Show.findById(link.show).populate("movie");
     if (!show) return res.json({ success: false, message: "Show not found" });
 
-    // Ensure seats are still owned by this link
     for (const s of link.seats) {
       if (show.occupiedSeats[s] !== `link:${link._id.toString()}`) {
         return res.json({ success: false, message: "Seats are no longer available" });
       }
     }
 
-    // Create a booking for this user using the seats
     const booking = await Booking.create({
       user: userId,
       show: show._id.toString(),
@@ -78,12 +75,10 @@ export const checkoutPaymentLink = async (req, res) => {
       bookedSeats: link.seats,
     });
 
-    // Assign seats to user
     for (const s of link.seats) show.occupiedSeats[s] = userId;
     show.markModified("occupiedSeats");
     await show.save();
 
-    // Create Stripe session
     const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);
     const line_items = [
       {
@@ -108,7 +103,6 @@ export const checkoutPaymentLink = async (req, res) => {
     booking.paymentLink = session.url;
     await booking.save();
 
-    // Mark link as used (to prevent multiple consumption). Seats already assigned to user.
     link.status = "used";
     link.stripeSessionId = session.id;
     await link.save();

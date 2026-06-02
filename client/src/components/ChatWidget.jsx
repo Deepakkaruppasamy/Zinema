@@ -19,10 +19,9 @@ export default function ChatWidget() {
   ]);
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
-  const [activeTab, setActiveTab] = useState('chat'); // 'chat' | 'support'
+  const [activeTab, setActiveTab] = useState('chat');
   const { user } = useUser();
 
-  // Support form state
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('Help with my booking');
@@ -47,17 +46,14 @@ export default function ChatWidget() {
       const resp = await assistantChat(conversation, { name: user?.fullName || undefined, email: user?.primaryEmailAddress?.emailAddress || undefined });
       const botText = resp?.text || "I'm sorry, I couldn't process that.";
       setMessages(msgs => [...msgs, { from: 'bot', text: botText }]);
-      // Handle navigation intent
       if (resp?.nav?.target) {
         setTimeout(() => { window.location.href = resp.nav.target; }, 600);
       }
-      // Surface quick actions when movies list is present
       const movies = resp?.data?.movies;
       if (Array.isArray(movies) && movies.length > 0) {
         const list = movies.slice(0, 5).map(m => m.title).filter(Boolean).join(', ');
         setMessages(msgs => [...msgs, { from: 'bot', text: `Quick picks: ${list}. You can say "Tell me about [Movie]" or "Book tickets for [Movie]".` }]);
       }
-      // Booking suggestion CTA
       if (resp?.intent === 'book_tickets' && resp?.data?.showId) {
         const showId = resp.data.showId;
         const movieTitle = resp?.data?.movie?.title || 'your movie';
@@ -74,7 +70,6 @@ export default function ChatWidget() {
   };
 
   const getBotReply = (msg) => {
-    // Simple keyword/rule-based bot
     const lower = msg.toLowerCase();
     for (const faq of FAQS) {
       if (lower.includes(faq.q.split(' ')[2])) return faq.a;
@@ -88,14 +83,12 @@ export default function ChatWidget() {
   };
 
   useEffect(() => {
-    // Prefill support form from Clerk user
     if (user) {
       const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ');
       setName(fullName || name);
       const primaryEmail = user.emailAddresses?.[0]?.emailAddress;
       if (primaryEmail && !email) setEmail(primaryEmail);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const submitTicket = async () => {
@@ -108,7 +101,6 @@ export default function ChatWidget() {
         subject: subject || 'Support Request',
         message,
       });
-      // Clear after submit and give feedback in chat stream
       setMessages(msgs => [...msgs, { from: 'bot', text: 'Thanks! Your support request has been submitted. Our team will get back to you via email shortly.' }]);
       setActiveTab('chat');
       setMessage('');
@@ -140,7 +132,7 @@ export default function ChatWidget() {
               <X className="w-5 h-5" />
             </button>
           </div>
-          {/* Tabs */}
+          {}
           <div className="flex text-xs">
             <button className={`flex-1 py-2 border-b ${activeTab==='chat' ? 'border-primary text-primary' : 'border-transparent text-gray-400'}`} onClick={()=>setActiveTab('chat')}>Chat</button>
             <button className={`flex-1 py-2 border-b ${activeTab==='support' ? 'border-primary text-primary' : 'border-transparent text-gray-400'}`} onClick={()=>setActiveTab('support')}><span className="inline-flex items-center gap-1"><LifeBuoy className="w-3.5 h-3.5"/>Support</span></button>
@@ -208,7 +200,6 @@ export default function ChatWidget() {
               </div>
             </>
           ) : (
-            // Support tab content
             <>
               <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-900" style={{ maxHeight: 320 }}>
                 <div className="text-xs text-gray-400">We typically respond within a few hours.</div>

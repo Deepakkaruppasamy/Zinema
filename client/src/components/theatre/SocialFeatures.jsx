@@ -285,7 +285,7 @@ const SocialFeatures = ({ userId, onUserSelect, onGroupCreate }) => {
 
   return (
     <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl border border-white/10 p-6">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/20 rounded-lg">
@@ -305,7 +305,7 @@ const SocialFeatures = ({ userId, onUserSelect, onGroupCreate }) => {
         </button>
       </div>
 
-      {/* Tabs */}
+      {}
       <div className="flex space-x-1 mb-6 bg-gray-800/30 rounded-lg p-1">
         {tabs.map(tab => (
           <button
@@ -323,7 +323,7 @@ const SocialFeatures = ({ userId, onUserSelect, onGroupCreate }) => {
         ))}
       </div>
 
-      {/* Content */}
+      {}
       <div className="space-y-6">
         {activeTab === 'feed' && (
           <div className="space-y-4">
@@ -334,7 +334,7 @@ const SocialFeatures = ({ userId, onUserSelect, onGroupCreate }) => {
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-gray-800/30 rounded-xl p-6 border border-white/10"
               >
-                {/* Post Header */}
+                {}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="text-2xl">{post.user.avatar}</div>
@@ -361,7 +361,7 @@ const SocialFeatures = ({ userId, onUserSelect, onGroupCreate }) => {
                   </button>
                 </div>
 
-                {/* Post Content */}
+                {}
                 <div className="mb-4">
                   <p className="text-gray-300 mb-3">{post.content}</p>
                   {post.image && (
@@ -389,7 +389,7 @@ const SocialFeatures = ({ userId, onUserSelect, onGroupCreate }) => {
                   )}
                 </div>
 
-                {/* Post Actions */}
+                {}
                 <div className="flex items-center justify-between pt-4 border-t border-white/10">
                   <div className="flex items-center gap-6">
                     <button
@@ -573,7 +573,7 @@ const SocialFeatures = ({ userId, onUserSelect, onGroupCreate }) => {
         )}
       </div>
 
-      {/* Create Post Modal */}
+      {}
       <AnimatePresence>
         {showCreatePost && (
           <motion.div
@@ -604,7 +604,6 @@ const SocialFeatures = ({ userId, onUserSelect, onGroupCreate }) => {
                 </button>
                 <button
                   onClick={() => {
-                    // Handle post creation
                     setShowCreatePost(false);
                     setNewPost({ content: '', image: null, movie: null });
                   }}

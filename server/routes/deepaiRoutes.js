@@ -4,7 +4,6 @@ import { deepaiChat, deepaiAssistant, checkAIServiceHealth } from '../controller
 
 const router = Router();
 
-// Health check endpoint
 router.get('/health', async (req, res) => {
   try {
     const healthStatus = await checkAIServiceHealth();
@@ -39,7 +38,6 @@ router.get('/health', async (req, res) => {
   }
 });
 
-// Add error handling middleware for DeepAI routes
 router.use((req, res, next) => {
   if (!process.env.GEMINI_API_KEY) {
     return res.status(503).json({
@@ -50,7 +48,6 @@ router.use((req, res, next) => {
   next();
 });
 
-// API endpoints
 router.post('/chat', deepaiChat);
 router.post('/assistant', deepaiAssistant);
 

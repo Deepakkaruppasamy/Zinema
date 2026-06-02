@@ -3,7 +3,6 @@ import { addShow, getNowPlayingMovies, getShow, getShows } from "../controllers/
 
 const showRouter = express.Router();
 
-// Root route for show API
 showRouter.get('/', (req, res) => {
     res.json({ 
         message: 'Show API is working!', 
@@ -17,11 +16,9 @@ showRouter.get('/', (req, res) => {
     });
 });
 
-// Admin routes - auth disabled for testing
 showRouter.get('/now-playing', getNowPlayingMovies)
 showRouter.post('/add', addShow)
 
-// Public routes (no auth required)
 showRouter.get("/all", getShows)
 showRouter.get("/:movieId", getShow)
 

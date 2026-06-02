@@ -23,7 +23,6 @@ export const addReminder = async (req, res) => {
       { new: true, upsert: true, setDefaultsOnInsert: true }
     )
 
-    // For now, if it's in the past or within 2 minutes, send immediately via email channel
     if (doc.channel === 'email') {
       const now = new Date()
       if (!doc.sendAt || doc.sendAt <= new Date(now.getTime() + 2*60000)) {
@@ -34,7 +33,6 @@ export const addReminder = async (req, res) => {
             html: `<p>Your show reminder is set for ${new Date(show.showDateTime).toLocaleString()}.</p>`
           })
         } catch (e) {
-          // ignore send failures here
         }
       }
     }

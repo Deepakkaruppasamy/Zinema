@@ -10,7 +10,6 @@ const SeatView360 = ({ seatId, isOpen, onClose, theatreLayout = 'standard' }) =>
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
 
-  // Theatre layout configurations
   const theatreConfigs = {
     standard: {
       rows: 10,
@@ -40,17 +39,15 @@ const SeatView360 = ({ seatId, isOpen, onClose, theatreLayout = 'standard' }) =>
 
   const config = theatreConfigs[theatreLayout] || theatreConfigs.standard;
 
-  // Parse seat ID to get row and column
   const getSeatPosition = (seatId) => {
     const row = seatId.charAt(0);
     const col = parseInt(seatId.slice(1));
-    const rowIndex = row.charCodeAt(0) - 65; // A=0, B=1, etc.
+    const rowIndex = row.charCodeAt(0) - 65;
     return { row: rowIndex, col: col - 1 };
   };
 
   const seatPosition = getSeatPosition(seatId);
 
-  // Calculate 3D position of the seat
   const getSeat3DPosition = (row, col) => {
     const x = (col - config.seatsPerRow / 2) * config.seatSpacing;
     const y = 0;
@@ -60,7 +57,6 @@ const SeatView360 = ({ seatId, isOpen, onClose, theatreLayout = 'standard' }) =>
 
   const seat3D = getSeat3DPosition(seatPosition.row, seatPosition.col);
 
-  // Calculate view from seat
   const calculateView = () => {
     const distance = Math.sqrt(seat3D.x * seat3D.x + seat3D.z * seat3D.z);
     const angle = Math.atan2(seat3D.x, seat3D.z) * (180 / Math.PI);
@@ -76,7 +72,6 @@ const SeatView360 = ({ seatId, isOpen, onClose, theatreLayout = 'standard' }) =>
 
   const viewInfo = calculateView();
 
-  // Draw 3D theatre view
   const drawTheatre = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -85,50 +80,41 @@ const SeatView360 = ({ seatId, isOpen, onClose, theatreLayout = 'standard' }) =>
     const width = canvas.width;
     const height = canvas.height;
 
-    // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
-    // Set up 3D projection
     const centerX = width / 2;
     const centerY = height / 2;
     const scale = 200 * zoom;
 
-    // Apply rotation
     ctx.save();
     ctx.translate(centerX, centerY);
     ctx.rotate((rotation * Math.PI) / 180);
     ctx.scale(zoom, zoom);
 
-    // Draw screen
     ctx.fillStyle = '#1a1a1a';
     ctx.fillRect(-width * config.screenWidth / 2, -height * config.screenHeight / 2, 
                  width * config.screenWidth, height * config.screenHeight);
     
-    // Draw screen border
     ctx.strokeStyle = '#333';
     ctx.lineWidth = 2;
     ctx.strokeRect(-width * config.screenWidth / 2, -height * config.screenHeight / 2, 
                    width * config.screenWidth, height * config.screenHeight);
 
-    // Draw seats
     for (let row = 0; row < config.rows; row++) {
       for (let col = 0; col < config.seatsPerRow; col++) {
         const pos = getSeat3DPosition(row, col);
         const x = pos.x * scale;
         const y = pos.z * scale;
         
-        // Check if this is the selected seat
         const isSelectedSeat = row === seatPosition.row && col === seatPosition.col;
         
         if (isSelectedSeat) {
-          // Highlight selected seat
           ctx.fillStyle = '#f84565';
           ctx.fillRect(x - 8, y - 8, 16, 16);
           ctx.strokeStyle = '#fff';
           ctx.lineWidth = 2;
           ctx.strokeRect(x - 8, y - 8, 16, 16);
         } else {
-          // Regular seat
           ctx.fillStyle = '#444';
           ctx.fillRect(x - 6, y - 6, 12, 12);
           ctx.strokeStyle = '#666';
@@ -138,7 +124,6 @@ const SeatView360 = ({ seatId, isOpen, onClose, theatreLayout = 'standard' }) =>
       }
     }
 
-    // Draw view cone from the selected seat (seat3D)
     ctx.strokeStyle = '#f84565';
     ctx.lineWidth = 2;
     ctx.setLineDash([5, 5]);
@@ -147,7 +132,6 @@ const SeatView360 = ({ seatId, isOpen, onClose, theatreLayout = 'standard' }) =>
     const seatY = seat3D.z * scale;
     const screenY = -height * config.screenHeight / 2;
     
-    // Draw view lines
     ctx.beginPath();
     ctx.moveTo(seatX, seatY);
     ctx.lineTo(-width * config.screenWidth / 4, screenY);
@@ -160,7 +144,6 @@ const SeatView360 = ({ seatId, isOpen, onClose, theatreLayout = 'standard' }) =>
     ctx.restore();
   };
 
-  // Handle mouse/touch interactions
   const handleMouseDown = (e) => {
     setIsDragging(true);
     setDragStart({ x: e.clientX, y: e.clientY });
@@ -228,7 +211,7 @@ const SeatView360 = ({ seatId, isOpen, onClose, theatreLayout = 'standard' }) =>
         ref={containerRef}
         className="bg-gray-900 rounded-lg border border-white/10 w-full max-w-4xl h-[80vh] flex flex-col"
       >
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between p-4 border-b border-white/10">
           <div className="flex items-center gap-3">
             <Eye className="w-5 h-5 text-blue-400" />
@@ -275,7 +258,7 @@ const SeatView360 = ({ seatId, isOpen, onClose, theatreLayout = 'standard' }) =>
           </div>
         </div>
 
-        {/* 3D View Canvas */}
+        {}
         <div className="flex-1 relative overflow-hidden">
           <canvas
             ref={canvasRef}
@@ -285,13 +268,13 @@ const SeatView360 = ({ seatId, isOpen, onClose, theatreLayout = 'standard' }) =>
             style={{ imageRendering: 'pixelated' }}
           />
           
-          {/* Instructions Overlay */}
+          {}
           <div className="absolute top-4 left-4 bg-black/50 rounded-lg p-3 text-sm text-white">
             <p>🖱️ Drag to rotate • 🎯 Scroll to zoom • 🔄 Click reset to center</p>
           </div>
         </div>
 
-        {/* View Information */}
+        {}
         <div className="p-4 border-t border-white/10 bg-gray-800/50">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="text-center">

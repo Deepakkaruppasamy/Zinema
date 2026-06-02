@@ -129,16 +129,13 @@ const seedGamification = async () => {
     await connectDB();
     console.log('Connected to database');
 
-    // Clear existing data
     await Badge.deleteMany({});
     await Reward.deleteMany({});
     console.log('Cleared existing gamification data');
 
-    // Insert badges
     await Badge.insertMany(badges);
     console.log(`Inserted ${badges.length} badges`);
 
-    // Insert rewards
     await Reward.insertMany(rewards);
     console.log(`Inserted ${rewards.length} rewards`);
 

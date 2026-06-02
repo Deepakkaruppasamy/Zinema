@@ -10,19 +10,14 @@ import {
 
 const router = express.Router();
 
-// Get user gamification stats
 router.get('/user', protectAdmin, getUserStats);
 
-// Get available badges
 router.get('/badges', getAvailableBadges);
 
-// Get leaderboard
 router.get('/leaderboard', getLeaderboard);
 
-// Get available rewards
 router.get('/rewards', protectAdmin, getRewards);
 
-// Claim reward
 router.post('/rewards/:rewardId/claim', protectAdmin, claimReward);
 
 export default router;

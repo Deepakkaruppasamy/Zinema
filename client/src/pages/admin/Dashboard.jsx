@@ -22,12 +22,10 @@ const Dashboard = () => {
     });
     const [loading, setLoading] = useState(true);
 
-    // Normalize server response: server may return `shows` while UI expects `activeShows`
     const activeShowsList = Array.isArray(dashboardData?.activeShows)
         ? dashboardData.activeShows
         : (Array.isArray(dashboardData?.shows) ? dashboardData.shows : []);
 
-    // Safely compute counts to avoid accessing properties on undefined
     const activeShowsCount = Array.isArray(activeShowsList)
         ? activeShowsList.length
         : Number(dashboardData?.activeShows ?? dashboardData?.shows ?? 0);

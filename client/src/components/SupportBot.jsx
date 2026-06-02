@@ -51,7 +51,6 @@ export default function SupportBot() {
     }, 400)
   }
 
-  // Cloudinary upload helper (component scope)
   const handleUpload = async (file) => {
     const cloud = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
     const preset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
@@ -78,7 +77,6 @@ export default function SupportBot() {
   const reply = async (userText) => {
     const t = userText.toLowerCase()
 
-    // FAQs
     if (/faq|help|questions?/.test(t)) {
       try {
         const res = await api.get('/api/support/faqs')
@@ -88,18 +86,15 @@ export default function SupportBot() {
       } catch { return { text: 'Could not load FAQs right now.' } }
     }
 
-    // Cancellation / Refund guidance
     if (/cancel|refund/.test(t)) {
       return { text: 'To cancel: Go to My Bookings > select booking > Cancel (if within the allowed time). Refunds are issued to the original payment method within 5-7 business days.' }
     }
 
-    // Payment issue guidance
     if (/payment|deduct|upi|card|failed/.test(t)) {
       setCategory('payment')
       return { text: 'For payment issues: wait a few minutes for sync. If not reflected, please share payment reference, amount, and time via "contact human" to create a ticket.' }
     }
 
-    // List my tickets
     if (/my tickets|my support|support tickets/.test(t)) {
       if (!isSignedIn) return { text: 'Please sign in to view your support tickets.' }
       try {
@@ -113,7 +108,6 @@ export default function SupportBot() {
       } catch { return { text: 'Unable to load your tickets right now.' } }
     }
 
-    // Ticket status
     if (/status\s+#?([a-f0-9]{6,24})/.test(t)) {
       const idFrag = RegExp.$1
       if (!isSignedIn) return { text: 'Please sign in to view ticket status.' }
@@ -129,9 +123,7 @@ export default function SupportBot() {
       } catch { return { text: 'Could not fetch ticket right now.' } }
     }
 
-    // Contact human / create ticket
     if (/contact|agent|human|support|email|issue|problem/.test(t)) {
-      // try to parse subject/message
       const subject = (userText.match(/subject\s*:\s*(.*)/i)?.[1] || '').trim() || 'Support Request'
       const message = (userText.replace(/subject\s*:.*/i, '').trim()) || userText
       try {
@@ -151,7 +143,6 @@ export default function SupportBot() {
       } catch { return { text: 'Could not submit your request right now.' } }
     }
 
-    // Default
     return { text: 'I can help with FAQs, cancellations/refunds, payment issues, or create a ticket. Try: "FAQs", "my tickets", "status #<id>", or "contact human".' }
   }
 
@@ -191,7 +182,7 @@ export default function SupportBot() {
         <div ref={endRef} />
       </div>
       <div className="p-2 border-t border-zinc-800 space-y-2">
-        {/* Quick chips */}
+        {}
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
           <span className="opacity-70">Category:</span>
           {['general','payment','booking','refund','technical'].map(c => (
@@ -207,13 +198,13 @@ export default function SupportBot() {
         {!isSignedIn && (
           <input value={guestEmail} onChange={e => setGuestEmail(e.target.value)} placeholder="Your email for updates (optional)" className="w-full px-3 py-2 rounded bg-zinc-800 text-sm outline-none" />
         )}
-        {/* Attachment URLs + Upload */}
+        {}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs opacity-70">
             <span>Attachment links (optional)</span>
             <button className="text-emerald-400" onClick={() => setAttachments(a => a.length<3 ? [...a, { name:'', url:'' }] : a)}>+ Add</button>
           </div>
-          {/* Dropzone */}
+          {}
           <div
             onDragOver={(e)=>e.preventDefault()}
             onDrop={async (e)=>{
@@ -240,7 +231,7 @@ export default function SupportBot() {
             </div>
           ))}
         </div>
-        {/* Input row */}
+        {}
         <div className="flex items-center gap-2">
           <button title="FAQs" onClick={() => setInput('FAQs')} className="p-2 rounded bg-zinc-800 text-zinc-200 hover:bg-zinc-700"><HelpCircle size={16} /></button>
           <button title="My tickets" onClick={() => setInput('my tickets')} className="p-2 rounded bg-zinc-800 text-zinc-200 hover:bg-zinc-700"><FileText size={16} /></button>

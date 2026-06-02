@@ -39,7 +39,6 @@ const reclinerGallery = [
 
 const Theatre = () => {
   const [foodCart, setFoodCart] = useState(() => {
-    // Load cart from localStorage on initialization
     const savedCart = localStorage.getItem('theatre_food_cart_basic');
     try {
       return savedCart ? JSON.parse(savedCart) : [];
@@ -75,7 +74,6 @@ const Theatre = () => {
   const [reportTheatre, setReportTheatre] = useState('');
   const [reportMessage, setReportMessage] = useState('');
   
-  // New feature states
   const [showAIFeatures, setShowAIFeatures] = useState(false);
   const [selectedShowId, setSelectedShowId] = useState(null);
   const [selectedSeats, setSelectedSeats] = useState([]);
@@ -87,13 +85,11 @@ const Theatre = () => {
   const [activeFeature, setActiveFeature] = useState('recommendations');
 
   useEffect(() => {
-    // Simulate theatres loading for skeleton UI
     setLoadingTheatres(true);
     const t = setTimeout(() => setLoadingTheatres(false), 800);
     return () => clearTimeout(t);
   }, []);
 
-  // Global ESC to close modals/drawers (UI only)
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape') {
@@ -141,14 +137,12 @@ const Theatre = () => {
       } else {
         newCart = [...cart, { ...item, qty }];
       }
-      // Save to localStorage
       localStorage.setItem('theatre_food_cart_basic', JSON.stringify(newCart));
       return newCart;
     });
     setFoodQuantities(qty => qty.map((q, i) => (i === idx ? 0 : q)));
   };
 
-  // Update localStorage whenever foodCart changes
   useEffect(() => {
     localStorage.setItem('theatre_food_cart_basic', JSON.stringify(foodCart));
   }, [foodCart]);
@@ -160,17 +154,15 @@ const Theatre = () => {
   const payableTotal = Math.max(0, grandTotal - appliedDiscount);
 
   const timeBucket = (t) => {
-    // Expecting formats like '10:30 AM' or '21:15' etc. UI-only approximation
     if (!t || typeof t !== 'string') return 'Other';
     let hour = 0;
     const ampm = t.toUpperCase().includes('AM') || t.toUpperCase().includes('PM');
     if (ampm) {
-      const parts = t.trim().split(/[:\s]/); // [HH, MM, AM]
+      const parts = t.trim().split(/[:\s]/);
       const h = parseInt(parts[0], 10);
       const am = t.toUpperCase().includes('AM');
       hour = (h % 12) + (am ? 0 : 12);
     } else {
-      // 24h like 21:15
       const parts = t.split(':');
       hour = parseInt(parts[0], 10) || 0;
     }
@@ -182,7 +174,7 @@ const Theatre = () => {
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 flex flex-col items-center pt-28 pb-20 px-6 md:px-20">
-      {/* Filters and dynamic theatre list */}
+      {}
       <div className="w-full max-w-5xl mb-6">
         <FiltersBar
           city={state.city}
@@ -201,7 +193,7 @@ const Theatre = () => {
       <div className="w-full max-w-5xl mb-2 flex items-center justify-between text-sm text-gray-400">
         <span>{theatres.length} theatres found</span>
       </div>
-      {/* Quick Date Pills */}
+      {}
       <div className="w-full max-w-5xl mb-4 flex items-center gap-2">
         {(() => {
           const d = new Date();
@@ -220,7 +212,7 @@ const Theatre = () => {
           return [btn('Today', today), btn('Tomorrow', tomorrow)];
         })()}
       </div>
-      {/* Showtime Filter Pills */}
+      {}
       <div className="w-full max-w-5xl mb-4 flex flex-wrap items-center gap-2">
         {['All','Morning','Afternoon','Evening','Night'].map(b => (
           <button
@@ -280,7 +272,7 @@ const Theatre = () => {
 
             <h2 className="text-2xl font-semibold text-primary mb-3">Facilities</h2>
             <div className="grid grid-cols-2 gap-5 mb-6">
-              {/* Recliner Add-on */}
+              {}
               <div
                 className={`flex items-center gap-3 bg-gray-800 p-3 rounded-xl shadow cursor-pointer hover:bg-primary/20 transition ${reclinerSelected ? 'ring-4 ring-primary/40 scale-105' : ''}`}
                 onClick={() => setShowReclinerModal(true)}
@@ -295,7 +287,7 @@ const Theatre = () => {
                 </button>
               </div>
 
-              {/* Parking Add-on */}
+              {}
               <div
                 className={`flex items-center gap-3 bg-gray-800 p-3 rounded-xl shadow cursor-pointer hover:bg-primary/20 transition ${parkingSelected ? 'ring-4 ring-primary/40 scale-105' : ''}`}
                 onClick={() => setShowParkingModal(true)}
@@ -310,7 +302,7 @@ const Theatre = () => {
                 </button>
               </div>
 
-              {/* Food Facility */}
+              {}
               <div
                 className="flex items-center gap-4 bg-gray-800 p-5 rounded-xl shadow cursor-pointer hover:bg-primary/20 transition relative"
                 onClick={() => setShowFoodModal(true)}
@@ -331,7 +323,7 @@ const Theatre = () => {
                 )}
               </div>
 
-              {/* Wi-Fi Facility */}
+              {}
               <div
                 className="flex items-center gap-4 bg-gray-800 p-5 rounded-xl shadow cursor-pointer hover:bg-primary/20 transition"
                 onClick={() => setShowWifiModal(true)}
@@ -344,7 +336,7 @@ const Theatre = () => {
         </div>
       </div>
 
-      {/* Ratings & Amenities */}
+      {}
       <div className="max-w-5xl w-full grid md:grid-cols-2 gap-6 mt-6">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
           <div className="flex items-center gap-3 mb-3">
@@ -373,7 +365,7 @@ const Theatre = () => {
         </div>
       </div>
 
-      {/* Offers / Coupons */}
+      {}
       <div className="max-w-5xl w-full rounded-2xl border border-white/10 bg-white/5 p-6 mt-6">
         <div className="flex items-center gap-2 mb-4">
           <FaTags className="text-primary" />
@@ -409,7 +401,7 @@ const Theatre = () => {
         )}
       </div>
 
-      {/* Seat Map Preview */}
+      {}
       <div className="max-w-5xl w-full rounded-2xl border border-white/10 bg-white/5 p-6 mt-6">
         <h3 className="text-primary font-semibold mb-4">Seat Map Preview (UI)</h3>
         <div className="mb-3 text-xs text-gray-400">Screen this side</div>
@@ -431,12 +423,12 @@ const Theatre = () => {
         </div>
       </div>
 
-      {/* Mini Map Placeholder */}
+      {}
       <div className="max-w-5xl w-full rounded-2xl border border-white/10 bg-white/5 p-6 mt-6">
         <h3 className="text-primary font-semibold mb-3">Location</h3>
         <div className="w-full h-56 rounded-xl overflow-hidden border border-white/10 bg-gray-800">
-          {/* Embed Google Maps using the provided link */}
-          {/* If the embed is blocked, the Open in Maps button is available below */}
+          {}
+          {}
           <iframe
             title="Theatre Location Map"
             className="w-full h-full"
@@ -461,7 +453,7 @@ const Theatre = () => {
         </div>
       </div>
 
-      {/* FAQ / Policy Accordion */}
+      {}
       <div className="max-w-5xl w-full rounded-2xl border border-white/10 bg-white/5 p-6 mt-6">
         <h3 className="text-primary font-semibold mb-3">FAQs & Policies</h3>
         {[
@@ -476,7 +468,7 @@ const Theatre = () => {
         ))}
       </div>
 
-      {/* AI Features Toggle */}
+      {}
       <div className="max-w-5xl w-full mt-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -499,7 +491,7 @@ const Theatre = () => {
 
         {showAIFeatures && (
           <div className="space-y-6">
-            {/* Feature Tabs */}
+            {}
             <div className="flex space-x-1 bg-gray-800/30 rounded-lg p-1">
               {[
                 { id: 'recommendations', name: 'Smart Recommendations', icon: <FaBrain /> },
@@ -525,7 +517,7 @@ const Theatre = () => {
               ))}
             </div>
 
-            {/* Feature Content */}
+            {}
             <div className="min-h-[400px]">
               {activeFeature === 'recommendations' && (
                 <SmartRecommendations
@@ -567,7 +559,6 @@ const Theatre = () => {
                 <AdvancedFoodOrdering
                   onOrderUpdate={(order) => {
                     setFoodOrder(order);
-                    // Update the main food cart state
                     const updatedCart = order.map(item => ({
                       name: item.name,
                       price: item.price,
@@ -601,11 +592,9 @@ const Theatre = () => {
                   userId="user123"
                   onRewardClaim={(reward) => {
                     console.log('Reward claimed:', reward);
-                    // Handle reward claim logic
                   }}
                   onAchievementUnlock={(achievement) => {
                     console.log('Achievement unlocked:', achievement);
-                    // Handle achievement unlock logic
                   }}
                 />
               )}
@@ -615,11 +604,9 @@ const Theatre = () => {
                   userId="user123"
                   onUserSelect={(user) => {
                     console.log('User selected:', user);
-                    // Handle user selection logic
                   }}
                   onGroupCreate={(group) => {
                     console.log('Group created:', group);
-                    // Handle group creation logic
                   }}
                 />
               )}
@@ -628,7 +615,7 @@ const Theatre = () => {
         )}
       </div>
 
-      {/* Quick Actions */}
+      {}
       <div className="max-w-5xl w-full grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
         <button 
           className="px-4 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white flex items-center gap-3 transition-colors" 
@@ -658,7 +645,7 @@ const Theatre = () => {
         </button>
       </div>
 
-      {/* Gallery Modal */}
+      {}
       {galleryOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center">
           <div className="bg-gray-900 rounded-2xl p-4 w-full max-w-3xl">
@@ -681,7 +668,7 @@ const Theatre = () => {
         </div>
       )}
 
-      {/* Contact Drawer */}
+      {}
       {contactOpen && (
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/60" onClick={() => setContactOpen(false)}></div>
@@ -698,11 +685,11 @@ const Theatre = () => {
         </div>
       )}
 
-      {/* Food Modal */}
+      {}
       {showFoodModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50 p-4">
           <div className="bg-gray-900 rounded-2xl shadow-2xl w-full max-w-4xl h-[85vh] flex flex-col">
-            {/* Header */}
+            {}
             <div className="p-6 border-b border-white/10">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -735,7 +722,7 @@ const Theatre = () => {
               </div>
             </div>
 
-            {/* Content */}
+            {}
             <div className="flex-1 p-6 overflow-y-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
               {mockMenu.map((item, idx) => (
@@ -788,7 +775,7 @@ const Theatre = () => {
               ))}
             </div>
 
-              {/* Cart Summary */}
+              {}
               {foodCart.length > 0 && (
                 <div className="bg-gray-800/30 rounded-xl p-6 border border-white/10">
                   <h4 className="text-lg font-semibold text-primary mb-4">Order Summary</h4>
@@ -819,7 +806,7 @@ const Theatre = () => {
               )}
               </div>
 
-            {/* Footer */}
+            {}
             <div className="p-6 border-t border-white/10">
               <div className="flex items-center justify-between">
                 <div className="text-gray-400">
@@ -835,7 +822,6 @@ const Theatre = () => {
                   {foodCart.length > 0 && (
                     <button 
                       onClick={() => {
-                        // Save the order and show confirmation
                         const orderDetails = {
                           items: foodCart,
                           total: foodTotal,
@@ -843,10 +829,8 @@ const Theatre = () => {
                           status: 'confirmed'
                         };
                         
-                        // In a real app, this would be sent to the server
                         localStorage.setItem('theatre_food_order_confirmed', JSON.stringify(orderDetails));
                         
-                        // Show success message
                         alert(`🎉 Food order confirmed!\n\nItems: ${foodCart.map(item => `${item.name} x${item.qty}`).join(', ')}\nTotal: ₹${foodTotal}\n\nYour order will be ready for pickup 15 minutes before showtime.`);
                         
                         setShowFoodModal(false);
@@ -863,7 +847,7 @@ const Theatre = () => {
         </div>
       )}
 
-      {/* Wi-Fi Modal */}
+      {}
       {showWifiModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
           <div className="bg-gray-900 rounded-2xl shadow-lg p-8 max-w-md w-full flex flex-col items-center animate-fade-in">
@@ -887,7 +871,7 @@ const Theatre = () => {
         </div>
       )}
 
-      {/* Recliner Modal */}
+      {}
       {showReclinerModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
           <div className="bg-gray-900 rounded-2xl shadow-lg p-6 max-w-lg w-full animate-fade-in">
@@ -942,7 +926,7 @@ const Theatre = () => {
         </div>
       )}
 
-      {/* Parking Modal */}
+      {}
       {showParkingModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50">
           <div className="bg-gray-900 rounded-2xl shadow-lg p-6 max-w-xl w-full animate-fade-in">
@@ -995,7 +979,7 @@ const Theatre = () => {
         </div>
       )}
 
-      {/* Seat Picker + Quick Book */}
+      {}
       <SeatPickerModal
         open={seatModal.open}
         theatreName={seatModal.theatre}
@@ -1017,7 +1001,7 @@ const Theatre = () => {
         onClose={() => setQuickBook({ open: false, theatre: '', showtime: '', showId: null, selectedSeats: [] })}
       />
 
-      {/* Advanced Food Ordering Modal */}
+      {}
       {showFoodOrdering && (
         <AdvancedFoodOrdering
           onOrderUpdate={(order) => {
@@ -1028,7 +1012,7 @@ const Theatre = () => {
         />
       )}
 
-      {/* Sticky Summary Bar */}
+      {}
       {(foodCart.length > 0 || reclinerSelected || parkingSelected) && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[95%] md:w-[800px]">
           <div className="rounded-2xl border border-white/10 bg-gray-900/90 backdrop-blur shadow-2xl px-5 py-4 flex flex-col md:flex-row md:items-center md:gap-6">
@@ -1071,7 +1055,6 @@ const Theatre = () => {
                     grandTotal: payableTotal
                   };
                   
-                  // In a real implementation, this would redirect to booking page with these add-ons
                   console.log('Theatre add-ons order:', orderSummary);
                   
                   if (foodCart.length > 0) {

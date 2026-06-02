@@ -14,10 +14,9 @@ function createTransport(port = SMTP_PORT, secure = SMTP_SECURE) {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
-    // Improve reliability on flaky networks
-    connectionTimeout: 10000, // 10s
-    greetingTimeout: 10000,   // 10s
-    socketTimeout: 20000,     // 20s
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 20000,
     pool: true,
     maxConnections: 3,
     maxMessages: 50,
@@ -31,15 +30,12 @@ function stripHtml(html = '') {
   try { return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(); } catch { return html; }
 }
 
-// Backward-compatible signature: accepts { to, subject, body } where body = HTML
-// Enhanced: also accepts { html, text, replyTo, attachments, fromName }
 const sendEmail = async ({ to, subject, body, html, text, attachments = [], replyTo, fromName }) => {
   if (!to) throw new Error('sendEmail: missing "to"')
   if (!subject) throw new Error('sendEmail: missing "subject"')
   const htmlBody = html ?? body ?? ''
   const textBody = text ?? stripHtml(htmlBody)
 
-  // Check if email configuration is properly set up
   const brevoApiKey = process.env.BREVO_API_KEY || process.env.BREVO_KEY;
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
@@ -53,14 +49,12 @@ const sendEmail = async ({ to, subject, body, html, text, attachments = [], repl
     throw new Error('Email configuration incomplete. Please set BREVO_API_KEY or SMTP_USER/SMTP_PASS in your environment variables.');
   }
 
-  // Check if Brevo API key is the same as SMTP password (common mistake)
   if (brevoApiKey && smtpPass && brevoApiKey === smtpPass) {
     console.warn('⚠️  WARNING: BREVO_API_KEY is the same as SMTP_PASS');
     console.warn('   These should be different values. Please get the correct Brevo API key.');
     console.warn('   Falling back to SMTP authentication...');
   }
 
-  // 1) Prefer Brevo HTTP API if api key present (avoids SMTP port issues)
   if (brevoApiKey) {
     console.log('📧 Sending email via Brevo API...');
     const payload = {
@@ -70,7 +64,6 @@ const sendEmail = async ({ to, subject, body, html, text, attachments = [], repl
       htmlContent: htmlBody,
       textContent: textBody,
       replyTo: replyTo ? { email: replyTo } : undefined,
-      // Attachments via API require base64; skip here unless implemented separately
     };
     try {
       const res = await axios.post('https://api.brevo.com/v3/smtp/email', payload, {
@@ -86,11 +79,9 @@ const sendEmail = async ({ to, subject, body, html, text, attachments = [], repl
     } catch (brevoErr) {
       console.error('❌ Brevo API Error:', brevoErr.response?.data || brevoErr.message);
       console.log('🔄 Falling back to SMTP...');
-      // Fall through to SMTP if Brevo API fails
     }
   }
 
-  // 2) SMTP attempt with configured port
   const mailOptions = {
     from: FROM_EMAIL ? `${fromName || FROM_NAME} <${FROM_EMAIL}>` : undefined,
     to,
@@ -108,7 +99,6 @@ const sendEmail = async ({ to, subject, body, html, text, attachments = [], repl
     return response
   } catch (err) {
     console.error('❌ SMTP Error:', err.message);
-    // On timeout, retry with Brevo alternate port 2525 (STARTTLS)
     if (String(err?.code).toUpperCase() === 'ETIMEDOUT' || String(err?.command).toUpperCase() === 'CONN') {
       console.log('🔄 Retrying with alternate port 2525...');
       try {
